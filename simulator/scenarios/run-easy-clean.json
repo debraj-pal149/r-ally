@@ -1,0 +1,13 @@
+{
+  "id": "run-easy-clean",
+  "name": "Easy 40 min — no fade",
+  "activity": "running",
+  "athlete": { "hrMax": 188, "thresholdPaceSecPerKm": 360 },
+  "durationSec": 2400,
+  "segments": [
+    { "untilSec": 300, "effort": 0.50, "label": "warmup" },
+    { "untilSec": 2100, "effort": 0.62, "label": "easy" },
+    { "untilSec": 2400, "effort": 0.45, "label": "cooldown" }
+  ],
+  "events": []
+}

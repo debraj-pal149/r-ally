@@ -1,0 +1,33 @@
+{
+  "id": "hiit-tabata-quit",
+  "name": "HIIT tabata — quit mid block",
+  "activity": "hiit",
+  "durationSec": 720,
+  "hiit": { "workSec": 20, "restSec": 10, "count": 16 },
+  "segments": [
+    { "untilSec": 60, "effort": 0.45, "label": "warmup" },
+    { "untilSec": 660, "effort": 0.90, "label": "tabata" },
+    { "untilSec": 720, "effort": 0.35, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 140, "kind": "interval_rest", "holdSec": 10 },
+    { "atSec": 230, "kind": "interval_rest", "holdSec": 10 },
+    {
+      "atSec": 420,
+      "kind": "sudden_stop",
+      "holdSec": 24,
+      "rescuable": true,
+      "rescueWindowSec": 20,
+      "recoverySec": 15
+    },
+    {
+      "atSec": 540,
+      "kind": "gradual_fade",
+      "rampSec": 35,
+      "effortFloor": 0.40,
+      "rescuable": true,
+      "rescueWindowSec": 30,
+      "recoverySec": 15
+    }
+  ]
+}

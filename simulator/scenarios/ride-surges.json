@@ -1,0 +1,24 @@
+{
+  "id": "ride-surges",
+  "name": "Ride with surges then a hard stop",
+  "activity": "cycling",
+  "athlete": { "ftpWatts": 210, "hrMax": 191 },
+  "durationSec": 1500,
+  "segments": [
+    { "untilSec": 180, "effort": 0.50, "label": "warmup" },
+    { "untilSec": 1320, "effort": 0.76, "label": "endurance" },
+    { "untilSec": 1500, "effort": 0.42, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 420, "kind": "grind", "holdSec": 90 },
+    { "atSec": 700, "kind": "grind", "holdSec": 80 },
+    {
+      "atSec": 1100,
+      "kind": "sudden_stop",
+      "holdSec": 22,
+      "rescuable": true,
+      "rescueWindowSec": 20,
+      "recoverySec": 18
+    }
+  ]
+}

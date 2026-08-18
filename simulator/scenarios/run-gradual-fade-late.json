@@ -1,0 +1,23 @@
+{
+  "id": "run-gradual-fade-late",
+  "name": "Long run — fade at minute 32",
+  "activity": "running",
+  "athlete": { "hrMax": 186, "thresholdPaceSecPerKm": 345 },
+  "durationSec": 2400,
+  "segments": [
+    { "untilSec": 240, "effort": 0.52, "label": "warmup" },
+    { "untilSec": 2160, "effort": 0.74, "label": "steady" },
+    { "untilSec": 2400, "effort": 0.50, "label": "cooldown" }
+  ],
+  "events": [
+    {
+      "atSec": 1920,
+      "kind": "gradual_fade",
+      "rampSec": 90,
+      "effortFloor": 0.40,
+      "rescuable": true,
+      "rescueWindowSec": 50,
+      "recoverySec": 35
+    }
+  ]
+}

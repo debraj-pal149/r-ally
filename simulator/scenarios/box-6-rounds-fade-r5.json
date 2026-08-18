@@ -1,0 +1,27 @@
+{
+  "id": "box-6-rounds-fade-r5",
+  "name": "Six rounds — fade in round 5",
+  "activity": "boxing",
+  "durationSec": 1500,
+  "boxing": { "workSec": 180, "restSec": 60, "count": 6 },
+  "segments": [
+    { "untilSec": 60, "effort": 0.50, "label": "warmup" },
+    { "untilSec": 1380, "effort": 0.82, "label": "rounds" },
+    { "untilSec": 1500, "effort": 0.40, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 240, "kind": "interval_rest", "holdSec": 60 },
+    { "atSec": 480, "kind": "interval_rest", "holdSec": 60 },
+    { "atSec": 720, "kind": "interval_rest", "holdSec": 60 },
+    { "atSec": 960, "kind": "interval_rest", "holdSec": 60 },
+    {
+      "atSec": 1080,
+      "kind": "gradual_fade",
+      "rampSec": 50,
+      "effortFloor": 0.38,
+      "rescuable": true,
+      "rescueWindowSec": 40,
+      "recoverySec": 25
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "id": "row-2k-grind",
+  "name": "2K row — grind then fade",
+  "activity": "rowing",
+  "athlete": { "ftpWatts": 240, "hrMax": 193 },
+  "durationSec": 540,
+  "goal": { "distanceM": 2000 },
+  "segments": [
+    { "untilSec": 60, "effort": 0.55, "label": "warmup" },
+    { "untilSec": 480, "effort": 0.88, "label": "2k" },
+    { "untilSec": 540, "effort": 0.40, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 180, "kind": "grind", "holdSec": 120 },
+    {
+      "atSec": 360,
+      "kind": "gradual_fade",
+      "rampSec": 40,
+      "effortFloor": 0.50,
+      "rescuable": true,
+      "rescueWindowSec": 30,
+      "recoverySec": 20
+    }
+  ]
+}

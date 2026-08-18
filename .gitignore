@@ -1,0 +1,56 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+*.generated.xcconfig
+*.pem
+*.p12
+*.key
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Xcode
+DerivedData/
+**/DerivedData/
+build/
+**/build/
+xcuserdata/
+*.xcuserstate
+*.xccheckout
+*.xcscmblueprint
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.moved-aside
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+timeline.xctimeline
+playground.xcworkspace
+
+# SwiftPM
+.swiftpm/
+.build/
+
+# Node / Vite
+node_modules/
+simulator/dist/
+simulator/web/dist/
+simulator/web/.vite/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Eval artifacts (generated)
+eval-reports/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*~

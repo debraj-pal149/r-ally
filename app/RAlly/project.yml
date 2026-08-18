@@ -1,0 +1,99 @@
+name: RAlly
+options:
+  bundleIdPrefix: com.rally
+  deploymentTarget:
+    iOS: "17.0"
+  xcodeVersion: "26.5"
+  createIntermediateGroups: true
+configs:
+  Debug: debug
+  Release: release
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+settings:
+  base:
+    SWIFT_VERSION: "6.0"
+    TARGETED_DEVICE_FAMILY: "1"
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+packages: {}
+targets:
+  RAlly:
+    type: application
+    platform: iOS
+    sources:
+      - path: RAlly
+        excludes:
+          - Info.plist
+          - RAlly.entitlements
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rally.RAlly
+        PRODUCT_NAME: RAlly
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: RAlly/Info.plist
+        CODE_SIGN_ENTITLEMENTS: RAlly/RAlly.entitlements
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        DEVELOPMENT_TEAM: ""
+        CODE_SIGN_STYLE: Automatic
+    info:
+      path: RAlly/Info.plist
+      properties:
+        CFBundleDisplayName: r-ally
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+        UIUserInterfaceStyle: Dark
+        NSLocationWhenInUseUsageDescription: r-ally uses GPS to measure your pace and distance so it can shout at the right moment.
+        NSMotionUsageDescription: r-ally uses motion and cadence to tell when your form starts to fade.
+        NSBluetoothAlwaysUsageDescription: r-ally reads live heart rate from a Bluetooth strap or a watch in broadcast mode.
+        NSBluetoothPeripheralUsageDescription: r-ally connects to heart-rate straps so encouragement can use live effort.
+        NSHealthShareUsageDescription: r-ally reads heart rate and past workouts (including Nike Run Club runs synced to Apple Health) to understand your effort.
+        NSHealthUpdateUsageDescription: r-ally saves completed workouts to Apple Health.
+        UIBackgroundModes:
+          - audio
+          - location
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+        STRAVA_CLIENT_ID: $(STRAVA_CLIENT_ID)
+        STRAVA_CLIENT_SECRET: $(STRAVA_CLIENT_SECRET)
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - rally
+            CFBundleURLName: com.rally.RAlly
+    entitlements:
+      path: RAlly/RAlly.entitlements
+      properties:
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.background-delivery: true
+    preBuildScripts:
+      - name: Generate secrets
+        basedOnDependencyAnalysis: false
+        script: |
+          ROOT="${SRCROOT}/../.."
+          /bin/bash "${ROOT}/scripts/gen-secrets.sh"
+  RAllyTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: RAllyTests
+    dependencies:
+      - target: RAlly
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rally.RAllyTests
+        GENERATE_INFOPLIST_FILE: YES
+        IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+        PRODUCT_NAME: RAllyTests
+        PRODUCT_MODULE_NAME: RAllyTests
+schemes:
+  RAlly:
+    build:
+      targets:
+        RAlly: all
+        RAllyTests: [test]
+    test:
+      targets:
+        - RAllyTests

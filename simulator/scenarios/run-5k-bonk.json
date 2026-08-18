@@ -1,0 +1,33 @@
+{
+  "id": "run-5k-bonk",
+  "name": "5K race — bonk at 3.2 km",
+  "activity": "running",
+  "athlete": { "hrMax": 190, "thresholdPaceSecPerKm": 330 },
+  "durationSec": 1800,
+  "goal": { "distanceM": 5000 },
+  "segments": [
+    { "untilSec": 180, "effort": 0.55, "label": "warmup" },
+    { "untilSec": 1500, "effort": 0.82, "label": "race pace" },
+    { "untilSec": 1800, "effort": 0.60, "label": "cooldown" }
+  ],
+  "events": [
+    {
+      "atSec": 690,
+      "kind": "gradual_fade",
+      "rampSec": 75,
+      "effortFloor": 0.45,
+      "rescuable": true,
+      "rescueWindowSec": 45,
+      "recoverySec": 30
+    },
+    {
+      "atSec": 1020,
+      "kind": "sudden_stop",
+      "holdSec": 25,
+      "rescuable": true,
+      "rescueWindowSec": 20,
+      "recoverySec": 20
+    },
+    { "atSec": 480, "kind": "pause_resume", "holdSec": 6 }
+  ]
+}

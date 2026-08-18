@@ -1,0 +1,24 @@
+{
+  "id": "swim-1500-dropouts",
+  "name": "1500 m swim — optical HR dropouts + late fade",
+  "activity": "swimming",
+  "athlete": { "hrMax": 184 },
+  "durationSec": 1500,
+  "goal": { "distanceM": 1500 },
+  "segments": [
+    { "untilSec": 180, "effort": 0.52, "label": "warmup" },
+    { "untilSec": 1320, "effort": 0.80, "label": "cruise" },
+    { "untilSec": 1500, "effort": 0.48, "label": "cooldown" }
+  ],
+  "events": [
+    {
+      "atSec": 900,
+      "kind": "gradual_fade",
+      "rampSec": 80,
+      "effortFloor": 0.42,
+      "rescuable": true,
+      "rescueWindowSec": 45,
+      "recoverySec": 30
+    }
+  ]
+}

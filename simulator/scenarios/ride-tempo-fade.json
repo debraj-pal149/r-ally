@@ -1,0 +1,23 @@
+{
+  "id": "ride-tempo-fade",
+  "name": "Tempo ride — fade at 18 min",
+  "activity": "cycling",
+  "athlete": { "hrMax": 188, "ftpWatts": 230 },
+  "durationSec": 1800,
+  "segments": [
+    { "untilSec": 300, "effort": 0.48, "label": "warmup" },
+    { "untilSec": 1560, "effort": 0.84, "label": "tempo" },
+    { "untilSec": 1800, "effort": 0.45, "label": "cooldown" }
+  ],
+  "events": [
+    {
+      "atSec": 1080,
+      "kind": "gradual_fade",
+      "rampSec": 70,
+      "effortFloor": 0.44,
+      "rescuable": true,
+      "rescueWindowSec": 45,
+      "recoverySec": 30
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "run-intervals",
+  "name": "Track intervals — planned rests as distractors",
+  "activity": "running",
+  "athlete": { "hrMax": 192, "thresholdPaceSecPerKm": 320 },
+  "durationSec": 1500,
+  "segments": [
+    { "untilSec": 240, "effort": 0.50, "label": "warmup" },
+    { "untilSec": 1320, "effort": 0.78, "label": "intervals" },
+    { "untilSec": 1500, "effort": 0.48, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 360, "kind": "interval_rest", "holdSec": 90 },
+    { "atSec": 570, "kind": "interval_rest", "holdSec": 90 },
+    { "atSec": 780, "kind": "interval_rest", "holdSec": 90 },
+    {
+      "atSec": 1080,
+      "kind": "gradual_fade",
+      "rampSec": 50,
+      "effortFloor": 0.42,
+      "rescuable": true,
+      "rescueWindowSec": 40,
+      "recoverySec": 25
+    }
+  ]
+}

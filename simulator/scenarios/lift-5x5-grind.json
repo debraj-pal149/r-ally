@@ -1,0 +1,39 @@
+{
+  "id": "lift-5x5-grind",
+  "name": "5x5 — velocity loss failure on set 4",
+  "activity": "strength",
+  "durationSec": 900,
+  "sets": [
+    { "reps": 5, "restSec": 90, "load": 80 },
+    { "reps": 5, "restSec": 90, "load": 80 },
+    { "reps": 5, "restSec": 90, "load": 82 },
+    { "reps": 5, "restSec": 90, "load": 85 },
+    { "reps": 5, "restSec": 90, "load": 80 }
+  ],
+  "segments": [
+    { "untilSec": 60, "effort": 0.40, "label": "warmup" },
+    { "untilSec": 840, "effort": 0.80, "label": "working sets" },
+    { "untilSec": 900, "effort": 0.30, "label": "cooldown" }
+  ],
+  "events": [
+    { "atSec": 150, "kind": "interval_rest", "holdSec": 90 },
+    { "atSec": 310, "kind": "interval_rest", "holdSec": 90 },
+    {
+      "atSec": 520,
+      "kind": "grind",
+      "holdSec": 70,
+      "rescuable": true,
+      "rescueWindowSec": 40,
+      "recoverySec": 20
+    },
+    {
+      "atSec": 620,
+      "kind": "gradual_fade",
+      "rampSec": 40,
+      "effortFloor": 0.35,
+      "rescuable": true,
+      "rescueWindowSec": 35,
+      "recoverySec": 20
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "id": "lift-fast-quit",
+  "name": "Heavy singles — rack it early",
+  "activity": "strength",
+  "durationSec": 600,
+  "sets": [
+    { "reps": 3, "restSec": 120, "load": 90 },
+    { "reps": 2, "restSec": 120, "load": 95 },
+    { "reps": 1, "restSec": 120, "load": 100 }
+  ],
+  "segments": [
+    { "untilSec": 90, "effort": 0.45, "label": "warmup" },
+    { "untilSec": 540, "effort": 0.88, "label": "heavy" },
+    { "untilSec": 600, "effort": 0.28, "label": "cooldown" }
+  ],
+  "events": [
+    {
+      "atSec": 360,
+      "kind": "sudden_stop",
+      "holdSec": 28,
+      "rescuable": true,
+      "rescueWindowSec": 22,
+      "recoverySec": 20
+    }
+  ]
+}
