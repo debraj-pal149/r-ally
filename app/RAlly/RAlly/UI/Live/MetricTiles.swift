@@ -41,6 +41,8 @@ struct MetricTiles: View {
         case .strokeRateSpm: "STROKE"
         case .motionIntensityG: "MOTION"
         case .activeEnergyKcal: "KCAL"
+        case .altitudeM: "ALT"
+        case .gradePercent: "GRADE"
         default: k.rawValue.uppercased()
         }
     }

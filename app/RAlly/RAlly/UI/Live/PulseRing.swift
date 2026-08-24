@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PulseRing: View {
     var state: EngineState
+    var locomotion: Locomotion = .moving
     var bpm: Double?
     var cadence: Double?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -13,7 +14,7 @@ struct PulseRing: View {
             if let cadence, cadence > 30 { return 120 / cadence }
             return 1.0
         }()
-        let color = Theme.ringColor(state)
+        let color = Theme.ringColor(state: state, locomotion: locomotion)
         ZStack {
             Circle()
                 .fill(color.opacity(0.08))

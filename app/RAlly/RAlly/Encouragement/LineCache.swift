@@ -31,7 +31,7 @@ final class LineCache {
 
     func maybePrefetch(ctx: LineContext, risk: Double) {
         guard client.isConfigured else { return }
-        if risk < 35 { return }
+        if risk < 20, ctx.elapsed < EngineConstants.warmupSec + 30 { return }
         if inflight { return }
         if let p = persona, p == ctx.persona.id, lines != nil {
             if ctx.elapsed - generatedAt < 240,
@@ -72,7 +72,11 @@ final class LineCache {
             let arr: [String] = {
                 switch kind {
                 case .preQuitFade: lines.pre_quit_fade
+                case .paceSlip: lines.pace_slip ?? lines.pre_quit_fade
+                case .keepGoing: lines.keep_going ?? lines.grind_support
                 case .stopped: lines.stopped
+                case .stillStopped: lines.still_stopped ?? lines.stopped
+                case .recovery: lines.recovery ?? lines.grind_support
                 case .grindSupport: lines.grind_support
                 case .finalPush: lines.grind_support
                 }
@@ -90,7 +94,23 @@ final class LineCache {
         var p = pep
         switch kind {
         case .preQuitFade: p.pre_quit_fade.removeAll { $0 == dropping }
+        case .paceSlip:
+            var s = p.pace_slip ?? []
+            s.removeAll { $0 == dropping }
+            p.pace_slip = s
+        case .keepGoing:
+            var s = p.keep_going ?? []
+            s.removeAll { $0 == dropping }
+            p.keep_going = s
         case .stopped: p.stopped.removeAll { $0 == dropping }
+        case .stillStopped:
+            var s = p.still_stopped ?? []
+            s.removeAll { $0 == dropping }
+            p.still_stopped = s
+        case .recovery:
+            var r = p.recovery ?? []
+            r.removeAll { $0 == dropping }
+            p.recovery = r
         case .grindSupport, .finalPush: p.grind_support.removeAll { $0 == dropping }
         }
         return p

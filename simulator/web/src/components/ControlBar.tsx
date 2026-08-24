@@ -3,6 +3,7 @@ interface ScenarioInfo {
   name: string;
   activity: string;
   durationSec: number;
+  lab?: boolean;
 }
 
 interface Props {
@@ -30,13 +31,25 @@ export default function ControlBar(p: Props) {
         value={p.scenarioId}
         onChange={(e) => p.onControl("load", { scenarioId: e.target.value, seed: p.seed, timeScale: p.timeScale, rescuable: p.rescuable })}
       >
-        {p.scenarios.map((s) => (
-          <option key={s.id} value={s.id}>
-            {s.name}
-          </option>
-        ))}
+        <optgroup label="Shipped — run / ride / row">
+          {p.scenarios.filter((s) => !s.lab).map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </optgroup>
+        <optgroup label="Lab only — engine tests, not the product">
+          {p.scenarios.filter((s) => s.lab).map((s) => (
+            <option key={s.id} value={s.id}>
+              {s.name}
+            </option>
+          ))}
+        </optgroup>
       </select>
       <span className="badge">{p.activity}</span>
+      {p.scenarios.find((s) => s.id === p.scenarioId)?.lab ? (
+        <span className="badge">lab — don't attach the app</span>
+      ) : null}
       <label>
         time
         <input

@@ -47,6 +47,9 @@ struct SettingsView: View {
         HairlineCard {
             VStack(alignment: .leading, spacing: 16) {
                 SectionLabel(text: "Signal")
+                Text("Outdoor running on this phone: GPS pace, cadence, and distance. Apple Health saves the finished run. No watch required.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textSecondary)
                 HStack(spacing: 8) {
                     sourceChip("Simulator", .simulator)
                     sourceChip("iPhone", .device)
@@ -60,19 +63,28 @@ struct SettingsView: View {
                         .background(Theme.surfaceRaised)
                         .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                 }
-                Toggle(isOn: Bindable(model).bleEnabled) {
-                    Text("Bluetooth heart-rate strap")
-                        .font(Theme.body(15, .medium))
-                }
-                .tint(Theme.ember)
-                if model.bleEnabled {
-                    Button("Scan & pair") {
-                        Haptics.tap()
-                        pairing = true
+                DisclosureGroup {
+                    Toggle(isOn: Bindable(model).bleEnabled) {
+                        Text("Optional BLE heart-rate strap")
+                            .font(Theme.body(15, .medium))
                     }
-                    .font(Theme.label(15, .bold))
-                    .foregroundStyle(Theme.emberSoft)
-                    .frame(minHeight: 44)
+                    .tint(Theme.ember)
+                    if model.bleEnabled {
+                        Button("Scan & pair") {
+                            Haptics.tap()
+                            pairing = true
+                        }
+                        .font(Theme.label(15, .bold))
+                        .foregroundStyle(Theme.emberSoft)
+                        .frame(minHeight: 44)
+                    }
+                    Text("Not needed for running. Only if you already own a strap and want richer fade detection.")
+                        .font(Theme.body(12))
+                        .foregroundStyle(Theme.textMuted)
+                } label: {
+                    Text("Advanced")
+                        .font(Theme.label(13, .bold))
+                        .foregroundStyle(Theme.textMuted)
                 }
             }
         }
@@ -84,13 +96,24 @@ struct SettingsView: View {
                 SectionLabel(text: "Voice")
                 Text("Using \(model.speech.resolvedVoiceName)")
                     .font(Theme.headline(16, .bold))
-                Text("Siri and Premium English voices sound human. Download them in iOS Settings → Accessibility → Spoken Content → Voices.")
+                Text(model.speech.onDeviceStatus)
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textMuted)
+                Text(model.voiceEngine.blurb)
                     .font(Theme.body(13))
                     .foregroundStyle(Theme.textSecondary)
                     .fixedSize(horizontal: false, vertical: true)
-                VoiceList(expanded: $showAllVoices)
+                VStack(spacing: 8) {
+                    ForEach(VoiceEngine.allCases, id: \.rawValue) { engine in
+                        engineRow(engine)
+                    }
+                }
+                if model.voiceEngine == .apple {
+                    VoiceList(expanded: $showAllVoices)
+                }
                 Button {
                     Haptics.tap()
+                    model.speech.warmOnDeviceVoice(persona: model.persona)
                     model.speech.speak(FallbackLines.preview(persona: model.persona), persona: model.persona) {}
                 } label: {
                     Label("HEAR THIS COACH", systemImage: "speaker.wave.2.fill")
@@ -104,6 +127,57 @@ struct SettingsView: View {
                 .foregroundStyle(Theme.emberSoft)
                 .accessibilityLabel("Preview coach voice")
             }
+        }
+    }
+
+    func engineRow(_ engine: VoiceEngine) -> some View {
+        let on = model.voiceEngine == engine
+        return Button {
+            Haptics.tap()
+            model.voiceEngine = engine
+        } label: {
+            HStack(alignment: .top, spacing: 12) {
+                Text(engine.chipTitle)
+                    .font(Theme.label(12, .bold))
+                    .tracking(0.8)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(on ? Theme.ember : Theme.surfaceRaised)
+                    .foregroundStyle(on ? Color.white : Theme.textPrimary)
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(engineTitle(engine))
+                        .font(Theme.body(15, .semibold))
+                        .foregroundStyle(Theme.textPrimary)
+                    Text(engine.blurb)
+                        .font(Theme.body(12))
+                        .foregroundStyle(Theme.textMuted)
+                        .multilineTextAlignment(.leading)
+                }
+                Spacer(minLength: 0)
+                if on {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(Theme.ember)
+                }
+            }
+            .padding(12)
+            .background(on ? Theme.ember.opacity(0.10) : Theme.surfaceRaised)
+            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .stroke(on ? Theme.ember.opacity(0.55) : Theme.hairline, lineWidth: on ? 1.5 : 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(on ? [.isSelected] : [])
+        .accessibilityLabel("\(engineTitle(engine)). \(engine.blurb)")
+    }
+
+    func engineTitle(_ engine: VoiceEngine) -> String {
+        switch engine {
+        case .auto: "Auto — punchy Apple male"
+        case .power: "Power — on-device baritone"
+        case .apple: "Apple — pick the voice"
         }
     }
 
@@ -186,12 +260,15 @@ struct SettingsView: View {
     var intensityCard: some View {
         HairlineCard {
             VStack(alignment: .leading, spacing: 12) {
-                SectionLabel(text: "Rally intensity")
-                GoalStepper(label: "\(model.sessionCap) shouts", onMinus: {
+                SectionLabel(text: "Fade shout budget")
+                GoalStepper(label: "\(model.sessionCap) fade shouts", onMinus: {
                     model.sessionCap = max(3, model.sessionCap - 1)
                 }, onPlus: {
-                    model.sessionCap = min(10, model.sessionCap + 1)
+                    model.sessionCap = min(30, model.sessionCap + 1)
                 })
+                Text("Rest nags and keep-going lines are uncapped. This only limits fade / pace-slip shouts.")
+                    .font(Theme.label(12))
+                    .foregroundStyle(Theme.textMuted)
             }
         }
     }

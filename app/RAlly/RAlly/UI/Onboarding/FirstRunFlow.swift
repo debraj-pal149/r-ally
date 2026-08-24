@@ -51,7 +51,10 @@ struct FirstRunFlow: View {
                         }
                     case 2:
                         VStack(alignment: .leading, spacing: 16) {
-                            PosterText(text: "Who's in\nyour corner?", size: 40)
+                            PosterText(text: "Who's in\nyour ear?", size: 40)
+                            Text("Put the buds in. The product is the voice at the moment you fade — not a screen.")
+                                .font(Theme.body(15))
+                                .foregroundStyle(Theme.textSecondary)
                             PersonaPicker(preview: true)
                         }
                     default:
@@ -65,7 +68,12 @@ struct FirstRunFlow: View {
                 }
                 .padding(.horizontal, 24)
                 Spacer()
-                Button(step < 3 ? "Continue" : "Let's go") { advance() }
+                Button(step < 3 ? "Continue" : "Let's go") {
+                    if step == 3 {
+                        model.prepareDevicePermissions()
+                    }
+                    advance()
+                }
                     .buttonStyle(RallyButtonStyle())
                     .padding(24)
             }

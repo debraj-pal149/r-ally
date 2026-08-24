@@ -3,9 +3,14 @@
 .env.*
 !.env.example
 *.generated.xcconfig
+Secrets.xcconfig
 *.pem
 *.p12
 *.key
+
+# Local working notes / agent scratch (not product)
+problem.md
+*.local.md
 
 # macOS
 .DS_Store
@@ -28,12 +33,14 @@ xcuserdata/
 *.ipa
 *.dSYM.zip
 *.dSYM
+*.xcresult
 timeline.xctimeline
 playground.xcworkspace
 
 # SwiftPM
 .swiftpm/
 .build/
+# Keep Package.resolved tracked for reproducible app builds
 
 # Node / Vite
 node_modules/
@@ -49,8 +56,9 @@ yarn-error.log*
 # Eval artifacts (generated)
 eval-reports/
 
-# IDE
+# IDE / agent
 .idea/
 .vscode/
+.cursor/
 *.swp
 *~

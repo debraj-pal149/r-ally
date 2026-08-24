@@ -14,7 +14,7 @@ struct SummaryView: View {
             Atmosphere(intensity: 0.7)
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 24) {
-                    PosterText(text: "The story\nof the fight", size: 42)
+                    PosterText(text: "The story\nof the run", size: 42)
                     HStack(spacing: 0) {
                         stat(record.activity.title, "ACTIVITY")
                         stat(Formatters.clock(record.durationSec), "TIME")

@@ -13,6 +13,10 @@ enum MetricKind: String, Codable, CaseIterable, Sendable, Hashable {
     case motionIntensityG
     case distanceM
     case activeEnergyKcal
+    case altitudeM
+    case gradePercent
+    /// 1 = CMMotionActivity.stationary, 0 = not. Optional corroboration for locomotion.
+    case motionStationary
 
     var unitLabel: String {
         switch self {
@@ -28,6 +32,9 @@ enum MetricKind: String, Codable, CaseIterable, Sendable, Hashable {
         case .motionIntensityG: "g"
         case .distanceM: "m"
         case .activeEnergyKcal: "kcal"
+        case .altitudeM: "m"
+        case .gradePercent: "%"
+        case .motionStationary: ""
         }
     }
 }

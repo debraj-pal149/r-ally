@@ -10,7 +10,7 @@ struct HistoryView: View {
             Atmosphere(intensity: 0.5)
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
-                    PosterText(text: "The fights", size: 42)
+                    PosterText(text: "The sessions", size: 42)
                     if sessions.isEmpty {
                         Text("Nothing in the book yet. Finish a session and it lands here.")
                             .font(Theme.body(15))

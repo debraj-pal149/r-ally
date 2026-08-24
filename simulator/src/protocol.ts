@@ -36,9 +36,18 @@ export type EngineState =
 
 export type TriggerKind =
   | "pre_quit_fade"
+  | "pace_slip"
+  | "keep_going"
   | "stopped"
+  | "still_stopped"
+  | "recovery"
   | "grind_support"
   | "final_push";
+
+export type Locomotion =
+  | "moving"
+  | "slowing"
+  | "stopped";
 
 export type EventKind =
   | "gradual_fade"

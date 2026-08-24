@@ -72,6 +72,8 @@ export const ScenarioSchema = z.object({
       durationSec: z.number().optional(),
     })
     .optional(),
+  /** Lab scenarios test the engine. They are not v1 product claims. */
+  lab: z.boolean().optional().default(false),
 });
 
 export type Scenario = z.infer<typeof ScenarioSchema>;
@@ -223,11 +225,11 @@ export function eventEnd(e: ScenarioEvent): number {
 export function matchingTriggerKind(kind: EventKind): string[] {
   switch (kind) {
     case "gradual_fade":
-      return ["pre_quit_fade"];
+      return ["pre_quit_fade", "pace_slip"];
     case "sudden_stop":
-      return ["stopped"];
+      return ["stopped", "still_stopped"];
     case "grind":
-      return ["grind_support"];
+      return ["grind_support", "keep_going"];
     default:
       return [];
   }

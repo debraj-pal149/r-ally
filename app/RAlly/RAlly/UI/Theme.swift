@@ -47,6 +47,12 @@ enum Theme {
         case .pausedUnknown: textSecondary
         }
     }
+
+    static func ringColor(state: EngineState, locomotion: Locomotion) -> Color {
+        if locomotion == .stopped { return textSecondary }
+        if locomotion == .slowing { return warn }
+        return ringColor(state)
+    }
 }
 
 enum Haptics {

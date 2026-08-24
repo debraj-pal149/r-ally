@@ -109,6 +109,7 @@ app.get("/api/scenarios", async () => {
     name: s.name,
     activity: s.activity,
     durationSec: s.durationSec,
+    lab: Boolean(s.lab) || !["running", "cycling", "rowing"].includes(s.activity),
   }));
 });
 

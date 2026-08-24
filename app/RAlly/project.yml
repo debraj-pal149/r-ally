@@ -17,7 +17,10 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     SWIFT_STRICT_CONCURRENCY: complete
-packages: {}
+packages:
+  FluidAudio:
+    url: https://github.com/FluidInference/FluidAudio
+    branch: main
 targets:
   RAlly:
     type: application
@@ -27,6 +30,9 @@ targets:
         excludes:
           - Info.plist
           - RAlly.entitlements
+    dependencies:
+      - package: FluidAudio
+        product: FluidAudio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rally.RAlly
@@ -35,7 +41,7 @@ targets:
         INFOPLIST_FILE: RAlly/Info.plist
         CODE_SIGN_ENTITLEMENTS: RAlly/RAlly.entitlements
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        DEVELOPMENT_TEAM: ""
+        DEVELOPMENT_TEAM: "5LV8BN8Q4Q"
         CODE_SIGN_STYLE: Automatic
     info:
       path: RAlly/Info.plist

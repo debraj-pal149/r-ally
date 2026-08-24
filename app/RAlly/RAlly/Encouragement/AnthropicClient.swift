@@ -2,7 +2,11 @@ import Foundation
 
 struct PepLines: Codable, Sendable {
     var pre_quit_fade: [String]
+    var pace_slip: [String]?
+    var keep_going: [String]?
     var stopped: [String]
+    var still_stopped: [String]?
+    var recovery: [String]?
     var grind_support: [String]
 }
 

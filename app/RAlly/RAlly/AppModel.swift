@@ -3,6 +3,8 @@ import SwiftUI
 import SwiftData
 #if os(iOS)
 import UIKit
+import CoreLocation
+import CoreMotion
 #endif
 
 enum AppRoute: Equatable {
@@ -27,14 +29,19 @@ final class AppModel {
     var selectedPrompt: String?
     var customPrompt: String = ""
     var sourceKind: DataSourceKind = {
-        #if DEBUG
+        // Physical iPhone from Xcode is almost always DEBUG. Never default that to Simulator.
+        #if targetEnvironment(simulator)
         .simulator
         #else
-        .device
+        if let raw = UserDefaults.standard.string(forKey: "source.kind"),
+           let kind = DataSourceKind(rawValue: raw) {
+            return kind
+        }
+        return .device
         #endif
     }()
     var simulatorURLString: String = UserDefaults.standard.string(forKey: "sim.url") ?? "ws://127.0.0.1:7777/stream"
-    var sessionCap: Int = UserDefaults.standard.object(forKey: "rally.cap") as? Int ?? 7
+    var sessionCap: Int = UserDefaults.standard.object(forKey: "rally.cap") as? Int ?? 10
     var didOnboard: Bool = UserDefaults.standard.bool(forKey: "didOnboard")
     var route: AppRoute
     var muted = false
@@ -46,12 +53,33 @@ final class AppModel {
     var healthAuthorized = false
     var nrcWorkoutCount = 0
     var voiceIdentifier: String? {
-        didSet { speech.voiceIdentifier = voiceIdentifier }
+        didSet {
+            speech.voiceIdentifier = voiceIdentifier
+            if let voiceIdentifier {
+                UserDefaults.standard.set(voiceIdentifier, forKey: "voice.id")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "voice.id")
+            }
+        }
+    }
+    var voiceEngine: VoiceEngine = {
+        if let raw = UserDefaults.standard.string(forKey: "voice.engine"),
+           let e = VoiceEngine(rawValue: raw) {
+            return e
+        }
+        return .auto
+    }() {
+        didSet {
+            speech.voiceEngine = voiceEngine
+            UserDefaults.standard.set(voiceEngine.rawValue, forKey: "voice.engine")
+            speech.warmOnDeviceVoice(persona: persona)
+        }
     }
 
     var liveT: TimeInterval = 0
     var liveRisk: Double = 0
     var liveState: EngineState = .cruising
+    var liveLocomotion: Locomotion = .moving
     var liveLatest: [MetricKind: Double] = [:]
     var liveRallies: [RallyMoment] = []
     var livePaused = false
@@ -85,11 +113,29 @@ final class AppModel {
         return "\(Formatters.greeting())\(n)"
     }
 
+    /// Cycling/rowing need effort sensors we do not ship in the phone-only product.
+    var startBlockedReason: String? {
+        if sourceKind == .simulator { return nil }
+        if !activity.isShipped {
+            return "v1 is running on phone sensors. Ride and row need a strap — not this build."
+        }
+        return nil
+    }
+
+    /// Phone-only is the product. No scare banner.
+    var phoneOnlyWarning: String? { nil }
+
     init() {
         let key = AnthropicClient.keyFromBundle()
         cache = LineCache(client: AnthropicClient(apiKey: key))
         llmOffline = key.trimmingCharacters(in: .whitespaces).isEmpty
         route = UserDefaults.standard.bool(forKey: "didOnboard") ? .home : .onboarding
+        if let vid = UserDefaults.standard.string(forKey: "voice.id") {
+            voiceIdentifier = vid
+        }
+        speech.voiceIdentifier = voiceIdentifier
+        speech.voiceEngine = voiceEngine
+        speech.warmOnDeviceVoice(persona: persona)
         ble.onDevices = { [weak self] list in
             Task { @MainActor in
                 self?.bleDevices = list.map { (id: $0.0, name: $0.1) }
@@ -103,21 +149,49 @@ final class AppModel {
         UserDefaults.standard.set(thresholdPace, forKey: "athlete.pace")
         UserDefaults.standard.set(sessionCap, forKey: "rally.cap")
         UserDefaults.standard.set(simulatorURLString, forKey: "sim.url")
+        UserDefaults.standard.set(sourceKind.rawValue, forKey: "source.kind")
         if let hrMaxOverride { UserDefaults.standard.set(hrMaxOverride, forKey: "athlete.hrMax") }
         UserDefaults.standard.set(didOnboard, forKey: "didOnboard")
     }
 
     func completeOnboarding() {
         didOnboard = true
+        #if !targetEnvironment(simulator)
+        sourceKind = .device
+        #endif
         persistProfile()
+        Task { @MainActor in
+            _ = await health.requestAuthorization()
+            healthAuthorized = true
+        }
         route = .home
     }
 
+    /// Kick location/motion prompts before the first outdoor run.
+    func prepareDevicePermissions() {
+        #if os(iOS)
+        let loc = CLLocationManager()
+        loc.requestWhenInUseAuthorization()
+        if CMPedometer.isCadenceAvailable() || CMPedometer.isDistanceAvailable() {
+            let pedo = CMPedometer()
+            pedo.startUpdates(from: Date()) { _, _ in }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { pedo.stopUpdates() }
+        }
+        #endif
+    }
+
     func startWorkout() {
+        guard startBlockedReason == nil else { return }
+        // Physical phone product is Run. Never leave a leftover sim activity.
+        #if !targetEnvironment(simulator)
+        if sourceKind == .device { activity = .running }
+        #endif
+        if !activity.isShipped, sourceKind == .device { activity = .running }
         engine.reset(activity: activity, maxHR: hrMax, sessionCap: sessionCap)
         liveT = 0
         liveRisk = 0
         liveState = .cruising
+        liveLocomotion = .moving
         liveLatest = [:]
         liveRallies = []
         livePaused = false
@@ -129,7 +203,9 @@ final class AppModel {
         spokenLine = nil
         speech.muted = muted
 
-        let supplements: [SupplementalHRSource] = bleEnabled ? [ble, health] : [health]
+        // Phone sensors are the primary path. BLE HR is optional. HealthKit HR is not
+        // attached live unless a strap is on — otherwise Watch/Health lag would fake "live" HR.
+        let supplements: [SupplementalHRSource] = bleEnabled ? [ble] : []
         if sourceKind == .simulator {
             let url = URL(string: simulatorURLString) ?? URL(string: "ws://127.0.0.1:7777/stream")!
             let sim = SimulatorDataSource(url: url)
@@ -143,8 +219,12 @@ final class AppModel {
             }
             sim.onHello = { [weak self] _, act in
                 Task { @MainActor in
-                    self?.activity = act
-                    self?.engine.reset(activity: act, maxHR: self?.hrMax ?? 190, sessionCap: self?.sessionCap ?? 7)
+                    guard let self else { return }
+                    // Simulator may play ride/row for engine demos. Phone UI only ships Run.
+                    if act.isContinuousEffort {
+                        self.activity = act
+                        self.engine.reset(activity: act, maxHR: self.hrMax, sessionCap: self.sessionCap)
+                    }
                 }
             }
             sim.onScenarioEnded = { [weak self] in
@@ -158,12 +238,19 @@ final class AppModel {
             deviceSource = dev
             simSource = nil
             sources.configure(primary: dev, supplements: supplements)
+            // Ask Health once so the finished run can save. Not used for live tracking.
+            Task { @MainActor in
+                if !self.healthAuthorized {
+                    self.healthAuthorized = await self.health.requestAuthorization()
+                }
+            }
         }
         sources.onSample = { [weak self] sample in
             self?.ingest(sample)
         }
         sources.start()
         route = .live
+        speech.warmOnDeviceVoice(persona: persona)
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         #endif
@@ -216,6 +303,7 @@ final class AppModel {
         let result = engine.tick(t: t)
         liveRisk = result.risk
         liveState = result.state
+        liveLocomotion = result.locomotion
         if result.state == .critical { finishedAfterCritical = true }
 
         let ctx = lineContext(snapshot: result.snapshot, t: t)
@@ -231,6 +319,8 @@ final class AppModel {
         }
 
         if let kind = result.trigger {
+            // Never queue a new line while the previous one is still speaking.
+            guard !speech.speaking else { return }
             fire(kind: kind, t: t, ctx: ctx, output: result.channels.output)
         }
     }
@@ -247,7 +337,12 @@ final class AppModel {
         #endif
         speech.speak(popped.text, persona: persona) { [weak self] in
             guard let self else { return }
+            self.engine.policy.noteSpeechEnded(t: self.liveT)
             self.simSource?.sendSpeechDone(t: self.liveT)
+            // Prefetch a likely next line during the breath window (on-device only).
+            let nextKind: TriggerKind = self.liveLocomotion == .stopped ? .stillStopped : .keepGoing
+            let peek = FallbackLines.line(kind: nextKind, ctx: ctx)
+            self.speech.prefetch(peek, persona: self.persona)
             Task { @MainActor in
                 try? await Task.sleep(for: .seconds(3))
                 if self.spokenLine == popped.text { self.spokenLine = nil }
@@ -322,10 +417,12 @@ final class AppModel {
         case .distanceM: return Formatters.km(v)
         case .heartRateBpm, .cadenceSpm, .strokeRateSpm, .punchRatePpm, .powerWatts, .repCount:
             return String(Int(v.rounded()))
-        case .repVelocityMps, .speedMps, .motionIntensityG:
+        case .repVelocityMps, .speedMps, .motionIntensityG, .gradePercent:
             return String(format: "%.2f", v)
-        case .activeEnergyKcal:
+        case .activeEnergyKcal, .altitudeM:
             return String(Int(v.rounded()))
+        case .motionStationary:
+            return v >= 0.5 ? "still" : "move"
         }
     }
 }

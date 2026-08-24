@@ -22,12 +22,12 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             id: .southpaw,
             name: "The Southpaw",
             tagline: "Gravel and heart. One more round.",
-            archetype: "a Rocky-style corner man",
-            styleRules: "Gravel and heart. Short punches of words. One more round energy. Call them kid or champ. Imperfect grammar welcome. Sound like a person in the corner, never a narrator.",
+            archetype: "a gravel-voiced corner coach who fights for the athlete in the ear",
+            styleRules: "Gravel and heart. Short punches that build into a second breath. Call them kid or champ. Imperfect grammar welcome. Sound like a person in the corner, never a narrator. Never reference real celebrities.",
             monogram: "S",
             symbol: "figure.boxing",
-            speechRate: 0.46,
-            speechPitch: 0.98,
+            speechRate: 0.52,
+            speechPitch: 0.95,
             prefersFemale: false,
             voiceHints: ["aaron", "reed", "nathan", "daniel", "tom"]
         ),
@@ -35,25 +35,25 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             id: .machine,
             name: "The Machine",
             tagline: "Playful dominance. Loves the pain.",
-            archetype: "an Arnold-style icon of certainty",
-            styleRules: "Playful dominance, absolute certainty, loves the pain, light humor. Sound like a person in the corner, never a narrator.",
+            archetype: "a confident iron-willed coach who treats effort like fuel",
+            styleRules: "Playful dominance, absolute certainty, loves the burn, light humor. Two-breath commands. Sound like a person in the corner, never a narrator. Never reference real celebrities.",
             monogram: "M",
             symbol: "bolt.fill",
-            speechRate: 0.47,
-            speechPitch: 0.97,
+            speechRate: 0.53,
+            speechPitch: 0.95,
             prefersFemale: false,
-            voiceHints: ["aaron", "evan", "reed"]
+            voiceHints: ["aaron", "evan", "reed", "daniel"]
         ),
         Persona(
             id: .preacher,
             name: "The Preacher",
             tagline: "You decided. Rise to it.",
-            archetype: "a Les Brown-style orator",
-            styleRules: "Sermon cadence, YOU decided, rises to a peak, greatness and destiny vocabulary. Sound like a person in the corner, never a narrator.",
+            archetype: "a resonant orator with rising conviction on the final clause",
+            styleRules: "Sermon cadence, YOU decided, rises to a peak, greatness and destiny vocabulary. Longer second breath. Sound like a person in the corner, never a narrator. Never reference real celebrities.",
             monogram: "P",
             symbol: "sparkles",
-            speechRate: 0.44,
-            speechPitch: 1.0,
+            speechRate: 0.46,
+            speechPitch: 0.98,
             prefersFemale: false,
             voiceHints: ["aaron", "daniel", "gordon", "nicky"]
         ),
@@ -61,27 +61,27 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             id: .sarge,
             name: "Sarge",
             tagline: "Barked. Clipped. Secretly proud.",
-            archetype: "a drill instructor",
-            styleRules: "Barked, clipped, zero sympathy, secretly proud. Clean language always. No profanity ever. Sound like a person in the corner, never a narrator.",
+            archetype: "a dry close-mic drill coach — clipped, proud underneath",
+            styleRules: "Barked, clipped, zero pity, secretly proud. Clean language always. No profanity ever. Sound like a person in the corner, never a narrator. Never reference real celebrities.",
             monogram: "G",
             symbol: "megaphone.fill",
-            speechRate: 0.49,
-            speechPitch: 0.99,
+            speechRate: 0.54,
+            speechPitch: 0.94,
             prefersFemale: false,
-            voiceHints: ["aaron", "reed", "ralph"]
+            voiceHints: ["aaron", "reed", "ralph", "daniel", "tom"]
         ),
         Persona(
             id: .steady,
             name: "The Steady",
             tagline: "Calm. Grounded. Breath-first.",
-            archetype: "a zen coach",
-            styleRules: "Calm, grounded, breath-anchored, mantra-like. Never yell. Sound like a person in the corner, never a narrator.",
+            archetype: "a calm grounded coach with breath-first pacing",
+            styleRules: "Calm, grounded, breath-anchored, mantra-like. Never yell. Longer soft lines. Sound like a person in the corner, never a narrator. Never reference real celebrities.",
             monogram: "Z",
             symbol: "wind",
-            speechRate: 0.43,
-            speechPitch: 1.01,
+            speechRate: 0.45,
+            speechPitch: 1.0,
             prefersFemale: true,
-            voiceHints: ["zoe", "nicky", "samantha", "martha", "susan"]
+            voiceHints: ["zoe", "nicky", "martha", "susan"]
         ),
     ]
 
@@ -92,7 +92,11 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
 
 enum TriggerKind: String, Codable, CaseIterable, Sendable {
     case preQuitFade = "pre_quit_fade"
+    case paceSlip = "pace_slip"
+    case keepGoing = "keep_going"
     case stopped
+    case stillStopped = "still_stopped"
+    case recovery
     case grindSupport = "grind_support"
     case finalPush = "final_push"
 }
@@ -102,4 +106,11 @@ enum EngineState: String, Codable, Sendable {
     case wobbling = "WOBBLING"
     case critical = "CRITICAL"
     case pausedUnknown = "PAUSED_UNKNOWN"
+}
+
+/// Sticky motion class — drives REST UI and rest-nag prompts. Independent of risk CRITICAL.
+enum Locomotion: String, Codable, Sendable {
+    case moving
+    case slowing
+    case stopped
 }

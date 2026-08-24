@@ -7,13 +7,14 @@ struct LiveWorkoutView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             RadialGradient(
-                colors: [Theme.ringColor(model.liveState).opacity(0.22), Color.clear],
+                colors: [Theme.ringColor(state: model.liveState, locomotion: model.liveLocomotion).opacity(0.22), Color.clear],
                 center: .center,
                 startRadius: 40,
                 endRadius: 420
             )
             .ignoresSafeArea()
             .animation(.easeInOut(duration: 2), value: model.liveState)
+            .animation(.easeInOut(duration: 2), value: model.liveLocomotion)
 
             VStack(spacing: 0) {
                 HStack {
@@ -34,7 +35,7 @@ struct LiveWorkoutView: View {
 
                 Spacer()
 
-                PulseRing(state: model.liveState, bpm: model.liveLatest[.heartRateBpm], cadence: model.liveLatest[.cadenceSpm])
+                PulseRing(state: model.liveState, locomotion: model.liveLocomotion, bpm: model.liveLatest[.heartRateBpm], cadence: model.liveLatest[.cadenceSpm])
                     .overlay {
                         VStack(spacing: 6) {
                             Text(Formatters.clock(model.liveT))
@@ -44,7 +45,7 @@ struct LiveWorkoutView: View {
                             Text(stateLabel)
                                 .font(Theme.label(13, .bold))
                                 .tracking(2.4)
-                                .foregroundStyle(Theme.ringColor(model.liveState))
+                                .foregroundStyle(Theme.ringColor(state: model.liveState, locomotion: model.liveLocomotion))
                         }
                         .accessibilityElement(children: .combine)
                         .accessibilityLabel("Elapsed \(Formatters.clock(model.liveT)). Status \(stateLabel)")
@@ -91,11 +92,14 @@ struct LiveWorkoutView: View {
     }
 
     var stateLabel: String {
+        // Locomotion wins over risk CRITICAL so REST never flickers with RALLY.
+        if model.liveLocomotion == .stopped { return "REST" }
+        if model.liveLocomotion == .slowing { return "SLOWING" }
         switch model.liveState {
-        case .cruising: "HOLDING"
-        case .wobbling: "FADING"
-        case .critical: "RALLY"
-        case .pausedUnknown: "STILL"
+        case .cruising: return "HOLDING"
+        case .wobbling: return "FADING"
+        case .critical: return "PUSH"
+        case .pausedUnknown: return "REST"
         }
     }
 

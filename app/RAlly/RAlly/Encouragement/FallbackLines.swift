@@ -10,11 +10,12 @@ enum FallbackLines {
     static func all(persona: Persona.ID, kind: TriggerKind) -> [String] {
         let cores = core(persona, kind)
         let tails = tail(persona)
+        let maxWords = maxWords(for: kind)
         var out: [String] = []
         for c in cores {
             for t in tails {
                 let line = t.isEmpty ? c : "\(c) \(t)"
-                if wordCount(line) <= 12 { out.append(line) }
+                if wordCount(line) <= maxWords { out.append(line) }
             }
         }
         var i = 0
@@ -27,11 +28,21 @@ enum FallbackLines {
 
     static func preview(persona: Persona) -> String {
         switch persona.id {
-        case .southpaw: "Kid, this is your round. Stay in it."
-        case .machine: "The pain is the point. Keep going."
-        case .preacher: "You decided. Now rise to it."
-        case .sarge: "On your feet. We are not done."
-        case .steady: "Breathe. One more step. That's all."
+        case .southpaw: "Kid, this is your round. Stay with me and keep those legs honest."
+        case .machine: "The pain is the point. Keep the engine rolling and do not negotiate."
+        case .preacher: "You decided who you are. Now rise into that decision and keep going."
+        case .sarge: "On your feet. We are not done. Drive those legs and move now."
+        case .steady: "Breathe. One more honest step. That is all you need right now."
+        }
+    }
+
+    private static func maxWords(for kind: TriggerKind) -> Int {
+        switch kind {
+        case .stopped: 14
+        case .stillStopped, .paceSlip: 24
+        case .keepGoing: 28
+        case .preQuitFade: 32
+        case .recovery, .grindSupport, .finalPush: 24
         }
     }
 
@@ -68,46 +79,216 @@ enum FallbackLines {
 
     private static func core(_ p: Persona.ID, _ k: TriggerKind) -> [String] {
         switch (p, k) {
-        case (.southpaw, .preQuitFade):
-            ["Don't you quit on me", "This is the round that counts", "Get up kid stay in it", "The hill ain't got nothing", "You came here to fight", "Legs are lying you keep going", "One more minute champ", "Heart over heavy legs", "We don't stop here", "Show me that fire"]
         case (.southpaw, .stopped):
-            ["Get back in there kid", "On your feet champ", "Don't park it here", "Shake it off and go", "Clock is still running", "Walk it in then run", "Come on get moving", "This ain't the finish", "Back to work kid", "Stand up and go"]
+            [
+                "Get back in there kid now",
+                "On your feet champ let's go",
+                "Don't park it here keep moving",
+                "Shake it off and start running",
+                "Come on get moving right now",
+                "Back to work kid pick it up",
+            ]
+        case (.southpaw, .stillStopped):
+            [
+                "Still here kid — you cannot rest on this road while the fight is unfinished",
+                "I'm still with you champ — stand up, find a soft start, and go again",
+                "Brother you cannot park it here — one step then another until the legs wake",
+                "Don't leave me hanging — rest is later, motion is now, get moving",
+            ]
+        case (.southpaw, .keepGoing):
+            [
+                "That's it kid — you are doing the honest work, stay mean and keep rolling forward",
+                "Beautiful ugly miles champ — hold this rhythm and eat the road like you mean it",
+                "This is your movie kid — stay with the scene and keep those legs honest",
+                "You're looking strong out here — keep that fire and do not negotiate with comfort",
+            ]
+        case (.southpaw, .paceSlip):
+            [
+                "Pace is slipping kid — reel it back in and find the earlier stride now",
+                "Don't fade on me — push those legs and reclaim the tempo you had",
+                "I see the dip champ — speed up, stay mean, and take your pace back",
+            ]
+        case (.southpaw, .preQuitFade):
+            [
+                "Don't you quit on me now kid — this is the round that counts and your heart is still louder than your legs",
+                "The doubt is talking but it is lying — get up inside the stride and stay in this fight",
+                "One more minute champ that is all — heart over heavy legs, show me that fire again",
+            ]
+        case (.southpaw, .recovery):
+            [
+                "There it is kid — that's the stuff, you picked it back up, now hold it",
+                "Yes champ — you came back, keep that pace and stay in the fight",
+            ]
         case (.southpaw, .grindSupport):
-            ["That's the stuff kid", "You're eating this up", "Beautiful ugly work", "Stay mean stay moving", "This is your movie", "Hold that line champ", "You look like a fighter", "Keep punching the road", "Yes that's it", "Don't give this away"]
+            [
+                "That's the stuff kid — keep eating this effort and stay mean through it",
+                "Beautiful ugly work — hold the line and keep moving through the burn",
+            ]
         case (.southpaw, .finalPush):
-            ["Bring it home champ", "Last stretch kid go", "This is your bell", "Take the house now", "Finish like you mean it", "Go get that line", "One more burst", "Leave it all here", "You can see it", "Run through the tape"]
-        case (.machine, .preQuitFade):
-            ["Pain is just weakness leaving", "You are a machine keep rolling", "Do not negotiate with tired", "Stronger than this moment", "Smile at the burn", "I love this pain for you", "No room for maybe", "Push because you can", "The body follows the mind", "Keep the engine loud"]
+            [
+                "Bring it home champ — last stretch, leave it all out here now",
+                "This is your bell — take the house and finish like you mean every step",
+            ]
+
         case (.machine, .stopped):
-            ["Machines do not park", "Back on the throttle", "Start the engine again", "Up up we go", "Rest is later not now", "Move those mountains", "Come come keep pumping", "I said go", "No sitting on greatness", "Restart now"]
+            [
+                "Machines do not park — restart now",
+                "Back on the throttle right now",
+                "Rest is later not now — move",
+                "Start the engine again and go",
+            ]
+        case (.machine, .stillStopped):
+            [
+                "Still stopped — you cannot rest while the engine is supposed to be loud",
+                "I said go — get moving again and keep pumping until the road answers",
+                "No sitting on greatness — restart now and reclaim the throttle",
+            ]
+        case (.machine, .keepGoing):
+            [
+                "Clean power — keep the engine loud and do not negotiate with the burn",
+                "You are rolling perfectly — stay locked in and keep crushing meters like this",
+                "Magnificent pace — hold this line and smile at the work",
+            ]
+        case (.machine, .paceSlip):
+            [
+                "Output dropping — correct it now and push the throttle back up",
+                "Pace slip — do not accept slower, reclaim the speed you had",
+            ]
+        case (.machine, .preQuitFade):
+            [
+                "Pain is just weakness leaving — you are stronger than this moment so keep rolling",
+                "Do not negotiate with tired legs — smile at the burn and push through it now",
+            ]
+        case (.machine, .recovery):
+            [
+                "Yes — the engine is back, keep it loud and stay unstoppable",
+            ]
         case (.machine, .grindSupport):
-            ["This is magnificent pain", "You are crushing it", "Look at this power", "Hold and dominate", "Beautiful suffering yes", "You were built for this", "Keep feeding the fire", "Unstoppable today", "Yes more of that", "Stay monstrous"]
+            [
+                "This is magnificent pain — hold it and keep the power coming",
+            ]
         case (.machine, .finalPush):
-            ["Finish like a champion", "Last meters belong to you", "Now you win this", "Take it all home", "Empty the tank now", "Victory is a choice", "Go claim it", "Final surge now", "No leftovers", "End it strong"]
-        case (.preacher, .preQuitFade):
-            ["You decided who you are", "Greatness is calling keep walking", "Do not bury this moment", "Your future is watching", "Stand in your power", "You are bigger than tired", "Speak life into these legs", "Destiny does not jog back", "Rise because you chose this", "Hold the vision"]
+            [
+                "Finish like a champion — empty the tank and take the last meters",
+            ]
+
         case (.preacher, .stopped):
-            ["Get up you are not done", "Walk back into your promise", "The story continues now", "On your feet and believe", "Do not sit on the calling", "Start again with purpose", "Move toward the person you want", "This pause is not the end", "Step forward now", "Return to the work"]
+            [
+                "Get up — you are not done yet",
+                "Walk back into your promise now",
+                "On your feet and believe again",
+            ]
+        case (.preacher, .stillStopped):
+            [
+                "This pause is not the chapter — rise, return to the work, and move with purpose",
+                "You cannot rest in this story — begin again, your calling is waiting on the road",
+            ]
+        case (.preacher, .keepGoing):
+            [
+                "You are becoming — stay faithful to this stride and keep walking forward with courage",
+                "Beautiful courage — hold your head high and continue writing this mile with purpose",
+            ]
+        case (.preacher, .paceSlip):
+            [
+                "Your pace is softening — rise into it with purpose and reclaim your stride now",
+                "Do not shrink — speed up, honor your word, and lift the tempo again",
+            ]
+        case (.preacher, .preQuitFade):
+            [
+                "You decided who you are — greatness is calling, so do not bury this moment, rise and keep going",
+                "Your future is watching — stand in your power and continue walking into who you chose to be",
+            ]
+        case (.preacher, .recovery):
+            [
+                "Yes — that is the becoming, you returned, stay faithful and keep going",
+            ]
         case (.preacher, .grindSupport):
-            ["This is the becoming", "You are writing character", "Stay faithful to the work", "Look at your courage", "Keep the covenant with yourself", "You are already winning", "Honor the decision", "This grind is glory", "Hold your head high", "Yes live this fully"]
+            [
+                "This is the becoming — stay faithful and hold your head high through it",
+            ]
         case (.preacher, .finalPush):
-            ["Finish the promise", "Walk into the victory", "This is your harvest", "Close it with greatness", "The last stretch is holy", "Go claim your name", "Complete what you started", "Now become it", "See it through", "Arrive"]
-        case (.sarge, .preQuitFade):
-            ["Drop the pity keep moving", "I did not hear quit", "Straighten up drive on", "Pain is information only", "Lock in and push", "We do not break here", "Faster not softer", "Eyes up drive the legs", "Stay on my count", "That fade is unauthorized"]
+            [
+                "Finish the promise you made — walk into the victory and complete what you started",
+            ]
+
         case (.sarge, .stopped):
-            ["On your feet now", "I said move", "Back on the line", "This is not a rest", "Get going soldier", "Pick it up immediately", "No freeze on my watch", "Walk then run now", "Recover in motion", "Up and drive"]
+            [
+                "On your feet now — move",
+                "I said move — get going",
+                "This is not a rest period",
+                "Pick it up immediately",
+            ]
+        case (.sarge, .stillStopped):
+            [
+                "Still frozen — that is unauthorized, recover in motion, up and drive",
+                "You cannot rest soldier — get moving, I am waiting on the line",
+            ]
+        case (.sarge, .keepGoing):
+            [
+                "Good pace — hold the standard, quiet mouth, strong legs, keep driving",
+                "That is solid — you are earning meters, stay on this line and continue",
+            ]
+        case (.sarge, .paceSlip):
+            [
+                "Pace dropping — correct it now, override the slip, and drive those legs",
+                "I see the slip — do not accept slower, pick the pace back up",
+            ]
+        case (.sarge, .preQuitFade):
+            [
+                "Drop the pity and keep moving — pain is information only, lock in and push through this",
+                "I did not hear quit — straighten up, drive those legs, and push through this moment",
+            ]
+        case (.sarge, .recovery):
+            [
+                "That's the standard — you earned that restart, hold this pace and keep driving",
+            ]
         case (.sarge, .grindSupport):
-            ["That's the standard", "Hold this pace", "Good keep earning it", "Quiet mouth loud legs", "Stay in the hurt", "This is acceptable work", "Don't you dare ease", "Keep that form", "Yes that's discipline", "Drive drive drive"]
+            [
+                "That's the standard — hold this pace, quiet mouth, earn every meter",
+            ]
         case (.sarge, .finalPush):
-            ["Sprint the last bit", "Finish the objective", "No coasting to the line", "Empty it now", "Last push authorized", "Take the hill", "Close it clean", "Go now go", "Finish strong", "Mission almost complete"]
-        case (.steady, .preQuitFade):
-            ["Soft breath long spine", "One more honest step", "Stay with this stride", "Nothing to prove just continue", "Return to the breath", "Gentle and relentless", "You can do the next minute", "Ease the jaw keep going", "This wave will pass", "Find the quiet power"]
+            [
+                "Sprint the last bit — finish the objective clean and empty it now",
+            ]
+
         case (.steady, .stopped):
-            ["Begin again without drama", "Stand and walk it in", "Soft start then flow", "Come back to motion", "No judgment just go", "A small step is enough", "Breathe and restart", "The path is still here", "Lift and continue", "Gently back in"]
+            [
+                "Begin again without drama",
+                "Come back to motion kindly",
+                "A small step is enough now",
+            ]
+        case (.steady, .stillStopped):
+            [
+                "Still here — rest can wait, lift gently and begin again on the path",
+                "Standing still is not the work — breathe, then move, the path is waiting",
+            ]
+        case (.steady, .keepGoing):
+            [
+                "You are right on time — beautiful even effort, stay with this calm fire",
+                "Steady as the tide — quiet courage, continue like this and remain in motion",
+            ]
+        case (.steady, .paceSlip):
+            [
+                "Your pace softened — lift it gently and return to your earlier tempo",
+                "Don't drift slower — reclaim the stride with an easy honest push",
+            ]
+        case (.steady, .preQuitFade):
+            [
+                "Soft breath, long spine — one more honest step is enough, stay with this stride gently",
+                "Nothing to prove — you can do the next minute, continue with calm strength",
+            ]
+        case (.steady, .recovery):
+            [
+                "There you are — steady as the tide, beautiful even effort, stay with it",
+            ]
         case (.steady, .grindSupport):
-            ["Steady as the tide", "You are right on time", "Hold this calm fire", "Beautiful even effort", "Stay kind and strong", "This is enough keep it", "Anchored and moving", "Quiet courage yes", "Let the rhythm carry you", "Remain"]
+            [
+                "Steady as the tide — you are right on time, hold this calm fire",
+            ]
         case (.steady, .finalPush):
-            ["Float it home", "Last minutes with grace", "Finish as you began", "Open the stride slightly", "Arrive whole", "Let it flow to the end", "You are nearly there", "Complete this kindly", "One calm surge", "Home"]
+            [
+                "Float it home with grace — last minutes with calm strength, arrive whole",
+            ]
         }
     }
 }

@@ -19,23 +19,24 @@
 		234942C1866366A27DA9AD8A /* PersonaPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = A5C756FD2D1F399BDE679E12 /* PersonaPicker.swift */; };
 		23671C6B56FD64063ADA8C86 /* ActivityAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8DB9EEFDDD6F9DDCC73480B /* ActivityAdapter.swift */; };
 		25421B72C88FD17E8B338128 /* WorkoutSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83A30C02D2CB3A9B8B90AA2E /* WorkoutSession.swift */; };
+		282EFCE03B9232A535DA8EE2 /* LocomotionClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = AE4C1FAFE0719E5AB673C735 /* LocomotionClassifier.swift */; };
 		338EED53EC6FC74B90C000BD /* MetricStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B60046B70FFBB26806A26ED9 /* MetricStoreTests.swift */; };
+		394F15C6AE0645D247491FFF /* LocomotionEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EAB9D7CEBFCFA2A63A1B2891 /* LocomotionEngineTests.swift */; };
 		3A9F7C84CEEC8F19908BBF71 /* MetricSample.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AE8149121F7DF46543DCC01 /* MetricSample.swift */; };
 		3B967574B5F4548824928B65 /* MetricStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 29E91061BB3A58818C932716 /* MetricStore.swift */; };
+		40224D57A42CB89B4495D54E /* VoiceEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EFA15C8F32E4745FAB01265 /* VoiceEngine.swift */; };
 		440E4A70D477D41B3DC7D515 /* AppModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F001B92AA78F5145EB5AF8B0 /* AppModel.swift */; };
 		44F74B98CD3BDAEAF15E9A65 /* HealthKitWriter.swift in Sources */ = {isa = PBXBuildFile; fileRef = D378141B28E6B8094852C2A3 /* HealthKitWriter.swift */; };
 		48802F7E4A4860E4B2474CF7 /* PromptBuilder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 253A9834F1B10E73E692937B /* PromptBuilder.swift */; };
 		49727C79A81223ABBFD9DFBC /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3B818DC93E8F998408136A5 /* Log.swift */; };
-		4CD9E6FD73D85034C64AA9D1 /* SwimmingAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = B8F1BECBCD65E5FC8F8B3F9D /* SwimmingAdapter.swift */; };
 		4F74CEDE850AA8FB6C8A7CA9 /* StravaClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45C1A7925A498513FBD1FF2A /* StravaClient.swift */; };
 		5321D1A0B7C46ACDE07EA155 /* RallyMoment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 37F3A99FADFC24DA5D6F5383 /* RallyMoment.swift */; };
 		538BECD7E621F301BD0D11C6 /* AnthropicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA248B2AF96E6B81C88DDC72 /* AnthropicClient.swift */; };
 		60FA75DC6435C5DACB87A5F0 /* PromptBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843051ADE81E761C021E306E /* PromptBuilderTests.swift */; };
 		62A55DA47D851F32509A72BF /* FallbackLines.swift in Sources */ = {isa = PBXBuildFile; fileRef = D00AF4BBA105D226334A112B /* FallbackLines.swift */; };
 		63FBF941182B54FA39755CB8 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13642139E96695E47BA72B9D /* HistoryView.swift */; };
-		6508BF0A8238CCD99E7AA311 /* HIITAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEB2F0B9EF5D87545DC4B01A /* HIITAdapter.swift */; };
+		666D499FA7D4A8ABA923C89E /* SilentLabAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 70315315E7454D1FE50E0A46 /* SilentLabAdapter.swift */; };
 		66E1D458DB18B0B1FBBAE88C /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4047EB950235CEC73AB22160 /* Theme.swift */; };
-		6C462EF73E6C245D2FD2D04C /* StrengthAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4DA2B8B1E05D0B20233BD63F /* StrengthAdapter.swift */; };
 		6D48A78902D787A319A1F100 /* BLEHeartRateDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD3BB016763576504F310469 /* BLEHeartRateDataSource.swift */; };
 		70FA821DD2FDE46CC36E6873 /* HealthKitDataSource.swift in Sources */ = {isa = PBXBuildFile; fileRef = F311E521334CB97D99D1A5C1 /* HealthKitDataSource.swift */; };
 		7CDACFA5252DD58BD5D56478 /* SummaryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E545873F0B436FE4973AEB15 /* SummaryView.swift */; };
@@ -46,9 +47,9 @@
 		93FF1EFF52073AFF3191CBF6 /* FirstRunFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D44B3F197D94A88F2B8218F /* FirstRunFlow.swift */; };
 		98FEFE9D5EF422A3946D190A /* QuitRiskEngineTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F50769E93980931142975268 /* QuitRiskEngineTests.swift */; };
 		9D527C7DA25B3B26FD581C3F /* MetricTiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 357EDC7E58E0239C296F7F10 /* MetricTiles.swift */; };
+		A348C571CF8DDDD3C3DFE84D /* CoachRhythm.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6FDE49FDF8B5C18DC074113 /* CoachRhythm.swift */; };
 		A678B0ACD4DFF6E31DDCC6BA /* TCXExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6BFB9AAE5DD15A69948FC325 /* TCXExporter.swift */; };
 		A6A732ACA23E4C74FF9D69AB /* MetricKind.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8DA07DFC159C00C9207F83DF /* MetricKind.swift */; };
-		A7CD7E59A44A42C87A570312 /* BoxingAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 760347BBD5934B53DA637E67 /* BoxingAdapter.swift */; };
 		A8F1F444477FF796A6566399 /* LineCache.swift in Sources */ = {isa = PBXBuildFile; fileRef = 705FCB17DB43AE382A3A6FE4 /* LineCache.swift */; };
 		A90AFBBB5D3F64600586442F /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F29CB827A4B40AE241F2492 /* Formatters.swift */; };
 		BD820333B44C1797A02F9E36 /* GoalRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = FEF82AFD8B3E2A077A771F47 /* GoalRow.swift */; };
@@ -56,6 +57,7 @@
 		C02A4ED225683E7AEAF73784 /* Protocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3D13AD74F8D4F30629FF9477 /* Protocol.swift */; };
 		CC8E8A220B1B5CE4C7B5F6D3 /* WatchConnectivitySource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 58E1C809B4AB4E9843EFB4C3 /* WatchConnectivitySource.swift */; };
 		CC91E5E8E0270157682138AA /* Persona.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3516EFBE896ED0BB6F400E46 /* Persona.swift */; };
+		CD48ACAFC64211B8BC035A78 /* OnDeviceTTS.swift in Sources */ = {isa = PBXBuildFile; fileRef = 548E06F4220400E383439FEA /* OnDeviceTTS.swift */; };
 		CDA0C6E801D7902AD8B2EA13 /* RAllyApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED32AB93835147195BFAC542 /* RAllyApp.swift */; };
 		D6509620409E4854BE59A734 /* SpeechEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C3A66124A36370C6B9ADC1 /* SpeechEngine.swift */; };
 		D8B0A2E3732E7133C6ABD02F /* ActivityCarousel.swift in Sources */ = {isa = PBXBuildFile; fileRef = D586C4FC090067FB810E33F7 /* ActivityCarousel.swift */; };
@@ -65,6 +67,7 @@
 		F449ED1948EFC92A89A9B479 /* RowingAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5766A516E98FB58157DB596 /* RowingAdapter.swift */; };
 		F4E4FF87AC6D4BC84BF27730 /* SpokenLineOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 035512A2D809833CBB4FE55A /* SpokenLineOverlay.swift */; };
 		F7A1FC5BC422DB03B850288B /* DataSourceManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 99C63E18F6BEB1CC28CC5B09 /* DataSourceManager.swift */; };
+		F8C4C38AAB12792A3B9B943E /* FluidAudio in Frameworks */ = {isa = PBXBuildFile; productRef = 74252AF06CAFEC466509382E /* FluidAudio */; };
 		FC2C4AA66FE9A81606AB3449 /* AdapterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD67E70ACB1F29A0E3868FFD /* AdapterTests.swift */; };
 		FED443F28C2CEDC7B7D5525D /* RunningAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF8CEB8BD85512DF34A8EDDB /* RunningAdapter.swift */; };
 /* End PBXBuildFile section */
@@ -92,7 +95,7 @@
 		37F3A99FADFC24DA5D6F5383 /* RallyMoment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RallyMoment.swift; sourceTree = "<group>"; };
 		3AE8149121F7DF46543DCC01 /* MetricSample.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricSample.swift; sourceTree = "<group>"; };
 		3B1E39FD66BDB0D029B6BEAD /* Activity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Activity.swift; sourceTree = "<group>"; };
-		3C74EFCBCF4D83DB93376006 /* RAllyTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = RAllyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		3C74EFCBCF4D83DB93376006 /* RAllyTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RAllyTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		3D13AD74F8D4F30629FF9477 /* Protocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Protocol.swift; sourceTree = "<group>"; };
 		4047EB950235CEC73AB22160 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		42C3A66124A36370C6B9ADC1 /* SpeechEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SpeechEngine.swift; sourceTree = "<group>"; };
@@ -100,15 +103,16 @@
 		48DF246819E086FF4CB79B57 /* BLEPairingSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEPairingSheet.swift; sourceTree = "<group>"; };
 		4994D455A95E4E4F6A515F49 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		4B99BF935D53E1180A07288B /* PulseRing.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PulseRing.swift; sourceTree = "<group>"; };
-		4DA2B8B1E05D0B20233BD63F /* StrengthAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StrengthAdapter.swift; sourceTree = "<group>"; };
+		4EFA15C8F32E4745FAB01265 /* VoiceEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoiceEngine.swift; sourceTree = "<group>"; };
 		4F29CB827A4B40AE241F2492 /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
 		527873A3967F57901A8DFA2E /* EngineConstants.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EngineConstants.swift; sourceTree = "<group>"; };
+		548E06F4220400E383439FEA /* OnDeviceTTS.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnDeviceTTS.swift; sourceTree = "<group>"; };
 		58E1C809B4AB4E9843EFB4C3 /* WatchConnectivitySource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WatchConnectivitySource.swift; sourceTree = "<group>"; };
 		612ADC7A67586C87B84F87AE /* WorkoutDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutDataSource.swift; sourceTree = "<group>"; };
 		6BFB9AAE5DD15A69948FC325 /* TCXExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TCXExporter.swift; sourceTree = "<group>"; };
+		70315315E7454D1FE50E0A46 /* SilentLabAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SilentLabAdapter.swift; sourceTree = "<group>"; };
 		705FCB17DB43AE382A3A6FE4 /* LineCache.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LineCache.swift; sourceTree = "<group>"; };
-		760347BBD5934B53DA637E67 /* BoxingAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxingAdapter.swift; sourceTree = "<group>"; };
-		81A393DE0BA6AA784B6B0C92 /* RAlly.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = RAlly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		81A393DE0BA6AA784B6B0C92 /* RAlly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RAlly.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		83A30C02D2CB3A9B8B90AA2E /* WorkoutSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WorkoutSession.swift; sourceTree = "<group>"; };
 		843051ADE81E761C021E306E /* PromptBuilderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptBuilderTests.swift; sourceTree = "<group>"; };
 		86297F80CCC7B002E15CA447 /* Base.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
@@ -117,23 +121,24 @@
 		8DA07DFC159C00C9207F83DF /* MetricKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKind.swift; sourceTree = "<group>"; };
 		99C63E18F6BEB1CC28CC5B09 /* DataSourceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceManager.swift; sourceTree = "<group>"; };
 		A5C756FD2D1F399BDE679E12 /* PersonaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaPicker.swift; sourceTree = "<group>"; };
+		AE4C1FAFE0719E5AB673C735 /* LocomotionClassifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocomotionClassifier.swift; sourceTree = "<group>"; };
 		B3B818DC93E8F998408136A5 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		B42D27552C28904745B31DA3 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		B5FFAF9CD4471FCD6DCE209B /* QuitRiskEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuitRiskEngine.swift; sourceTree = "<group>"; };
 		B60046B70FFBB26806A26ED9 /* MetricStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricStoreTests.swift; sourceTree = "<group>"; };
 		B7F068C1F859B7B53AB301EF /* RallyTimeline.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RallyTimeline.swift; sourceTree = "<group>"; };
-		B8F1BECBCD65E5FC8F8B3F9D /* SwimmingAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwimmingAdapter.swift; sourceTree = "<group>"; };
 		BD67E70ACB1F29A0E3868FFD /* AdapterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdapterTests.swift; sourceTree = "<group>"; };
 		BF8CEB8BD85512DF34A8EDDB /* RunningAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunningAdapter.swift; sourceTree = "<group>"; };
 		CD3BB016763576504F310469 /* BLEHeartRateDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEHeartRateDataSource.swift; sourceTree = "<group>"; };
 		D00AF4BBA105D226334A112B /* FallbackLines.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FallbackLines.swift; sourceTree = "<group>"; };
 		D378141B28E6B8094852C2A3 /* HealthKitWriter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthKitWriter.swift; sourceTree = "<group>"; };
 		D586C4FC090067FB810E33F7 /* ActivityCarousel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityCarousel.swift; sourceTree = "<group>"; };
+		D6FDE49FDF8B5C18DC074113 /* CoachRhythm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachRhythm.swift; sourceTree = "<group>"; };
 		E545873F0B436FE4973AEB15 /* SummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SummaryView.swift; sourceTree = "<group>"; };
 		E8DB9EEFDDD6F9DDCC73480B /* ActivityAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivityAdapter.swift; sourceTree = "<group>"; };
+		EAB9D7CEBFCFA2A63A1B2891 /* LocomotionEngineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocomotionEngineTests.swift; sourceTree = "<group>"; };
 		EB24B1B5D7DB01BDF3067514 /* SimulatorDataSource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SimulatorDataSource.swift; sourceTree = "<group>"; };
 		ED32AB93835147195BFAC542 /* RAllyApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RAllyApp.swift; sourceTree = "<group>"; };
-		EEB2F0B9EF5D87545DC4B01A /* HIITAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HIITAdapter.swift; sourceTree = "<group>"; };
 		EFBA64D4C94D0FBE3138071C /* ProtocolCodableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProtocolCodableTests.swift; sourceTree = "<group>"; };
 		F001B92AA78F5145EB5AF8B0 /* AppModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppModel.swift; sourceTree = "<group>"; };
 		F11BB03887671711B124CCB0 /* PromptChips.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PromptChips.swift; sourceTree = "<group>"; };
@@ -144,6 +149,17 @@
 		FDCE04C61378160CF1B9719B /* TriggerPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TriggerPolicy.swift; sourceTree = "<group>"; };
 		FEF82AFD8B3E2A077A771F47 /* GoalRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalRow.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F207319D065480FEAC7ADAFB /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F8C4C38AAB12792A3B9B943E /* FluidAudio in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		047E7E351437115DB36BB58A /* Onboarding */ = {
@@ -216,13 +232,10 @@
 			isa = PBXGroup;
 			children = (
 				E8DB9EEFDDD6F9DDCC73480B /* ActivityAdapter.swift */,
-				760347BBD5934B53DA637E67 /* BoxingAdapter.swift */,
 				87DD7F1FAA84644FBBC9A018 /* CyclingAdapter.swift */,
-				EEB2F0B9EF5D87545DC4B01A /* HIITAdapter.swift */,
 				F5766A516E98FB58157DB596 /* RowingAdapter.swift */,
 				BF8CEB8BD85512DF34A8EDDB /* RunningAdapter.swift */,
-				4DA2B8B1E05D0B20233BD63F /* StrengthAdapter.swift */,
-				B8F1BECBCD65E5FC8F8B3F9D /* SwimmingAdapter.swift */,
+				70315315E7454D1FE50E0A46 /* SilentLabAdapter.swift */,
 			);
 			path = Adapters;
 			sourceTree = "<group>";
@@ -244,6 +257,7 @@
 			isa = PBXGroup;
 			children = (
 				BD67E70ACB1F29A0E3868FFD /* AdapterTests.swift */,
+				EAB9D7CEBFCFA2A63A1B2891 /* LocomotionEngineTests.swift */,
 				B60046B70FFBB26806A26ED9 /* MetricStoreTests.swift */,
 				843051ADE81E761C021E306E /* PromptBuilderTests.swift */,
 				EFBA64D4C94D0FBE3138071C /* ProtocolCodableTests.swift */,
@@ -302,8 +316,10 @@
 				FA248B2AF96E6B81C88DDC72 /* AnthropicClient.swift */,
 				D00AF4BBA105D226334A112B /* FallbackLines.swift */,
 				705FCB17DB43AE382A3A6FE4 /* LineCache.swift */,
+				548E06F4220400E383439FEA /* OnDeviceTTS.swift */,
 				253A9834F1B10E73E692937B /* PromptBuilder.swift */,
 				42C3A66124A36370C6B9ADC1 /* SpeechEngine.swift */,
+				4EFA15C8F32E4745FAB01265 /* VoiceEngine.swift */,
 			);
 			path = Encouragement;
 			sourceTree = "<group>";
@@ -328,7 +344,9 @@
 		C222DC0011C327CEA539724E /* Engine */ = {
 			isa = PBXGroup;
 			children = (
+				D6FDE49FDF8B5C18DC074113 /* CoachRhythm.swift */,
 				527873A3967F57901A8DFA2E /* EngineConstants.swift */,
+				AE4C1FAFE0719E5AB673C735 /* LocomotionClassifier.swift */,
 				29E91061BB3A58818C932716 /* MetricStore.swift */,
 				B5FFAF9CD4471FCD6DCE209B /* QuitRiskEngine.swift */,
 				FDCE04C61378160CF1B9719B /* TriggerPolicy.swift */,
@@ -377,6 +395,7 @@
 				025ECD83FB60C47FA887EA16 /* Generate secrets */,
 				EEBE639278C164FC59B03CF6 /* Sources */,
 				6DF543CD87046DA13A829F04 /* Resources */,
+				F207319D065480FEAC7ADAFB /* Frameworks */,
 			);
 			buildRules = (
 			);
@@ -384,6 +403,7 @@
 			);
 			name = RAlly;
 			packageProductDependencies = (
+				74252AF06CAFEC466509382E /* FluidAudio */,
 			);
 			productName = RAlly;
 			productReference = 81A393DE0BA6AA784B6B0C92 /* RAlly.app */;
@@ -417,7 +437,6 @@
 				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					B107D15C315803ADC5AF2AE8 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -431,6 +450,9 @@
 			);
 			mainGroup = F6D290AFC3D0CC30EE47BEF7;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				81356C2918D4D74C82046F58 /* XCRemoteSwiftPackageReference "FluidAudio" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B7392BADFD707EB40355677B /* Products */;
 			projectDirPath = "";
@@ -481,6 +503,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				FC2C4AA66FE9A81606AB3449 /* AdapterTests.swift in Sources */,
+				394F15C6AE0645D247491FFF /* LocomotionEngineTests.swift in Sources */,
 				338EED53EC6FC74B90C000BD /* MetricStoreTests.swift in Sources */,
 				60FA75DC6435C5DACB87A5F0 /* PromptBuilderTests.swift in Sources */,
 				10B809B52C117416B3EA0B83 /* ProtocolCodableTests.swift in Sources */,
@@ -499,7 +522,7 @@
 				440E4A70D477D41B3DC7D515 /* AppModel.swift in Sources */,
 				6D48A78902D787A319A1F100 /* BLEHeartRateDataSource.swift in Sources */,
 				E1FE93BD8A284FD5B354EB57 /* BLEPairingSheet.swift in Sources */,
-				A7CD7E59A44A42C87A570312 /* BoxingAdapter.swift in Sources */,
+				A348C571CF8DDDD3C3DFE84D /* CoachRhythm.swift in Sources */,
 				8FAD424DDFE28E77CAA05AD7 /* CyclingAdapter.swift in Sources */,
 				F7A1FC5BC422DB03B850288B /* DataSourceManager.swift in Sources */,
 				1568557D6093958C64D80AF3 /* DeviceSensorDataSource.swift in Sources */,
@@ -508,18 +531,19 @@
 				93FF1EFF52073AFF3191CBF6 /* FirstRunFlow.swift in Sources */,
 				A90AFBBB5D3F64600586442F /* Formatters.swift in Sources */,
 				BD820333B44C1797A02F9E36 /* GoalRow.swift in Sources */,
-				6508BF0A8238CCD99E7AA311 /* HIITAdapter.swift in Sources */,
 				70FA821DD2FDE46CC36E6873 /* HealthKitDataSource.swift in Sources */,
 				44F74B98CD3BDAEAF15E9A65 /* HealthKitWriter.swift in Sources */,
 				63FBF941182B54FA39755CB8 /* HistoryView.swift in Sources */,
 				7F93017B9A58AD5174805CBB /* HomeView.swift in Sources */,
 				A8F1F444477FF796A6566399 /* LineCache.swift in Sources */,
 				F36A99521BD99710C458037D /* LiveWorkoutView.swift in Sources */,
+				282EFCE03B9232A535DA8EE2 /* LocomotionClassifier.swift in Sources */,
 				49727C79A81223ABBFD9DFBC /* Log.swift in Sources */,
 				A6A732ACA23E4C74FF9D69AB /* MetricKind.swift in Sources */,
 				3A9F7C84CEEC8F19908BBF71 /* MetricSample.swift in Sources */,
 				3B967574B5F4548824928B65 /* MetricStore.swift in Sources */,
 				9D527C7DA25B3B26FD581C3F /* MetricTiles.swift in Sources */,
+				CD48ACAFC64211B8BC035A78 /* OnDeviceTTS.swift in Sources */,
 				CC91E5E8E0270157682138AA /* Persona.swift in Sources */,
 				234942C1866366A27DA9AD8A /* PersonaPicker.swift in Sources */,
 				48802F7E4A4860E4B2474CF7 /* PromptBuilder.swift in Sources */,
@@ -533,16 +557,16 @@
 				F449ED1948EFC92A89A9B479 /* RowingAdapter.swift in Sources */,
 				FED443F28C2CEDC7B7D5525D /* RunningAdapter.swift in Sources */,
 				0D28C50282EFE05D0196FB56 /* SettingsView.swift in Sources */,
+				666D499FA7D4A8ABA923C89E /* SilentLabAdapter.swift in Sources */,
 				103C2B10032BCEA3903A4825 /* SimulatorDataSource.swift in Sources */,
 				D6509620409E4854BE59A734 /* SpeechEngine.swift in Sources */,
 				F4E4FF87AC6D4BC84BF27730 /* SpokenLineOverlay.swift in Sources */,
 				4F74CEDE850AA8FB6C8A7CA9 /* StravaClient.swift in Sources */,
-				6C462EF73E6C245D2FD2D04C /* StrengthAdapter.swift in Sources */,
 				7CDACFA5252DD58BD5D56478 /* SummaryView.swift in Sources */,
-				4CD9E6FD73D85034C64AA9D1 /* SwimmingAdapter.swift in Sources */,
 				A678B0ACD4DFF6E31DDCC6BA /* TCXExporter.swift in Sources */,
 				66E1D458DB18B0B1FBBAE88C /* Theme.swift in Sources */,
 				0818E0A9B51FF35D6D91DA13 /* TriggerPolicy.swift in Sources */,
+				40224D57A42CB89B4495D54E /* VoiceEngine.swift in Sources */,
 				CC8E8A220B1B5CE4C7B5F6D3 /* WatchConnectivitySource.swift in Sources */,
 				82D3F23027790CE8429C6F8F /* WorkoutDataSource.swift in Sources */,
 				25421B72C88FD17E8B338128 /* WorkoutSession.swift in Sources */,
@@ -567,7 +591,7 @@
 				CODE_SIGN_ENTITLEMENTS = RAlly/RAlly.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 5LV8BN8Q4Q;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RAlly/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -653,7 +677,7 @@
 				CODE_SIGN_ENTITLEMENTS = RAlly/RAlly.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = 5LV8BN8Q4Q;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RAlly/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -794,6 +818,25 @@
 			defaultConfigurationName = Debug;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		81356C2918D4D74C82046F58 /* XCRemoteSwiftPackageReference "FluidAudio" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/FluidInference/FluidAudio";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		74252AF06CAFEC466509382E /* FluidAudio */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 81356C2918D4D74C82046F58 /* XCRemoteSwiftPackageReference "FluidAudio" */;
+			productName = FluidAudio;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = FDA6FA2090D871284CBA0D62 /* Project object */;
 }

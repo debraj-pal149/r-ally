@@ -13,6 +13,7 @@ interface ScenarioInfo {
   name: string;
   activity: string;
   durationSec: number;
+  lab?: boolean;
 }
 
 function sampleVal(samples: { k: string; x: number }[], k: string): number | null {

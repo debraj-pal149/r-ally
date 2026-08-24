@@ -12,6 +12,7 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 26) {
                     header
                     if model.llmOffline { llmBanner }
+                    if let block = model.startBlockedReason { sensorBanner(block, color: Theme.ember) }
                     ActivityCarousel()
                     GoalRow()
                     PersonaPicker(preview: true)
@@ -37,12 +38,14 @@ struct HomeView: View {
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Button("Let's Rally") {
-                Haptics.heavy()
-                model.startWorkout()
+            VStack(spacing: 8) {
+                Button("Let's Rally") {
+                    Haptics.heavy()
+                    model.startWorkout()
+                }
+                .buttonStyle(RallyButtonStyle())
+                .accessibilityHint("Starts the run with phone sensors")
             }
-            .buttonStyle(RallyButtonStyle())
-            .accessibilityHint("Starts the workout")
             .padding(.horizontal, 22)
             .padding(.top, 10)
             .padding(.bottom, 6)
@@ -63,9 +66,13 @@ struct HomeView: View {
                     .tracking(4)
                     .foregroundStyle(Theme.ember)
                 PosterText(text: model.greeting, size: 40)
-                Text("Tonight's corner.")
+                Text("The fade is coming.")
                     .font(Theme.headline(16, .medium))
                     .foregroundStyle(Theme.textSecondary)
+                Text("Phone GPS · cadence · earbuds")
+                    .font(Theme.label(11, .bold))
+                    .tracking(1.2)
+                    .foregroundStyle(Theme.textMuted)
             }
             Spacer()
             Button {
@@ -94,6 +101,24 @@ struct HomeView: View {
         }
     }
 
+    func sensorBanner(_ text: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "heart.fill")
+                .foregroundStyle(color)
+            Text(text)
+                .font(Theme.body(13, .medium))
+                .foregroundStyle(Theme.textSecondary)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(color.opacity(0.08))
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(color.opacity(0.25), lineWidth: 1)
+        )
+    }
+
     var llmBanner: some View {
         HStack(spacing: 10) {
             Image(systemName: "waveform")
@@ -119,7 +144,7 @@ struct HomeView: View {
         } label: {
             HStack {
                 VStack(alignment: .leading, spacing: 6) {
-                    SectionLabel(text: "Last fight")
+                    SectionLabel(text: "Last session")
                     Text(last.activity.title.uppercased())
                         .font(Theme.headline(18))
                     Text("\(last.rallyCount) rallies · \(Formatters.clock(last.durationSec))")

@@ -6,6 +6,8 @@ struct EngineChannels: Sendable {
     var rhythm: Double
     var plannedRest: Bool
     var snapshot: String
+    /// True when output is GPS speed pretending to be effort (cycling/rowing without power).
+    var outputIsProxy: Bool = false
 }
 
 struct StoreSnapshot: Sendable {
@@ -34,6 +36,8 @@ final class MetricStore: @unchecked Sendable {
     private var baseOut = 0.0
     private var baseCv = 0.05
     private var initializedBase = false
+    /// Snapshot of baseOut when we first freeze (stopped). Used to reseed on resume (Bug E).
+    private var frozenBaseOut: Double?
     private var peakHR = 0.0
     private var secondsHard = 0.0
     private var outputHistory: [(t: TimeInterval, x: Double)] = []
@@ -46,6 +50,7 @@ final class MetricStore: @unchecked Sendable {
         baseOut = 0
         baseCv = 0.05
         initializedBase = false
+        frozenBaseOut = nil
         peakHR = 0
         secondsHard = 0
         outputHistory.removeAll()
@@ -79,15 +84,29 @@ final class MetricStore: @unchecked Sendable {
     }
 
     /// Advance the 1 Hz grid to integer second `t` (floor).
-    func tick(t: TimeInterval, channelsIn: EngineChannels) -> StoreSnapshot {
+    /// When `freezeBaseline` is true (athlete stopped), do not decay `baseOut` toward zero.
+    /// When `reseedFromFrozen` is true (just left stopped), restore pre-stop baseline — don't resume from a decayed value.
+    func tick(t: TimeInterval, channelsIn: EngineChannels, freezeBaseline: Bool = false, reseedFromFrozen: Bool = false) -> StoreSnapshot {
         let tt = floor(t)
         outputHistory.append((tt, channelsIn.output))
         if outputHistory.count > 2400 { outputHistory.removeFirst(outputHistory.count - 2400) }
 
-        if !initializedBase {
-            baseOut = max(channelsIn.output, EngineConstants.epsilon)
+        if reseedFromFrozen, let frozen = frozenBaseOut {
+            baseOut = max(frozen, channelsIn.output, EngineConstants.epsilon)
+            frozenBaseOut = nil
             initializedBase = true
-        } else {
+        }
+
+        if freezeBaseline {
+            if frozenBaseOut == nil, initializedBase {
+                frozenBaseOut = baseOut
+            }
+        } else if !initializedBase {
+            if channelsIn.output >= EngineConstants.vStop {
+                baseOut = max(channelsIn.output, EngineConstants.epsilon)
+                initializedBase = true
+            }
+        } else if channelsIn.output >= EngineConstants.vStop {
             let a = EngineConstants.ewmaAlpha
             baseOut = a * channelsIn.output + (1 - a) * baseOut
         }
@@ -95,17 +114,13 @@ final class MetricStore: @unchecked Sendable {
         let shortOut = sma(of: outputHistory.map(\.x), window: EngineConstants.shortWindow)
         let slope30Out = slope(of: outputHistory, window: EngineConstants.slopeWindow)
 
-        var rhythmHist: [Double] = []
-        if let arr = channels[rhythmKindGuess()] {
-            rhythmHist = arr.suffix(EngineConstants.cvWindow + 5).map(\.x)
-        }
-        // Prefer adapter rhythm via a synthetic channel we keep:
         rhythmBuffer.append(channelsIn.rhythm)
         if rhythmBuffer.count > 400 { rhythmBuffer.removeFirst(rhythmBuffer.count - 400) }
         let cv = coefficientOfVariation(Array(rhythmBuffer.suffix(EngineConstants.cvWindow)))
-        let a = EngineConstants.ewmaAlpha
-        baseCv = a * cv + (1 - a) * baseCv
-
+        if !freezeBaseline {
+            let a = EngineConstants.ewmaAlpha
+            baseCv = a * cv + (1 - a) * baseCv
+        }
         var slopeHR: Double?
         if let hr = channelsIn.hr {
             hrBuffer.append((tt, hr))
