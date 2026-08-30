@@ -17,10 +17,6 @@ settings:
     TARGETED_DEVICE_FAMILY: "1"
     IPHONEOS_DEPLOYMENT_TARGET: "17.0"
     SWIFT_STRICT_CONCURRENCY: complete
-packages:
-  FluidAudio:
-    url: https://github.com/FluidInference/FluidAudio
-    branch: main
 targets:
   RAlly:
     type: application
@@ -30,9 +26,6 @@ targets:
         excludes:
           - Info.plist
           - RAlly.entitlements
-    dependencies:
-      - package: FluidAudio
-        product: FluidAudio
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rally.RAlly
@@ -63,6 +56,8 @@ targets:
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         ANTHROPIC_API_KEY: $(ANTHROPIC_API_KEY)
+        FISH_AUDIO_API_KEY: $(FISH_AUDIO_API_KEY)
+        ELEVENLABS_API_KEY: $(ELEVENLABS_API_KEY)
         STRAVA_CLIENT_ID: $(STRAVA_CLIENT_ID)
         STRAVA_CLIENT_SECRET: $(STRAVA_CLIENT_SECRET)
         CFBundleURLTypes:

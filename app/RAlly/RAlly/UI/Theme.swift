@@ -56,16 +56,25 @@ enum Theme {
 }
 
 enum Haptics {
+    @MainActor
     static func tap() {
         #if os(iOS)
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
         #endif
     }
+    @MainActor
     static func heavy() {
         #if os(iOS)
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         #endif
     }
+    @MainActor
+    static func selection() {
+        #if os(iOS)
+        UISelectionFeedbackGenerator().selectionChanged()
+        #endif
+    }
+    @MainActor
     static func success() {
         #if os(iOS)
         UINotificationFeedbackGenerator().notificationOccurred(.success)

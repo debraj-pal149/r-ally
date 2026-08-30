@@ -42,7 +42,7 @@ enum FallbackLines {
         case .stillStopped, .paceSlip: 24
         case .keepGoing: 28
         case .preQuitFade: 32
-        case .recovery, .grindSupport, .finalPush: 24
+        case .recovery, .grindSupport, .finalPush, .milestone: 24
         }
     }
 
@@ -288,6 +288,12 @@ enum FallbackLines {
         case (.steady, .finalPush):
             [
                 "Float it home with grace — last minutes with calm strength, arrive whole",
+            ]
+        case (_, .milestone):
+            [
+                "You're in the pocket now — keep this exact tempo and drive through the mark.",
+                "Target is in sight — stay tall, breathe deep, and finish the job.",
+                "Hold this rhythm — you are making this look easy, keep rolling forward.",
             ]
         }
     }

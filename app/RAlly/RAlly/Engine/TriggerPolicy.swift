@@ -109,7 +109,7 @@ final class TriggerPolicy {
     private func usesFadeBudget(_ kind: TriggerKind) -> Bool {
         switch kind {
         case .preQuitFade, .paceSlip, .grindSupport, .finalPush: true
-        case .stopped, .stillStopped, .keepGoing, .recovery: false
+        case .stopped, .stillStopped, .keepGoing, .recovery, .milestone: false
         }
     }
 }

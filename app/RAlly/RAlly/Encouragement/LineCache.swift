@@ -12,6 +12,10 @@ struct LineContext: Sendable {
     var recent: [String]
     var persona: Persona
     var progressLabel: String
+    var runnerLevel: RunnerLevel = .intermediate
+    var paceSlopeDescription: String = "steady"
+    var milestoneState: MilestoneState? = nil
+    var closedLoopFeedback: String? = nil
 }
 
 @MainActor
@@ -40,7 +44,8 @@ final class LineCache {
             }
         }
         inflight = true
-        let sys = PromptBuilder.system(persona: ctx.persona)
+        let sys = PromptBuilder.system(persona: ctx.persona, runnerLevel: ctx.runnerLevel)
+        let blacklist = LifetimePromptMemory.shared.dynamicBlacklist
         let user = PromptBuilder.user(.init(
             activity: ctx.activity,
             elapsed: ctx.elapsed,
@@ -50,7 +55,12 @@ final class LineCache {
             athleteName: ctx.name,
             intensityMaximum: ctx.intensityMaximum,
             recent: ctx.recent,
-            persona: ctx.persona
+            persona: ctx.persona,
+            runnerLevel: ctx.runnerLevel,
+            paceSlopeDescription: ctx.paceSlopeDescription,
+            milestoneState: ctx.milestoneState,
+            closedLoopFeedback: ctx.closedLoopFeedback,
+            burnedPhrasesBlacklist: blacklist
         ))
         Task {
             defer { inflight = false }
@@ -77,8 +87,7 @@ final class LineCache {
                 case .stopped: lines.stopped
                 case .stillStopped: lines.still_stopped ?? lines.stopped
                 case .recovery: lines.recovery ?? lines.grind_support
-                case .grindSupport: lines.grind_support
-                case .finalPush: lines.grind_support
+                case .grindSupport, .finalPush, .milestone: lines.grind_support
                 }
             }()
             if let first = arr.first(where: { !ctx.recent.contains($0) }) ?? arr.first {
@@ -111,7 +120,7 @@ final class LineCache {
             var r = p.recovery ?? []
             r.removeAll { $0 == dropping }
             p.recovery = r
-        case .grindSupport, .finalPush: p.grind_support.removeAll { $0 == dropping }
+        case .grindSupport, .finalPush, .milestone: p.grind_support.removeAll { $0 == dropping }
         }
         return p
     }

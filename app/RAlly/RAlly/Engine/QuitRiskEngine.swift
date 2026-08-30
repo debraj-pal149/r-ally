@@ -6,6 +6,7 @@ struct EngineTickResult: Sendable {
     var state: EngineState
     var locomotion: Locomotion
     var trigger: TriggerKind?
+    var milestone: MilestoneState?
     var snapshot: String
     var channels: EngineChannels
     var store: StoreSnapshot
@@ -166,6 +167,7 @@ final class QuitRiskEngine {
             state: state,
             locomotion: locomotion,
             trigger: trigger,
+            milestone: nil,
             snapshot: ch.snapshot,
             channels: ch,
             store: snap

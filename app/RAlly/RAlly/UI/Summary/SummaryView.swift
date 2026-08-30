@@ -51,6 +51,30 @@ struct SummaryView: View {
                         )
                         .transition(.opacity)
                     }
+                    if let report = model.latestReport {
+                        VStack(alignment: .leading, spacing: 12) {
+                            CoachReportShareCard(record: record, report: report, persona: model.persona)
+                            ShareLink(
+                                item: "🏃 R·ALLY COACH DEBRIEF — \(model.persona.name.uppercased())\n\n\(report.headline)\n\n\(report.debrief)\n\n\"\(report.coachQuote)\"\n\nDistance: \(Formatters.km(record.distanceM)) | Time: \(Formatters.clock(record.durationSec)) | Grade: \(report.athleteGrade)"
+                            ) {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "square.and.arrow.up")
+                                        .font(.system(size: 13, weight: .bold))
+                                    Text("SHARE COACH REPORT")
+                                        .font(Theme.label(11, .bold))
+                                        .tracking(0.8)
+                                }
+                                .foregroundStyle(Theme.emberSoft)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 8)
+                                .background(Theme.surfaceRaised)
+                                .clipShape(Capsule())
+                                .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+
                     HStack(spacing: 10) {
                         Button("Save to Health") {
                             Haptics.tap()

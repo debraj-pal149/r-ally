@@ -17,6 +17,7 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
     private var lastCadenceAt: Date?
     private var lastSpeed: Double = 0
     private var lastSpeedAt: Date?
+    private var smoothedSpeed: Double = 0
     private var gradeEWMA: Double = 0
     private var accBuf: [Double] = []
     private var heartbeat: Timer?
@@ -28,6 +29,7 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
         distance = 0
         lastSpeed = 0
         lastSpeedAt = nil
+        smoothedSpeed = 0
         lastCadence = nil
         lastCadenceAt = nil
         lastLocation = nil
@@ -116,15 +118,14 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
             if now.timeIntervalSince(at) > 4 {
                 lastSpeed = 0
             }
-            let emitSpeed = lastSpeed < EngineConstants.vStop ? 0 : lastSpeed
+            smoothedSpeed = lastSpeed
+            let emitSpeed = smoothedSpeed < EngineConstants.vStop ? 0 : smoothedSpeed
             handler?(MetricSample(kind: .speedMps, value: emitSpeed, timestamp: t, source: .derived))
             if emitSpeed > EngineConstants.vStop {
                 handler?(MetricSample(kind: .paceSecPerKm, value: 1000 / emitSpeed, timestamp: t, source: .derived))
-            } else {
-                handler?(MetricSample(kind: .paceSecPerKm, value: 1800, timestamp: t, source: .derived))
             }
         } else if lastSpeedAt != nil {
-            let emitSpeed = lastSpeed < EngineConstants.vStop ? 0 : lastSpeed
+            let emitSpeed = smoothedSpeed < EngineConstants.vStop ? 0 : smoothedSpeed
             handler?(MetricSample(kind: .speedMps, value: emitSpeed, timestamp: t, source: .derived))
             if emitSpeed > EngineConstants.vStop {
                 handler?(MetricSample(kind: .paceSecPerKm, value: 1000 / emitSpeed, timestamp: t, source: .derived))
@@ -133,7 +134,7 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
         handler?(MetricSample(kind: .distanceM, value: distance, timestamp: t, source: .derived))
         if let cadAt = lastCadenceAt, now.timeIntervalSince(cadAt) > 6 {
             // Stale cadence while slow ⇒ zero (do NOT invent a healthy walk cadence).
-            let low = lastSpeed < EngineConstants.vStop ? 0.0 : (lastSpeed < EngineConstants.vJog ? 95.0 : 140.0)
+            let low = smoothedSpeed < EngineConstants.vStop ? 0.0 : (smoothedSpeed < EngineConstants.vJog ? 95.0 : 140.0)
             lastCadence = low
             handler?(MetricSample(kind: .cadenceSpm, value: low, timestamp: t, source: .derived))
         } else if let cad = lastCadence {
@@ -142,27 +143,43 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        guard let loc = locations.last, loc.horizontalAccuracy >= 0, loc.horizontalAccuracy < 45 else { return }
+        guard let loc = locations.last, loc.horizontalAccuracy >= 0, loc.horizontalAccuracy < 30 else { return }
         let t = Date().timeIntervalSince(sessionStart)
         if let prev = lastLocation {
             let dt = loc.timestamp.timeIntervalSince(prev.timestamp)
             if dt > 0.4 {
                 let dist = loc.distance(from: prev)
-                // Raw GPS speed; clamp micro-speeds to 0 so rest detection is sticky.
-                let raw = min(12, max(0, dist / dt))
-                let speed = raw < EngineConstants.vStop ? 0 : raw
-                // Only accumulate distance when clearly moving (ignore GPS wander at rest).
-                if speed > 0 { distance += dist }
-                gpsDistanceActive = true
-                lastSpeed = speed
-                lastSpeedAt = Date()
-                handler?(MetricSample(kind: .speedMps, value: speed, timestamp: t, source: .device))
-                if speed > 0 {
-                    handler?(MetricSample(kind: .paceSecPerKm, value: 1000 / speed, timestamp: t, source: .device))
+                // Use iOS hardware/satellite-derived speed when valid; fallback to delta distance
+                let candidateSpeed: Double = {
+                    if loc.speed >= 0 {
+                        return loc.speed
+                    }
+                    return dist / dt
+                }()
+
+                let clamped = min(12, max(0, candidateSpeed))
+                let instantaneousSpeed = clamped < EngineConstants.vStop ? 0 : clamped
+
+                // Exponential Moving Average (EMA) smoothing for instantaneous GPS jitter
+                if smoothedSpeed == 0 {
+                    smoothedSpeed = instantaneousSpeed
                 } else {
-                    handler?(MetricSample(kind: .paceSecPerKm, value: 1800, timestamp: t, source: .device))
+                    let alpha = 0.35 // Quick responsiveness with jitter rejection
+                    smoothedSpeed = (alpha * instantaneousSpeed) + ((1.0 - alpha) * smoothedSpeed)
+                }
+
+                if instantaneousSpeed > 0 { distance += dist }
+                gpsDistanceActive = true
+                lastSpeed = instantaneousSpeed
+                lastSpeedAt = Date()
+
+                let emitSpeed = smoothedSpeed < EngineConstants.vStop ? 0 : smoothedSpeed
+                handler?(MetricSample(kind: .speedMps, value: emitSpeed, timestamp: t, source: .device))
+                if emitSpeed > EngineConstants.vStop {
+                    handler?(MetricSample(kind: .paceSecPerKm, value: 1000 / emitSpeed, timestamp: t, source: .device))
                 }
                 handler?(MetricSample(kind: .distanceM, value: distance, timestamp: t, source: .device))
+
                 if loc.verticalAccuracy >= 0, loc.verticalAccuracy < 15, prev.verticalAccuracy >= 0, dist > 5 {
                     let rawGrade = max(-20, min(20, ((loc.altitude - prev.altitude) / dist) * 100))
                     gradeEWMA = gradeEWMA == 0 ? rawGrade : (0.25 * rawGrade + 0.75 * gradeEWMA)

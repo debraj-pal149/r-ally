@@ -84,7 +84,11 @@ struct LiveWorkoutView: View {
             }
 
             if let line = model.spokenLine {
-                SpokenLineOverlay(text: line)
+                SpokenLineOverlay(text: line) {
+                    withAnimation(.easeOut(duration: 0.25)) {
+                        model.spokenLine = nil
+                    }
+                }
             }
         }
         .navigationBarHidden(true)

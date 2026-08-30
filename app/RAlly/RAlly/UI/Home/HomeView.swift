@@ -79,17 +79,16 @@ struct HomeView: View {
                 Haptics.tap()
                 model.route = .settings
             } label: {
-                HStack(spacing: 7) {
-                    Circle()
-                        .fill(model.sourceKind == .simulator ? Theme.pulse : Theme.emberSoft)
-                        .frame(width: 7, height: 7)
-                        .shadow(color: Theme.pulse.opacity(0.8), radius: 4)
-                    Text(model.sourceKind == .simulator ? "SIM" : "PHONE")
-                        .font(Theme.label(12))
+                HStack(spacing: 6) {
+                    Image(systemName: "gearshape.fill")
+                        .font(.system(size: 11))
+                        .foregroundStyle(Theme.emberSoft)
+                    Text("SETTINGS")
+                        .font(Theme.label(11, .bold))
                         .tracking(1)
                 }
-                .padding(.horizontal, 14)
-                .frame(minHeight: 40)
+                .padding(.horizontal, 12)
+                .frame(minHeight: 36)
                 .background(.ultraThinMaterial.opacity(0.35))
                 .background(Theme.surfaceRaised.opacity(0.7))
                 .clipShape(Capsule())
@@ -97,7 +96,7 @@ struct HomeView: View {
             }
             .buttonStyle(.plain)
             .foregroundStyle(Theme.textPrimary)
-            .accessibilityLabel("Settings. Data source \(model.sourceKind == .simulator ? "simulator" : "phone sensors")")
+            .accessibilityLabel("Open Settings")
         }
     }
 

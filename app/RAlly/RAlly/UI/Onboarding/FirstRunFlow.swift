@@ -63,6 +63,7 @@ struct FirstRunFlow: View {
                             permission("figure.run", "Motion", "So we feel cadence fade without a watch.")
                             permission("location", "Location", "So outdoor runs have live pace.")
                             permission("heart.fill", "Apple Health", "To save workouts and read Nike Run Club history.")
+                            permission("waveform", "Coach Voice", "Ultra-realistic rugged audio motivators powered by low-latency cloud neural speech.")
                         }
                     }
                 }

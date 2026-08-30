@@ -23,7 +23,20 @@ final class AppModel {
     var age: Int = UserDefaults.standard.object(forKey: "athlete.age") as? Int ?? 32
     var hrMaxOverride: Double? = UserDefaults.standard.object(forKey: "athlete.hrMax") as? Double
     var thresholdPace: Double = UserDefaults.standard.object(forKey: "athlete.pace") as? Double ?? 330
-    var persona: Persona = Persona.named(.southpaw)
+    var persona: Persona = {
+        if let raw = UserDefaults.standard.string(forKey: "athlete.persona"),
+           let id = Persona.ID(rawValue: raw) {
+            return Persona.named(id)
+        }
+        return Persona.named(.sarge)
+    }() {
+        didSet {
+            voiceId = persona.voiceId
+            speech.voiceId = persona.voiceId
+            UserDefaults.standard.set(persona.id.rawValue, forKey: "athlete.persona")
+            UserDefaults.standard.set(persona.voiceId, forKey: "coach.voiceId")
+        }
+    }
     var activity: ActivityKind = .running
     var goal: WorkoutGoal = ActivityKind.running.defaultGoal
     var selectedPrompt: String?
@@ -52,29 +65,13 @@ final class AppModel {
     var bleDevices: [(id: UUID, name: String)] = []
     var healthAuthorized = false
     var nrcWorkoutCount = 0
-    var voiceIdentifier: String? {
+    var voiceId: String = UserDefaults.standard.string(forKey: "coach.voiceId") ?? CoachVoiceOption.defaultVoiceId {
         didSet {
-            speech.voiceIdentifier = voiceIdentifier
-            if let voiceIdentifier {
-                UserDefaults.standard.set(voiceIdentifier, forKey: "voice.id")
-            } else {
-                UserDefaults.standard.removeObject(forKey: "voice.id")
-            }
+            speech.voiceId = voiceId
+            UserDefaults.standard.set(voiceId, forKey: "coach.voiceId")
         }
     }
-    var voiceEngine: VoiceEngine = {
-        if let raw = UserDefaults.standard.string(forKey: "voice.engine"),
-           let e = VoiceEngine(rawValue: raw) {
-            return e
-        }
-        return .auto
-    }() {
-        didSet {
-            speech.voiceEngine = voiceEngine
-            UserDefaults.standard.set(voiceEngine.rawValue, forKey: "voice.engine")
-            speech.warmOnDeviceVoice(persona: persona)
-        }
-    }
+    var voiceEngine: VoiceEngine = .cloud
 
     var liveT: TimeInterval = 0
     var liveRisk: Double = 0
@@ -88,16 +85,26 @@ final class AppModel {
     var finishedAfterCritical = false
     var lastRecord: WorkoutSessionRecord?
 
+    var runnerLevel: RunnerLevel = .intermediate {
+        didSet {
+            UserDefaults.standard.set(runnerLevel.rawValue, forKey: "athlete.runnerLevel")
+        }
+    }
+
     let engine = QuitRiskEngine()
+    let trendTracker = TelemetryTrendTracker()
+    var latestReport: CoachFieldReport?
     let sources = DataSourceManager()
     let speech = SpeechEngine()
     let ble = BLEHeartRateDataSource()
+    let universalBle = UniversalBLEDataSource()
     let health = HealthKitDataSource()
     let strava = StravaClient()
     let hkWriter = HealthKitWriter()
     let cache: LineCache
 
     private var lastTick: TimeInterval = -1
+    private var lastSpokenTimestamp: TimeInterval = -10_000
     private var lastRiskReport: TimeInterval = -100
     private var lastRiskState: EngineState = .cruising
     private var recentLines: [String] = []
@@ -130,12 +137,12 @@ final class AppModel {
         cache = LineCache(client: AnthropicClient(apiKey: key))
         llmOffline = key.trimmingCharacters(in: .whitespaces).isEmpty
         route = UserDefaults.standard.bool(forKey: "didOnboard") ? .home : .onboarding
-        if let vid = UserDefaults.standard.string(forKey: "voice.id") {
-            voiceIdentifier = vid
+        speech.voiceId = persona.voiceId
+        voiceId = persona.voiceId
+        if let savedLevel = UserDefaults.standard.string(forKey: "athlete.runnerLevel"),
+           let level = RunnerLevel(rawValue: savedLevel) {
+            runnerLevel = level
         }
-        speech.voiceIdentifier = voiceIdentifier
-        speech.voiceEngine = voiceEngine
-        speech.warmOnDeviceVoice(persona: persona)
         ble.onDevices = { [weak self] list in
             Task { @MainActor in
                 self?.bleDevices = list.map { (id: $0.0, name: $0.1) }
@@ -151,7 +158,7 @@ final class AppModel {
         UserDefaults.standard.set(simulatorURLString, forKey: "sim.url")
         UserDefaults.standard.set(sourceKind.rawValue, forKey: "source.kind")
         if let hrMaxOverride { UserDefaults.standard.set(hrMaxOverride, forKey: "athlete.hrMax") }
-        UserDefaults.standard.set(didOnboard, forKey: "didOnboard")
+        UserDefaults.standard.set(voiceId, forKey: "coach.voiceId")
     }
 
     func completeOnboarding() {
@@ -203,9 +210,9 @@ final class AppModel {
         spokenLine = nil
         speech.muted = muted
 
-        // Phone sensors are the primary path. BLE HR is optional. HealthKit HR is not
-        // attached live unless a strap is on — otherwise Watch/Health lag would fake "live" HR.
-        let supplements: [SupplementalHRSource] = bleEnabled ? [ble] : []
+        // Phone sensors are the primary path. Universal BLE (Polar, Wahoo, Stryd, WHOOP, Garmin)
+        // automatically layers live HR, cadence, and power onto the run telemetry.
+        let supplements: [SupplementalHRSource] = [universalBle]
         if sourceKind == .simulator {
             let url = URL(string: simulatorURLString) ?? URL(string: "ws://127.0.0.1:7777/stream")!
             let sim = SimulatorDataSource(url: url)
@@ -250,7 +257,6 @@ final class AppModel {
         }
         sources.start()
         route = .live
-        speech.warmOnDeviceVoice(persona: persona)
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
         #endif
@@ -282,7 +288,16 @@ final class AppModel {
             finishedAfterCritical: finishedAfterCritical
         )
         lastRecord = rec
-        Task { @MainActor in await hkWriter.save(session: rec) }
+        Task { @MainActor in
+            await hkWriter.save(session: rec)
+            let report = await CoachReportGenerator.shared.generateReport(
+                record: rec,
+                persona: persona,
+                runnerLevel: runnerLevel,
+                client: AnthropicClient(apiKey: AnthropicClient.keyFromBundle())
+            )
+            self.latestReport = report
+        }
         route = .summary(rec)
     }
 
@@ -306,7 +321,51 @@ final class AppModel {
         liveLocomotion = result.locomotion
         if result.state == .critical { finishedAfterCritical = true }
 
-        let ctx = lineContext(snapshot: result.snapshot, t: t)
+        let speed = liveLatest[.speedMps] ?? 0
+        let hr = liveLatest[.heartRateBpm]
+        let cadence = liveLatest[.cadenceSpm]
+        let power = liveLatest[.powerWatts]
+        let alt = liveLatest[.altitudeM]
+        let grade = liveLatest[.gradePercent]
+        let dist = liveLatest[.distanceM] ?? 0
+
+        trendTracker.recordPoint(
+            t: t,
+            speedMps: speed,
+            hrBpm: hr,
+            cadenceSpm: cadence,
+            powerWatts: power,
+            altitudeM: alt,
+            gradePercent: grade
+        )
+
+        // Evaluate closed-loop feedback from last intervention
+        let currentPace = speed > 0.3 ? (1000.0 / speed) : 0
+        if let evaluated = trendTracker.evaluatePendingInterventions(currentT: t, currentPace: currentPace) {
+            if evaluated.result == .surged {
+                // Positively reinforced
+            }
+        }
+
+        // Check for 34 milestone & telemetry states
+        var targetDist: Double? = nil
+        if case .distance(let m) = goal { targetDist = Double(m) }
+        let milestone = trendTracker.evaluateMilestone(
+            t: t,
+            distanceM: dist,
+            targetDistanceM: targetDist,
+            speedMps: speed,
+            hrBpm: hr,
+            maxHR: hrMax,
+            cadenceSpm: cadence,
+            powerWatts: power,
+            gradePercent: grade,
+            engineState: result.state,
+            locomotion: result.locomotion,
+            lastSpokenT: lastSpokenTimestamp
+        )
+
+        let ctx = lineContext(snapshot: result.snapshot, t: t, milestone: milestone)
         cache.maybePrefetch(ctx: ctx, risk: result.risk)
         llmOffline = cache.llmOffline
 
@@ -322,19 +381,52 @@ final class AppModel {
             // Never queue a new line while the previous one is still speaking.
             guard !speech.speaking else { return }
             fire(kind: kind, t: t, ctx: ctx, output: result.channels.output)
+        } else if milestone != nil, !speech.speaking, (t - lastSpokenTimestamp >= 45) {
+            fire(kind: .milestone, t: t, ctx: ctx, output: result.channels.output)
         }
     }
 
     private func fire(kind: TriggerKind, t: TimeInterval, ctx: LineContext, output: Double) {
+        lastSpokenTimestamp = t
         let start = Date()
         let popped = cache.pop(kind: kind, ctx: ctx)
         let latency = Int(Date().timeIntervalSince(start) * 1000)
         recentLines.append(popped.text)
         if recentLines.count > 5 { recentLines.removeFirst(recentLines.count - 5) }
-        spokenLine = popped.text
+        withAnimation(.easeInOut(duration: 0.2)) {
+            spokenLine = popped.text
+        }
         #if os(iOS)
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
         #endif
+
+        // Safety fallback timer: auto-dismiss text if speech is interrupted or finishes silently
+        let lineID = popped.text
+        Task { @MainActor in
+            try? await Task.sleep(for: .seconds(8.0))
+            if self.spokenLine == lineID {
+                withAnimation(.easeOut(duration: 0.3)) {
+                    self.spokenLine = nil
+                }
+            }
+        }
+
+        // Record into lifetime anti-repetition memory
+        LifetimePromptMemory.shared.recordSpokenLine(popped.text)
+
+        // Record intervention for closed-loop follow-up
+        let curSpeed = liveLatest[.speedMps] ?? 0
+        let curPace = curSpeed > 0.3 ? (1000.0 / curSpeed) : 0
+        trendTracker.recordIntervention(
+            t: t,
+            line: popped.text,
+            trigger: kind,
+            milestone: ctx.milestoneState,
+            currentPace: curPace,
+            cadence: liveLatest[.cadenceSpm],
+            hr: liveLatest[.heartRateBpm]
+        )
+
         speech.speak(popped.text, persona: persona) { [weak self] in
             guard let self else { return }
             self.engine.policy.noteSpeechEnded(t: self.liveT)
@@ -342,10 +434,14 @@ final class AppModel {
             // Prefetch a likely next line during the breath window (on-device only).
             let nextKind: TriggerKind = self.liveLocomotion == .stopped ? .stillStopped : .keepGoing
             let peek = FallbackLines.line(kind: nextKind, ctx: ctx)
-            self.speech.prefetch(peek, persona: self.persona)
+            self.speech.prefetch(peek)
             Task { @MainActor in
-                try? await Task.sleep(for: .seconds(3))
-                if self.spokenLine == popped.text { self.spokenLine = nil }
+                try? await Task.sleep(for: .seconds(2.0))
+                if self.spokenLine == popped.text {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        self.spokenLine = nil
+                    }
+                }
             }
         }
         simSource?.sendTrigger(t: t, kind: kind, persona: persona.id.rawValue, text: popped.text, sourceLLM: popped.sourceLLM, latencyMs: latency)
@@ -356,7 +452,7 @@ final class AppModel {
             try? await Task.sleep(for: .seconds(40))
             await MainActor.run {
                 guard let self else { return }
-                if let later = self.engine.store.value(kind: .speedMps, around: t, plus: 40) ?? self.engine.store.latest(.speedMps),
+                if let later = self.engine.store.value(kind: MetricKind.speedMps, around: t, plus: 40) ?? self.engine.store.latest(MetricKind.speedMps),
                    let before = moment.outputAtTrigger, before > 0 {
                     let pct = Int(((later - before) / before) * 100)
                     let after = pct >= 0 ? "Pace recovered \(pct) % within 40 s" : "Still grinding."
@@ -379,8 +475,15 @@ final class AppModel {
         engine.setGoalDone(done)
     }
 
-    private func lineContext(snapshot: String, t: TimeInterval) -> LineContext {
-        LineContext(
+    private func lineContext(snapshot: String, t: TimeInterval, milestone: MilestoneState? = nil) -> LineContext {
+        let slope = trendTracker.paceSlope(windowSec: 60)
+        let slopeDesc: String = {
+            if slope < -8 { return "surging and accelerating faster" }
+            if slope > 10 { return "fading and slowing down" }
+            return "holding steady pace"
+        }()
+
+        return LineContext(
             activity: activity,
             elapsed: t,
             distanceM: liveLatest[.distanceM] ?? 0,
@@ -391,7 +494,11 @@ final class AppModel {
             intensityMaximum: engine.policy.intensityMaximum,
             recent: recentLines,
             persona: persona,
-            progressLabel: progressLabel()
+            progressLabel: progressLabel(),
+            runnerLevel: runnerLevel,
+            paceSlopeDescription: slopeDesc,
+            milestoneState: milestone,
+            closedLoopFeedback: trendTracker.lastClosedLoopDescription
         )
     }
 
@@ -413,7 +520,11 @@ final class AppModel {
     func metricDisplay(_ kind: MetricKind) -> String {
         guard let v = liveLatest[kind] else { return "–" }
         switch kind {
-        case .paceSecPerKm: return Formatters.pace(v)
+        case .paceSecPerKm:
+            if liveLocomotion == .stopped || (liveLatest[.speedMps] ?? 0) < EngineConstants.vStop {
+                return "–"
+            }
+            return Formatters.pace(v)
         case .distanceM: return Formatters.km(v)
         case .heartRateBpm, .cadenceSpm, .strokeRateSpm, .punchRatePpm, .powerWatts, .repCount:
             return String(Int(v.rounded()))

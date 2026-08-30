@@ -2,52 +2,33 @@ import Foundation
 
 enum PromptBuilder {
     static let systemTemplate = """
-You are {persona_name}, {persona_archetype_description}. You are the in-ear
-sideline coach for a runner mid-workout. Your job: spoken motivational beats
-that make a human keep going RIGHT NOW — conviction, warmth, command.
+You are {persona_name}, {persona_archetype_description}. In-ear coach for a runner mid-workout.
+Spoken motivational beats that make a human keep going RIGHT NOW — conviction, warmth, command.
 
-STYLE RULES FOR THIS PERSONA:
+STYLE RULES:
 {persona_style_rules}
 
-HARD RULES (never break):
-- Write for the ear as 1–2 short sentences. Use a comma, an em dash for one
-  breath, end on a period.
-- Length by trigger (word counts are hard):
-  stopped (first get-up): 8 to 14 words, sharp.
-  still_stopped: 16 to 24 words.
-  keep_going: 18 to 28 words.
-  pace_slip: 16 to 24 words.
-  pre_quit_fade: 20 to 32 words.
-  recovery / grind_support / final_push: 14 to 24 words.
-- Prefer punchy spoken words. Never sound like a GPS or an app.
-- No emojis, no hashtags, no quotation marks, no stage directions, no decimals.
-  Spell out small numbers.
-- Never mention sensors, data, heart rate, apps, or AI.
-- Never name, quote, paraphrase, or write "in the style of" any real athlete,
-  actor, or motivational speaker. Original words only. Describe energy via
-  cadence and conviction — not celebrity references.
-- Weave in ONE concrete qualitative detail when natural (distance left, their
-  reason, that they are fading / holding / recovering). No raw pace numbers.
-- Never repeat or closely paraphrase any line in recent_lines.
-- No body-shaming, no health scares. Clean language.
+RUNNER LEVEL:
+{runner_level_instructions}
 
-Match trigger kind: pre_quit_fade = interrupt the doubt; pace_slip = mild
-slowdown, speed up; keep_going = encouragement while holding; stopped = get
-them moving fast; still_stopped = firmer nag while still resting; recovery =
-praise that they picked the pace back up; grind_support = fuel; final_push =
-bring it home.
+RULES:
+- 1–2 short spoken sentences. Natural breath cadence.
+- Word counts: stopped (8-14 words), still_stopped (14-22 words), keep_going (16-24 words), pace_slip (14-22 words), pre_quit_fade (18-28 words), recovery/grind/milestone (12-22 words).
+- Never sound like a GPS or app. No raw numbers, no bpm, no sensor names.
+- No emojis, hashtags, quotes, or stage directions. Clean language.
+- DO NOT repeat or closely paraphrase any line in avoid_repeating.
 
-OUTPUT FORMAT: a single JSON object, nothing else:
-{"pre_quit_fade": ["line1","line2","line3"],
- "pace_slip": ["line1","line2","line3"],
- "keep_going": ["line1","line2","line3"],
- "stopped": ["line1","line2","line3"],
- "still_stopped": ["line1","line2","line3"],
- "recovery": ["line1","line2","line3"],
- "grind_support": ["line1","line2","line3"]}
+OUTPUT FORMAT (JSON only):
+{"pre_quit_fade": ["line1","line2"],
+ "pace_slip": ["line1","line2"],
+ "keep_going": ["line1","line2"],
+ "stopped": ["line1","line2"],
+ "still_stopped": ["line1","line2"],
+ "recovery": ["line1","line2"],
+ "grind_support": ["line1","line2"]}
 """
 
-    struct Context {
+    struct Context: Sendable {
         var activity: ActivityKind
         var elapsed: TimeInterval
         var progressLabel: String
@@ -57,29 +38,66 @@ OUTPUT FORMAT: a single JSON object, nothing else:
         var intensityMaximum: Bool
         var recent: [String]
         var persona: Persona
+        var runnerLevel: RunnerLevel = .intermediate
+        var paceSlopeDescription: String = "steady"
+        var milestoneState: MilestoneState? = nil
+        var closedLoopFeedback: String? = nil
+        var burnedPhrasesBlacklist: [String] = []
     }
 
-    static func system(persona: Persona) -> String {
-        systemTemplate
+    static func system(persona: Persona, runnerLevel: RunnerLevel = .intermediate) -> String {
+        let levelInstructions: String
+        switch runnerLevel {
+        case .beginner:
+            levelInstructions = "Beginner: Prioritize breathing rhythm, posture, normalizing walk intervals without guilt, and celebrating distance breakthroughs."
+        case .intermediate:
+            levelInstructions = "Intermediate: Prioritize pacing discipline, cadence locks (170-180 SPM), and negative split execution."
+        case .beast:
+            levelInstructions = "Advanced Beast: Demand maximum lactate tolerance, attack hills, and command unrelenting mental armor."
+        }
+
+        return systemTemplate
             .replacingOccurrences(of: "{persona_name}", with: persona.name)
             .replacingOccurrences(of: "{persona_archetype_description}", with: persona.archetype)
             .replacingOccurrences(of: "{persona_style_rules}", with: persona.styleRules)
+            .replacingOccurrences(of: "{runner_level_instructions}", with: levelInstructions)
     }
 
     static func user(_ ctx: Context) -> String {
         let elapsed = Formatters.clock(ctx.elapsed)
-        let prompt = ctx.prompt?.isEmpty == false ? ctx.prompt! : "none"
-        let recent = ctx.recent.isEmpty ? "[]" : ctx.recent.map { "\"\($0)\"" }.joined(separator: ", ")
-        return """
-        ATHLETE CONTEXT
-        - activity: \(ctx.activity.rawValue)          - elapsed: \(elapsed)
-        - progress: \(ctx.progressLabel)
-        - qualitative moment: \(ctx.snapshot)
-        - athlete's chosen encouragement prompt: \(prompt)
-        - athlete name to use (optional): \(ctx.athleteName)
-        - intensity: \(ctx.intensityMaximum ? "maximum" : "normal")
-        - recent_lines: [\(recent)]
-        Generate the JSON now.
-        """
+        // Merge recent in-run lines + last 3 days blacklist into a compact, deduplicated list (max 6 items)
+        var avoid: [String] = []
+        for line in (ctx.recent + ctx.burnedPhrasesBlacklist) {
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !trimmed.isEmpty && !avoid.contains(trimmed) {
+                avoid.append(trimmed)
+            }
+            if avoid.count >= 6 { break }
+        }
+        let avoidFormatted = avoid.isEmpty ? "[]" : avoid.map { "\"\($0)\"" }.joined(separator: ", ")
+
+        var lines: [String] = [
+            "RUN CONTEXT",
+            "- activity: \(ctx.activity.rawValue) | progress: \(ctx.progressLabel) (\(elapsed))",
+            "- level: \(ctx.runnerLevel.rawValue) | pace_trend: \(ctx.paceSlopeDescription)",
+            "- state: \(ctx.snapshot)"
+        ]
+
+        if let m = ctx.milestoneState {
+            lines.append("- milestone: \(m.title)")
+        }
+        if let cl = ctx.closedLoopFeedback, !cl.isEmpty {
+            lines.append("- last_callout_response: \(cl)")
+        }
+        if !ctx.athleteName.isEmpty {
+            lines.append("- athlete: \(ctx.athleteName)")
+        }
+        if let p = ctx.prompt, !p.isEmpty && p != "none" {
+            lines.append("- custom_intent: \(p)")
+        }
+        lines.append("- avoid_repeating: [\(avoidFormatted)]")
+        lines.append("Generate JSON:")
+
+        return lines.joined(separator: "\n")
     }
 }

@@ -1,30 +1,25 @@
 import Foundation
 
-/// Voice engine choice — kept free of FluidAudio so Settings/AppModel compile even if SPM fails.
+/// Voice engine descriptor for the cloud TTS audio pipeline.
 enum VoiceEngine: String, CaseIterable, Sendable {
-    /// Best Apple male neural + energetic delivery. Fast, no model download.
-    case auto
-    /// On-device PocketTTS baritone coach. Distinct from Auto.
-    case power
-    /// Manual Apple system voice picker.
-    case apple
+    case cloud = "cloud"
 
     var chipTitle: String {
-        switch self {
-        case .auto: "AUTO"
-        case .power: "POWER"
-        case .apple: "APPLE"
+        switch CloudTTSService.activeProvider {
+        case .fishAudio: return "FISH AUDIO"
+        case .elevenLabs: return "ELEVENLABS"
+        case .appleFallback: return "APPLE NEURAL"
         }
     }
 
     var blurb: String {
-        switch self {
-        case .auto:
-            "Apple male neural · punchy coach delivery · instant"
-        case .power:
-            "On-device baritone coach · downloads once · offline"
-        case .apple:
-            "Pick any system voice yourself"
+        switch CloudTTSService.activeProvider {
+        case .fishAudio:
+            return "Fish Audio S2 ultra-realistic neural speech · instant streaming"
+        case .elevenLabs:
+            return "ElevenLabs Turbo v2.5 low-latency speech"
+        case .appleFallback:
+            return "Apple neural male coach (offline fallback)"
         }
     }
 }
