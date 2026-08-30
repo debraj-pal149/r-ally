@@ -17,6 +17,18 @@ enum Theme {
     static let textSecondary = Color(hex: 0x8B938C)
     static let textMuted = Color(hex: 0x5C6370)
 
+    // Aliases for unified UI palette
+    static let background = bg
+    static let card = surface
+    static let cardBorder = hairline
+    static let accent = ember
+    static let accentRed = Color(hex: 0xFF3B30)
+    static let secondaryText = textSecondary
+
+    static func font(size: CGFloat, weight: Font.Weight = .regular) -> Font {
+        .system(size: size, weight: weight).width(.condensed)
+    }
+
     static let cardRadius: CGFloat = 24
     static let chipRadius: CGFloat = 999
     static let buttonRadius: CGFloat = 18
@@ -160,11 +172,11 @@ struct HairlineCard<Content: View>: View {
 struct RallyButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Theme.display(22))
+            .font(Theme.display(20))
             .textCase(.uppercase)
             .tracking(1.5)
             .foregroundStyle(.white)
-            .frame(maxWidth: .infinity, minHeight: 58)
+            .frame(maxWidth: .infinity, minHeight: 52)
             .background(
                 ZStack {
                     LinearGradient(
@@ -179,8 +191,8 @@ struct RallyButtonStyle: ButtonStyle {
                     )
                 }
             )
-            .clipShape(RoundedRectangle(cornerRadius: Theme.buttonRadius, style: .continuous))
-            .shadow(color: Theme.ember.opacity(configuration.isPressed ? 0.15 : 0.38), radius: configuration.isPressed ? 6 : 22, y: 8)
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+            .shadow(color: Theme.ember.opacity(configuration.isPressed ? 0.15 : 0.38), radius: configuration.isPressed ? 6 : 20, y: 6)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
             .animation(Theme.spring, value: configuration.isPressed)
     }

@@ -20,21 +20,10 @@ struct HomeView: View {
                     if let last = sessions.first {
                         lastCard(last)
                     }
-                    Button {
-                        Haptics.tap()
-                        model.route = .history
-                    } label: {
-                        Text("HISTORY")
-                            .font(Theme.label(14))
-                            .tracking(1.5)
-                            .foregroundStyle(Theme.textMuted)
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.bottom, 8)
                 }
                 .padding(.horizontal, 22)
                 .padding(.top, 12)
+                .padding(.bottom, 150)
             }
         }
         .safeAreaInset(edge: .bottom) {
@@ -48,10 +37,19 @@ struct HomeView: View {
             }
             .padding(.horizontal, 22)
             .padding(.top, 10)
-            .padding(.bottom, 6)
+            .padding(.bottom, 74)
             .background(
-                LinearGradient(colors: [Theme.bg.opacity(0), Theme.bg.opacity(0.92), Theme.bg], startPoint: .top, endPoint: .bottom)
-                    .ignoresSafeArea(edges: .bottom)
+                LinearGradient(
+                    colors: [
+                        Theme.bg.opacity(0),
+                        Theme.bg.opacity(0.75),
+                        Theme.bg.opacity(0.95),
+                        Theme.bg
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                .ignoresSafeArea(edges: .bottom)
             )
         }
         .foregroundStyle(Theme.textPrimary)
@@ -77,7 +75,7 @@ struct HomeView: View {
             Spacer()
             Button {
                 Haptics.tap()
-                model.route = .settings
+                model.selectedTab = .corner
             } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "gearshape.fill")

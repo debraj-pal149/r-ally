@@ -25,7 +25,7 @@ struct RootView: View {
             case .onboarding:
                 FirstRunFlow()
             case .home:
-                HomeView()
+                MainTabView()
             case .live:
                 LiveWorkoutView()
             case .summary(let rec):

@@ -179,6 +179,8 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
                     handler?(MetricSample(kind: .paceSecPerKm, value: 1000 / emitSpeed, timestamp: t, source: .device))
                 }
                 handler?(MetricSample(kind: .distanceM, value: distance, timestamp: t, source: .device))
+                handler?(MetricSample(kind: .latitude, value: loc.coordinate.latitude, timestamp: t, source: .device))
+                handler?(MetricSample(kind: .longitude, value: loc.coordinate.longitude, timestamp: t, source: .device))
 
                 if loc.verticalAccuracy >= 0, loc.verticalAccuracy < 15, prev.verticalAccuracy >= 0, dist > 5 {
                     let rawGrade = max(-20, min(20, ((loc.altitude - prev.altitude) / dist) * 100))

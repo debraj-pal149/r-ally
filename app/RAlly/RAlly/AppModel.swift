@@ -57,6 +57,7 @@ final class AppModel {
     var sessionCap: Int = UserDefaults.standard.object(forKey: "rally.cap") as? Int ?? 10
     var didOnboard: Bool = UserDefaults.standard.bool(forKey: "didOnboard")
     var route: AppRoute
+    var selectedTab: MainTab = .run
     var muted = false
     var spokenLine: String?
     var connectedToSim = false
@@ -93,6 +94,7 @@ final class AppModel {
 
     let engine = QuitRiskEngine()
     let trendTracker = TelemetryTrendTracker()
+    let splitEngine = PeriodicSplitEngine()
     var latestReport: CoachFieldReport?
     let sources = DataSourceManager()
     let speech = SpeechEngine()
@@ -209,6 +211,9 @@ final class AppModel {
         finishedAfterCritical = false
         spokenLine = nil
         speech.muted = muted
+        trendTracker.reset()
+        splitEngine.reset()
+        latestReport = nil
 
         // Phone sensors are the primary path. Universal BLE (Polar, Wahoo, Stryd, WHOOP, Garmin)
         // automatically layers live HR, cadence, and power onto the run telemetry.
@@ -274,18 +279,45 @@ final class AppModel {
         #endif
         let ended = Date()
         let started = liveStartedAt ?? ended
+        let distance = liveLatest[.distanceM] ?? 0
+        let duration = liveT
+        let elevationGain = trendTracker.totalElevationGainM
+        let elevationLoss = trendTracker.totalElevationLossM
+        let movingSec = trendTracker.movingDurationSec
+        let rawAvgPace = distance > 0 ? (duration / distance) * 1000 : 0
+        let avgGrade = distance > 0 ? ((elevationGain - elevationLoss) / distance) * 100 : 0
+        let gapAvgPace = GradeAdjustedCalculator.gradeAdjustedPace(rawPaceSecPerKm: rawAvgPace, gradePercent: avgGrade)
+        let splits = trendTracker.lapSplits
+        let hrZones = trendTracker.computeHRZones(maxHR: hrMax)
+        let breadcrumbs = trendTracker.breadcrumbs
+
+        let unlockedPBs = PersonalBestStore.shared.evaluateSession(
+            distanceM: distance,
+            durationSec: duration,
+            elevationGainM: elevationGain,
+            splits: splits
+        )
+
         let rec = WorkoutSessionRecord(
             startedAt: started,
             endedAt: ended,
             activityRaw: activity.rawValue,
-            durationSec: liveT,
-            distanceM: liveLatest[.distanceM] ?? 0,
+            durationSec: duration,
+            distanceM: distance,
             avgHR: liveLatest[.heartRateBpm],
             rallyCount: liveRallies.count,
             outputSpark: engine.store.sparkline(),
             rallies: liveRallies.map { RallyMomentRecord(t: $0.t, kindRaw: $0.kind.rawValue, text: $0.text, aftermath: $0.aftermath) },
             personaRaw: persona.id.rawValue,
-            finishedAfterCritical: finishedAfterCritical
+            finishedAfterCritical: finishedAfterCritical,
+            elevationGainM: elevationGain,
+            elevationLossM: elevationLoss,
+            movingDurationSec: movingSec,
+            gapAveragePaceSecPerKm: gapAvgPace,
+            splits: splits,
+            hrZones: hrZones,
+            routeCoordinates: breadcrumbs,
+            personalBests: unlockedPBs
         )
         lastRecord = rec
         Task { @MainActor in
@@ -328,15 +360,21 @@ final class AppModel {
         let alt = liveLatest[.altitudeM]
         let grade = liveLatest[.gradePercent]
         let dist = liveLatest[.distanceM] ?? 0
+        let lat = liveLatest[.latitude]
+        let lon = liveLatest[.longitude]
 
         trendTracker.recordPoint(
             t: t,
             speedMps: speed,
             hrBpm: hr,
+            maxHR: hrMax,
             cadenceSpm: cadence,
             powerWatts: power,
             altitudeM: alt,
-            gradePercent: grade
+            gradePercent: grade,
+            latitude: lat,
+            longitude: lon,
+            cumulativeDistanceM: dist
         )
 
         // Evaluate closed-loop feedback from last intervention
@@ -345,6 +383,19 @@ final class AppModel {
             if evaluated.result == .surged {
                 // Positively reinforced
             }
+        }
+
+        // Periodic 1-Kilometer Milestone Voice Split
+        if activity == .running,
+           let splitLine = splitEngine.checkKilometerSplit(
+               currentDistanceM: dist,
+               currentElapsedT: t,
+               persona: persona,
+               currentPaceSecPerKm: currentPace
+           ),
+           !speech.speaking,
+           result.trigger == nil {
+            fireDirectSplitLine(splitLine, t: t)
         }
 
         // Check for 34 milestone & telemetry states
@@ -464,6 +515,27 @@ final class AppModel {
         }
     }
 
+    private func fireDirectSplitLine(_ text: String, t: TimeInterval) {
+        lastSpokenTimestamp = t
+        withAnimation(.easeInOut(duration: 0.2)) {
+            spokenLine = text
+        }
+        #if os(iOS)
+        UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+        #endif
+        LifetimePromptMemory.shared.recordSpokenLine(text)
+        speech.speak(text, persona: persona) { [weak self] in
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(2.0))
+                if self?.spokenLine == text {
+                    withAnimation(.easeOut(duration: 0.3)) {
+                        self?.spokenLine = nil
+                    }
+                }
+            }
+        }
+    }
+
     private func updateGoalDone() {
         let done: Bool = {
             switch goal {
@@ -534,6 +606,8 @@ final class AppModel {
             return String(Int(v.rounded()))
         case .motionStationary:
             return v >= 0.5 ? "still" : "move"
+        case .latitude, .longitude:
+            return String(format: "%.5f", v)
         }
     }
 }

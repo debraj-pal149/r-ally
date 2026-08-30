@@ -21,7 +21,7 @@ struct SettingsView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 28)
+                .padding(.bottom, 90)
             }
         }
         .foregroundStyle(Theme.textPrimary)
@@ -30,6 +30,7 @@ struct SettingsView: View {
             ToolbarItem(placement: .topBarLeading) {
                 BackButton(title: "Home") {
                     model.persistProfile()
+                    model.selectedTab = .run
                     model.route = .home
                 }
             }

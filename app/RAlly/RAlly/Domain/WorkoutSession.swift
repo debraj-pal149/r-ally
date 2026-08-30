@@ -12,9 +12,27 @@ final class WorkoutSessionRecord {
     var avgHR: Double?
     var rallyCount: Int
     var outputSpark: [Double]
-    var rallies: [RallyMomentRecord]
     var personaRaw: String
     var finishedAfterCritical: Bool
+
+    // Enhanced Analytics Properties
+    var elevationGainM: Double = 0
+    var elevationLossM: Double = 0
+    var movingDurationSec: Double = 0
+    var gapAveragePaceSecPerKm: Double?
+    var splitsData: Data?
+    var hrZonesData: Data?
+    var routeCoordinatesData: Data?
+    var personalBestsData: Data?
+
+    // Coach's Field Report data
+    var reportHeadline: String?
+    var reportDebrief: String?
+    var reportQuote: String?
+    var reportGrade: String?
+
+    @Relationship(deleteRule: .cascade)
+    var rallies: [RallyMomentRecord] = []
 
     init(
         id: UUID = UUID(),
@@ -26,9 +44,21 @@ final class WorkoutSessionRecord {
         avgHR: Double?,
         rallyCount: Int,
         outputSpark: [Double],
-        rallies: [RallyMomentRecord],
+        rallies: [RallyMomentRecord] = [],
         personaRaw: String,
-        finishedAfterCritical: Bool
+        finishedAfterCritical: Bool,
+        elevationGainM: Double = 0,
+        elevationLossM: Double = 0,
+        movingDurationSec: Double = 0,
+        gapAveragePaceSecPerKm: Double? = nil,
+        splits: [LapSplitRecord] = [],
+        hrZones: [HRZoneBucket] = [],
+        routeCoordinates: [GPSBreadcrumb] = [],
+        personalBests: [PersonalBestAchievement] = [],
+        reportHeadline: String? = nil,
+        reportDebrief: String? = nil,
+        reportQuote: String? = nil,
+        reportGrade: String? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -42,9 +72,42 @@ final class WorkoutSessionRecord {
         self.rallies = rallies
         self.personaRaw = personaRaw
         self.finishedAfterCritical = finishedAfterCritical
+        self.elevationGainM = elevationGainM
+        self.elevationLossM = elevationLossM
+        self.movingDurationSec = movingDurationSec
+        self.gapAveragePaceSecPerKm = gapAveragePaceSecPerKm
+        self.reportHeadline = reportHeadline
+        self.reportDebrief = reportDebrief
+        self.reportQuote = reportQuote
+        self.reportGrade = reportGrade
+
+        self.splitsData = try? JSONEncoder().encode(splits)
+        self.hrZonesData = try? JSONEncoder().encode(hrZones)
+        self.routeCoordinatesData = try? JSONEncoder().encode(routeCoordinates)
+        self.personalBestsData = try? JSONEncoder().encode(personalBests)
     }
 
     var activity: ActivityKind { ActivityKind(rawValue: activityRaw) ?? .running }
+
+    var splits: [LapSplitRecord] {
+        guard let data = splitsData else { return [] }
+        return (try? JSONDecoder().decode([LapSplitRecord].self, from: data)) ?? []
+    }
+
+    var hrZones: [HRZoneBucket] {
+        guard let data = hrZonesData else { return [] }
+        return (try? JSONDecoder().decode([HRZoneBucket].self, from: data)) ?? []
+    }
+
+    var routeCoordinates: [GPSBreadcrumb] {
+        guard let data = routeCoordinatesData else { return [] }
+        return (try? JSONDecoder().decode([GPSBreadcrumb].self, from: data)) ?? []
+    }
+
+    var personalBests: [PersonalBestAchievement] {
+        guard let data = personalBestsData else { return [] }
+        return (try? JSONDecoder().decode([PersonalBestAchievement].self, from: data)) ?? []
+    }
 }
 
 @Model
