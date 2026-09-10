@@ -16,6 +16,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     private var useBooth = true
     private var awaitingBuffers = false
     private var energeticDelivery = true
+    /// Bumps on every stop/speak so late TTS tasks cannot play after cancellation.
+    private var speakGeneration: UInt64 = 0
 
     var voiceId: String = CoachVoiceOption.defaultVoiceId
     var muted = false
@@ -47,7 +49,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         case .elevenLabs:
             return "ElevenLabs Turbo v2.5 low-latency active"
         case .appleFallback:
-            return "No cloud API key in .env — using Apple male fallback"
+            return "No cloud API key in .env. Using Apple male fallback"
         }
     }
 
@@ -80,7 +82,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
                 if let optVal = info[AVAudioSessionInterruptionOptionKey] as? UInt {
                     let opts = AVAudioSession.InterruptionOptions(rawValue: optVal)
                     if opts.contains(.shouldResume) {
-                        self.activateSession()
+                        // Restore route without ducking Spotify until we actually speak again.
+                        self.activateSession(duckOthers: false)
                     }
                 }
             @unknown default:
@@ -104,18 +107,23 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
             self?.previewingVoiceId = nil
             onFinish?()
         }
-        activateSession()
-        let spoken = Self.coachText(voice.previewText)
+        let spoken = DistanceUnitNormalizer.normalize(Self.coachText(voice.previewText), to: DistanceUnit.detect())
+        speaking = true
+        let generation = speakGeneration
 
         Task { @MainActor in
             do {
                 let data = try await CloudTTSService.shared.synthesize(text: spoken, voiceId: voice.id)
-                if await self.playAudioData(data) {
+                guard self.speakGeneration == generation, self.speaking else { return }
+                self.activateSession(duckOthers: true)
+                if await self.playAudioData(data, fadeIn: true) {
                     return
                 }
             } catch {
                 // Fallback to Apple voice preview if cloud request fails
             }
+            guard self.speakGeneration == generation, self.speaking || self.isPreviewing else { return }
+            self.activateSession(duckOthers: true)
             self.speakApple(spoken, persona: Persona.named(.sarge), energetic: true, labelPrefix: "Preview · ")
         }
     }
@@ -124,37 +132,61 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         guard !muted else { onFinish(); return }
         stop()
         self.onFinish = onFinish
-        activateSession()
-        let spoken = Self.coachText(text)
+        let spoken = DistanceUnitNormalizer.normalize(Self.coachText(text), to: DistanceUnit.detect())
         activePersona = persona
         self.voiceId = persona.voiceId
+        // Claim the speaking lock immediately so tick() cannot double-fire while TTS synthesizes.
+        speaking = true
+        let generation = speakGeneration
 
         Task { @MainActor in
-            // Try cloud TTS with low latency
+            // Synthesize FIRST. Only duck music when audio is ready to play.
             if CloudTTSService.hasCloudAPI {
                 do {
                     let data = try await CloudTTSService.shared.synthesize(text: spoken, voiceId: persona.voiceId)
-                    if await self.playAudioData(data) {
+                    guard self.speakGeneration == generation, self.speaking else { return }
+                    self.activateSession(duckOthers: true)
+                    if await self.playAudioData(data, fadeIn: true) {
                         return
                     }
                 } catch {
                     // Failover seamlessly to Apple male neural
                 }
             }
+            guard self.speakGeneration == generation, self.speaking else { return }
+            self.activateSession(duckOthers: true)
             self.speakApple(spoken, persona: persona, energetic: true, labelPrefix: "Fallback · ")
         }
     }
 
-    private func playAudioData(_ data: Data) async -> Bool {
+    /// Warm the playback route at workout start without ducking Spotify yet.
+    func warmSession() {
+        #if os(iOS)
+        let session = AVAudioSession.sharedInstance()
+        do {
+            // mixWithOthers only. DuckOthers would pull music down before any coach audio is ready.
+            try session.setCategory(.playback, mode: .spokenAudio, options: [.mixWithOthers])
+            try session.setActive(true, options: [])
+        } catch {}
+        #endif
+    }
+
+    private func playAudioData(_ data: Data, fadeIn: Bool = false) async -> Bool {
         do {
             let player = try AVAudioPlayer(data: data)
             player.delegate = self
             player.enableRate = true
             player.rate = 1.05
+            if fadeIn {
+                player.volume = 0.0
+            }
             player.prepareToPlay()
             audioPlayer = player
             speaking = true
             if !player.play() { return false }
+            if fadeIn {
+                player.setVolume(1.0, fadeDuration: 0.05)
+            }
             return true
         } catch {
             return false
@@ -172,6 +204,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     }
 
     func stop() {
+        speakGeneration &+= 1
         pendingChunks.removeAll()
         awaitingBuffers = false
         synth.stopSpeaking(at: .immediate)
@@ -319,6 +352,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         for vocative in ["Kid", "Champ", "Coach", "Soldier", "Chief"] {
             t = t.replacingOccurrences(of: "\(vocative) ", with: "\(vocative), ")
         }
+        t = DashNormalizer.normalize(t)
         t = t.replacingOccurrences(of: "  ", with: " ")
         if let last = t.last, !".!?".contains(last) {
             t += "."
@@ -328,8 +362,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
     nonisolated static func breathChunks(_ text: String) -> [String] {
         let marked = text
-            .replacingOccurrences(of: " — ", with: "|")
-            .replacingOccurrences(of: "—", with: "|")
+            .replacingOccurrences(of: ". ", with: "|")
+            .replacingOccurrences(of: ", ", with: "|")
             .replacingOccurrences(of: "; ", with: "|")
         let parts = marked
             .split(separator: "|")
@@ -346,7 +380,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         let pause: [NSAttributedString.Key: Any] = [
             NSAttributedString.Key(rawValue: "UIAccessibilitySpeechAttributePause"): 0.16
         ]
-        for token in [",", "—", " – "] {
+        for token in [",", ", ", ". "] {
             var search = 0
             while search < ns.length {
                 let found = ns.range(of: token, range: NSRange(location: search, length: ns.length - search))
@@ -374,11 +408,14 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         return out
     }
 
-    private func activateSession() {
+    private func activateSession(duckOthers: Bool = true) {
         #if os(iOS)
         let session = AVAudioSession.sharedInstance()
         do {
-            try session.setCategory(.playback, mode: .spokenAudio, options: [.duckOthers, .interruptSpokenAudioAndMixWithOthers])
+            let opts: AVAudioSession.CategoryOptions = duckOthers
+                ? [.duckOthers, .interruptSpokenAudioAndMixWithOthers]
+                : [.mixWithOthers]
+            try session.setCategory(.playback, mode: .spokenAudio, options: opts)
             try session.setActive(true, options: [])
         } catch {}
         #endif
@@ -386,7 +423,11 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
     private func deactivateSession() {
         #if os(iOS)
-        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        // Soft restore: brief delay so music doesn't slam back mid-word echo
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(120))
+            try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        }
         #endif
     }
 }

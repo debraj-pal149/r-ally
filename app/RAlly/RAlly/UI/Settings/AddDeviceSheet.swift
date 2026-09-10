@@ -158,7 +158,6 @@ struct AddDeviceSheet: View {
         .sheet(item: $selectedDeviceForPairing) { device in
             bleScanSheet(device)
         }
-        .preferredColorScheme(.dark)
         .onAppear {
             model.universalBle.startScanning()
         }
@@ -334,6 +333,5 @@ struct AddDeviceSheet: View {
             .padding(20)
         }
         .presentationDetents([.medium])
-        .preferredColorScheme(.dark)
     }
 }

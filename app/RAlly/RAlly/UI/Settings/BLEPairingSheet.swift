@@ -56,7 +56,6 @@ struct BLEPairingSheet: View {
             .padding(22)
         }
         .presentationDetents([.medium, .large])
-        .preferredColorScheme(.dark)
         .onAppear { model.ble.startScan() }
     }
 }

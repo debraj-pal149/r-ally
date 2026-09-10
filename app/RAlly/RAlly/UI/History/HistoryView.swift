@@ -41,12 +41,7 @@ struct HistoryView: View {
                                             .foregroundStyle(Theme.textMuted)
                                     }
                                     .padding(16)
-                                    .background(Theme.surface.opacity(0.88))
-                                    .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                            .stroke(Theme.hairline, lineWidth: 1)
-                                    )
+                                    .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                                 }
                                 .buttonStyle(.plain)
                                 .foregroundStyle(Theme.textPrimary)

@@ -50,7 +50,19 @@ struct AnthropicClient: Sendable {
             return trimmed
         }()
         guard let data = json.data(using: .utf8) else { throw URLError(.cannotDecodeContentData) }
-        return try JSONDecoder().decode(PepLines.self, from: data)
+        return Self.scrub(try JSONDecoder().decode(PepLines.self, from: data))
+    }
+
+    private static func scrub(_ pep: PepLines) -> PepLines {
+        var p = pep
+        p.pre_quit_fade = DashNormalizer.normalizeLines(p.pre_quit_fade)
+        p.pace_slip = p.pace_slip.map(DashNormalizer.normalizeLines)
+        p.keep_going = p.keep_going.map(DashNormalizer.normalizeLines)
+        p.stopped = DashNormalizer.normalizeLines(p.stopped)
+        p.still_stopped = p.still_stopped.map(DashNormalizer.normalizeLines)
+        p.recovery = p.recovery.map(DashNormalizer.normalizeLines)
+        p.grind_support = DashNormalizer.normalizeLines(p.grind_support)
+        return p
     }
 
     private struct MessagesResponse: Codable {

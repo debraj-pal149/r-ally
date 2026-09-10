@@ -85,7 +85,7 @@ final class MetricStore: @unchecked Sendable {
 
     /// Advance the 1 Hz grid to integer second `t` (floor).
     /// When `freezeBaseline` is true (athlete stopped), do not decay `baseOut` toward zero.
-    /// When `reseedFromFrozen` is true (just left stopped), restore pre-stop baseline — don't resume from a decayed value.
+    /// When `reseedFromFrozen` is true (just left stopped), restore pre-stop baseline. Don't resume from a decayed value.
     func tick(t: TimeInterval, channelsIn: EngineChannels, freezeBaseline: Bool = false, reseedFromFrozen: Bool = false) -> StoreSnapshot {
         let tt = floor(t)
         outputHistory.append((tt, channelsIn.output))

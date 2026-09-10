@@ -32,6 +32,6 @@ struct FallbackLinesTests {
 struct SpeechCoachTests {
     @Test func coachTextAddsCadence() {
         #expect(SpeechEngine.coachText("Kid stay in it") == "Kid, stay in it.")
-        #expect(SpeechEngine.breathChunks("Hold. — Now go.").count == 2)
+        #expect(SpeechEngine.breathChunks("Hold.. Now go.").count == 2)
     }
 }

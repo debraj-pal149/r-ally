@@ -11,7 +11,7 @@ struct RunningAdapter: ActivityAdapter {
         if let g = latest[.gradePercent], speed >= EngineConstants.vStop {
             speed *= max(0.5, 1 + 0.033 * g)
         }
-        // Kill GPS wander at rest — engine must see a hard zero when standing.
+        // Kill GPS wander at rest. Engine must see a hard zero when standing.
         if speed < EngineConstants.vStop {
             speed = 0
         }

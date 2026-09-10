@@ -21,7 +21,7 @@ struct ActivityCarousel: View {
                             Image(systemName: act.symbol)
                                 .font(.system(size: 28, weight: .semibold))
                                 .frame(width: 48, height: 48)
-                                .background(on ? Color.white.opacity(0.16) : Theme.surfaceRaised)
+                                .background(on ? Theme.onAccent.opacity(0.16) : Theme.surfaceRaised)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             VStack(alignment: .leading, spacing: 4) {
                                 Text(act.title.uppercased())
@@ -30,7 +30,7 @@ struct ActivityCarousel: View {
                                 Text("PHONE · GPS · CADENCE")
                                     .font(Theme.label(10, .bold))
                                     .tracking(1.2)
-                                    .foregroundStyle(on ? Color.white.opacity(0.8) : Theme.emberSoft)
+                                    .foregroundStyle(on ? Theme.onAccent.opacity(0.85) : Theme.emberSoft)
                             }
                             Spacer(minLength: 0)
                         }
@@ -41,11 +41,11 @@ struct ActivityCarousel: View {
                                 ? LinearGradient(colors: [Theme.ember, Theme.emberDeep], startPoint: .topLeading, endPoint: .bottomTrailing)
                                 : LinearGradient(colors: [Theme.surface, Theme.surface], startPoint: .top, endPoint: .bottom)
                         )
-                        .foregroundStyle(on ? Color.white : Theme.textPrimary)
+                        .foregroundStyle(on ? Theme.onAccent : Theme.textPrimary)
                         .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
                         .overlay(
                             RoundedRectangle(cornerRadius: 20, style: .continuous)
-                                .stroke(on ? Color.white.opacity(0.18) : Theme.hairline, lineWidth: 1)
+                                .stroke(on ? Theme.onAccent.opacity(0.22) : Theme.hairline, lineWidth: 1)
                         )
                         .shadow(color: on ? Theme.ember.opacity(0.35) : .clear, radius: 14, y: 6)
                     }

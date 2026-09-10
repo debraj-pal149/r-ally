@@ -5,7 +5,7 @@ struct LiveWorkoutView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Atmosphere(intensity: 0.55)
             RadialGradient(
                 colors: [Theme.ringColor(state: model.liveState, locomotion: model.liveLocomotion).opacity(0.22), Color.clear],
                 center: .center,
@@ -54,12 +54,7 @@ struct LiveWorkoutView: View {
                 MetricTiles()
                     .padding(.vertical, 18)
                     .padding(.horizontal, 8)
-                    .background(Theme.surface.opacity(0.72))
-                    .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 22, style: .continuous)
-                            .stroke(Theme.hairline, lineWidth: 1)
-                    )
+                    .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                     .padding(.top, 32)
                     .padding(.horizontal, 20)
 
@@ -112,10 +107,9 @@ struct LiveWorkoutView: View {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(Theme.textPrimary)
                     .frame(width: 56, height: 56)
-                    .background(Theme.surfaceRaised.opacity(0.9))
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Theme.hairline, lineWidth: 1))
+                    .rallyGlassCircle(.interactive, tint: nil)
                 Text(label.uppercased())
                     .font(Theme.label(11, .semibold))
                     .tracking(1)
@@ -123,7 +117,6 @@ struct LiveWorkoutView: View {
             }
         }
         .buttonStyle(.plain)
-        .foregroundStyle(Theme.textPrimary)
         .accessibilityLabel(label)
     }
 }

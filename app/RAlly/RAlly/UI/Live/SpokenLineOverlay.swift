@@ -6,20 +6,11 @@ struct SpokenLineOverlay: View {
 
     var body: some View {
         ZStack {
-            // Frosted blur backdrop over the live workout numbers
-            Rectangle()
-                .fill(.ultraThinMaterial)
+            Color.black.opacity(0.35)
                 .ignoresSafeArea()
+                .allowsHitTesting(false)
 
-            // Dark gradient overlay for high contrast
-            LinearGradient(
-                colors: [Color.black.opacity(0.75), Color.black.opacity(0.88)],
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .ignoresSafeArea()
-
-            VStack(spacing: 20) {
+            VStack(spacing: 18) {
                 HStack(spacing: 6) {
                     Circle()
                         .fill(Theme.ember)
@@ -32,13 +23,16 @@ struct SpokenLineOverlay: View {
                 }
 
                 Text(text.uppercased())
-                    .font(Theme.display(34))
+                    .font(Theme.display(32))
                     .multilineTextAlignment(.center)
                     .foregroundStyle(Theme.textPrimary)
-                    .padding(.horizontal, 28)
-                    .shadow(color: .black.opacity(0.6), radius: 16, y: 6)
+                    .padding(.horizontal, 8)
             }
-            .padding(.vertical, 40)
+            .padding(.horizontal, 22)
+            .padding(.vertical, 28)
+            .frame(maxWidth: 340)
+            .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: .black.opacity(0.45), radius: 24, y: 10)
         }
         .contentShape(Rectangle())
         .onTapGesture {

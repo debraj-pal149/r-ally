@@ -16,6 +16,9 @@ struct LineContext: Sendable {
     var paceSlopeDescription: String = "steady"
     var milestoneState: MilestoneState? = nil
     var closedLoopFeedback: String? = nil
+    var distanceUnit: DistanceUnit = .kilometre
+    var athleteHistoryLines: [String] = []
+    var historyCue: String? = nil
 }
 
 @MainActor
@@ -25,6 +28,8 @@ final class LineCache {
     private var generatedDistance: Double = 0
     private var persona: Persona.ID?
     private var inflight = false
+    /// If a pop wanted a refill while prefetch was in flight, run it next.
+    private var pendingRefill: (ctx: LineContext, justSpoken: String?)? = nil
     private let client: AnthropicClient
     var llmOffline = false
 
@@ -43,60 +48,46 @@ final class LineCache {
                 return
             }
         }
-        inflight = true
-        let sys = PromptBuilder.system(persona: ctx.persona, runnerLevel: ctx.runnerLevel)
-        let blacklist = LifetimePromptMemory.shared.dynamicBlacklist
-        let user = PromptBuilder.user(.init(
-            activity: ctx.activity,
-            elapsed: ctx.elapsed,
-            progressLabel: ctx.progressLabel,
-            snapshot: ctx.snapshot,
-            prompt: ctx.prompt,
-            athleteName: ctx.name,
-            intensityMaximum: ctx.intensityMaximum,
-            recent: ctx.recent,
-            persona: ctx.persona,
-            runnerLevel: ctx.runnerLevel,
-            paceSlopeDescription: ctx.paceSlopeDescription,
-            milestoneState: ctx.milestoneState,
-            closedLoopFeedback: ctx.closedLoopFeedback,
-            burnedPhrasesBlacklist: blacklist
-        ))
-        Task {
-            defer { inflight = false }
-            do {
-                let pep = try await client.generate(system: sys, user: user)
-                self.lines = pep
-                self.generatedAt = ctx.elapsed
-                self.generatedDistance = ctx.distanceM
-                self.persona = ctx.persona.id
-                self.llmOffline = false
-            } catch {
-                self.llmOffline = true
-            }
-        }
+        startGenerate(ctx: ctx, justSpoken: nil)
     }
 
     func pop(kind: TriggerKind, ctx: LineContext) -> (text: String, sourceLLM: Bool) {
+        let priors = rejectionPriors(for: ctx)
         if let lines {
-            let arr: [String] = {
-                switch kind {
-                case .preQuitFade: lines.pre_quit_fade
-                case .paceSlip: lines.pace_slip ?? lines.pre_quit_fade
-                case .keepGoing: lines.keep_going ?? lines.grind_support
-                case .stopped: lines.stopped
-                case .stillStopped: lines.still_stopped ?? lines.stopped
-                case .recovery: lines.recovery ?? lines.grind_support
-                case .grindSupport, .finalPush, .milestone: lines.grind_support
-                }
-            }()
-            if let first = arr.first(where: { !ctx.recent.contains($0) }) ?? arr.first {
-                self.lines = mutate(lines, kind: kind, dropping: first)
-                Task { refill(ctx: ctx) }
-                return (first, true)
+            let arr = array(for: kind, in: lines)
+            if let pick = arr.first(where: { !PhraseFingerprint.isTooSimilar($0, to: priors) }) {
+                self.lines = mutate(lines, kind: kind, dropping: pick)
+                let normalized = DistanceUnitNormalizer.normalize(pick, to: ctx.distanceUnit)
+                requestRefill(ctx: ctx, justSpoken: normalized)
+                return (normalized, true)
             }
+            // Cache exhausted of fresh lines. Drop stale batch and refill with full avoid context.
+            self.lines = nil
+            requestRefill(ctx: ctx, justSpoken: nil)
         }
         return (FallbackLines.line(kind: kind, ctx: ctx), false)
+    }
+
+    private func array(for kind: TriggerKind, in lines: PepLines) -> [String] {
+        switch kind {
+        case .preQuitFade: lines.pre_quit_fade
+        case .paceSlip: lines.pace_slip ?? lines.pre_quit_fade
+        case .keepGoing: lines.keep_going ?? lines.grind_support
+        case .stopped: lines.stopped
+        case .stillStopped: lines.still_stopped ?? lines.stopped
+        case .recovery: lines.recovery ?? lines.grind_support
+        case .grindSupport, .finalPush, .milestone: lines.grind_support
+        }
+    }
+
+    private func rejectionPriors(for ctx: LineContext) -> [String] {
+        var seen = Set<String>()
+        var out: [String] = []
+        for line in ctx.recent + LifetimePromptMemory.shared.rejectionPriors {
+            let key = line.lowercased()
+            if seen.insert(key).inserted { out.append(line) }
+        }
+        return out
     }
 
     private func mutate(_ pep: PepLines, kind: TriggerKind, dropping: String) -> PepLines {
@@ -125,22 +116,75 @@ final class LineCache {
         return p
     }
 
-    private func refill(ctx: LineContext) {
+    private func requestRefill(ctx: LineContext, justSpoken: String?) {
+        if inflight {
+            // Prefer the refill that knows what was just spoken.
+            if pendingRefill == nil || justSpoken != nil {
+                pendingRefill = (ctx, justSpoken)
+            }
+            return
+        }
+        startGenerate(ctx: ctx, justSpoken: justSpoken)
+    }
+
+    private func startGenerate(ctx: LineContext, justSpoken: String?) {
         guard client.isConfigured else { return }
         inflight = true
-        let sys = PromptBuilder.system(persona: ctx.persona)
-        let user = PromptBuilder.user(.init(
-            activity: ctx.activity, elapsed: ctx.elapsed, progressLabel: ctx.progressLabel,
-            snapshot: ctx.snapshot, prompt: ctx.prompt, athleteName: ctx.name,
-            intensityMaximum: ctx.intensityMaximum, recent: ctx.recent, persona: ctx.persona
-        ))
+        var extra: [String] = []
+        if let justSpoken { extra.append(justSpoken) }
+        let promptCtx = makePromptContext(from: ctx, extraRecent: extra)
+        let sys = PromptBuilder.system(
+            persona: ctx.persona,
+            runnerLevel: ctx.runnerLevel,
+            distanceUnit: ctx.distanceUnit
+        )
+        let user = PromptBuilder.user(promptCtx)
         Task {
-            defer { inflight = false }
-            if let pep = try? await client.generate(system: sys, user: user) {
+            defer {
+                self.inflight = false
+                if let pending = self.pendingRefill {
+                    self.pendingRefill = nil
+                    self.startGenerate(ctx: pending.ctx, justSpoken: pending.justSpoken)
+                }
+            }
+            do {
+                let pep = try await client.generate(system: sys, user: user)
                 self.lines = pep
                 self.generatedAt = ctx.elapsed
                 self.generatedDistance = ctx.distanceM
+                self.persona = ctx.persona.id
+                self.llmOffline = false
+            } catch {
+                self.llmOffline = true
             }
         }
+    }
+
+    private func makePromptContext(from ctx: LineContext, extraRecent: [String]) -> PromptBuilder.Context {
+        let memory = LifetimePromptMemory.shared
+        var recent = extraRecent + ctx.recent
+        // Dedupe while preserving order
+        var seen = Set<String>()
+        recent = recent.filter { seen.insert($0.lowercased()).inserted }
+        return PromptBuilder.Context(
+            activity: ctx.activity,
+            elapsed: ctx.elapsed,
+            progressLabel: ctx.progressLabel,
+            snapshot: ctx.snapshot,
+            prompt: ctx.prompt,
+            athleteName: ctx.name,
+            intensityMaximum: ctx.intensityMaximum,
+            recent: recent,
+            persona: ctx.persona,
+            runnerLevel: ctx.runnerLevel,
+            paceSlopeDescription: ctx.paceSlopeDescription,
+            milestoneState: ctx.milestoneState,
+            closedLoopFeedback: ctx.closedLoopFeedback,
+            burnedPhrasesBlacklist: memory.dynamicBlacklist,
+            distanceUnit: ctx.distanceUnit,
+            athleteHistoryLines: ctx.athleteHistoryLines,
+            historyCue: ctx.historyCue,
+            avoidMotifs: memory.leanMotifBlacklist
+        )
     }
 }

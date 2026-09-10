@@ -1,47 +1,57 @@
 import Foundation
 
-/// In-Run Periodic 1-Kilometer Milestone Voice Engine.
-/// Detects integer kilometer crossovers (1.0 km, 2.0 km, 3.0 km...) and prepares
-/// concise, in-character vocal announcements without blocking quit-risk prompts.
+/// In-Run Periodic Distance Milestone Voice Engine.
+/// Detects integer kilometre (or mile) crossovers and prepares concise split announcements.
 final class PeriodicSplitEngine: @unchecked Sendable {
-    private var lastAnnouncedKm: Int = 0
+    private var lastAnnouncedUnit: Int = 0
     private var lastSplitTimestamp: TimeInterval = 0
     private var lastSplitDistance: Double = 0
 
     func reset() {
-        lastAnnouncedKm = 0
+        lastAnnouncedUnit = 0
         lastSplitTimestamp = 0
         lastSplitDistance = 0
     }
 
-    /// Checks if a new integer kilometer mark has been crossed and returns a spoken split line if due.
     func checkKilometerSplit(
         currentDistanceM: Double,
         currentElapsedT: TimeInterval,
         persona: Persona,
-        currentPaceSecPerKm: Double
+        currentPaceSecPerKm: Double,
+        unit: DistanceUnit = .kilometre
     ) -> String? {
-        let currentKm = Int(currentDistanceM / 1000.0)
-        guard currentKm > lastAnnouncedKm, currentKm >= 1 else { return nil }
+        let segmentM = unit == .mile ? 1609.344 : 1000.0
+        let currentMark = Int(currentDistanceM / segmentM)
+        guard currentMark > lastAnnouncedUnit, currentMark >= 1 else { return nil }
 
         let splitDuration = currentElapsedT - lastSplitTimestamp
         let splitPace = splitDuration > 0 ? splitDuration : currentPaceSecPerKm
-        let paceText = Formatters.pace(splitPace)
+        // Formatters.pace expects sec/km; for miles convert if needed for display consistency
+        let paceForDisplay: Double = {
+            if unit == .mile {
+                // splitDuration for one mile segment → sec/mile; convert to sec/km for Formatters? Better show unit pace.
+                return splitPace // already duration of one segment
+            }
+            return splitPace
+        }()
+        let paceText = Formatters.pace(unit == .mile ? (paceForDisplay / 1.609344) : paceForDisplay)
 
-        lastAnnouncedKm = currentKm
+        lastAnnouncedUnit = currentMark
         lastSplitTimestamp = currentElapsedT
         lastSplitDistance = currentDistanceM
 
-        // Generate persona-tailored discrete split line
+        let label = unit == .mile ? "Mile" : "Kilometre"
+        let labelLower = unit == .mile ? "mile" : "kilometre"
+
         switch persona.id {
         case .sarge:
-            return "Kilometer \(currentKm) down. Split pace: \(paceText). Keep those boots driving."
+            return "\(label) \(currentMark) down. Split pace: \(paceText). Keep those boots driving."
         case .southpaw:
-            return "Round \(currentKm) in the book, kid. Pace: \(paceText). Stay light and stay mean."
+            return "Round \(currentMark) in the book, kid. Pace: \(paceText). Stay light and stay mean."
         case .machine:
-            return "Kilometer \(currentKm) complete. Split: \(paceText). Output consistent."
+            return "\(label) \(currentMark) complete. Split: \(paceText). Output consistent."
         default:
-            return "Kilometer \(currentKm) logged. Pace: \(paceText). Hold that rhythm and keep rolling."
+            return "\(label) \(currentMark) logged. Pace: \(paceText). Hold that \(labelLower) rhythm and keep rolling."
         }
     }
 }

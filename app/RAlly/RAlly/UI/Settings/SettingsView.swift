@@ -11,6 +11,7 @@ struct SettingsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
                     PosterText(text: "Corner", size: 38)
+                    appearanceCard
                     sourceCard
                     runnerLevelCard
                     voiceAuditionDashboard
@@ -21,24 +22,64 @@ struct SettingsView: View {
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 90)
+                .padding(.bottom, 110)
             }
         }
         .foregroundStyle(Theme.textPrimary)
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                BackButton(title: "Home") {
-                    model.persistProfile()
-                    model.selectedTab = .run
-                    model.route = .home
-                }
-            }
-        }
+        .navigationBarHidden(true)
         .sheet(isPresented: $showAddDevice) {
             AddDeviceSheet()
         }
         .onDisappear { model.persistProfile() }
+    }
+
+    var appearanceCard: some View {
+        HairlineCard {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionLabel(text: "Appearance")
+                Text("Follows your iPhone setting by default.")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textMuted)
+
+                HStack(spacing: 8) {
+                    ForEach(AppearanceMode.allCases) { mode in
+                        let on = model.appearanceMode == mode
+                        Button {
+                            Haptics.selection()
+                            withAnimation(Theme.spring) {
+                                model.appearanceMode = mode
+                            }
+                        } label: {
+                            Text(mode.title.uppercased())
+                                .font(Theme.label(11, .bold))
+                                .tracking(0.8)
+                                .foregroundStyle(on ? Theme.onAccent : Theme.textPrimary)
+                                .frame(maxWidth: .infinity, minHeight: 36)
+                                .background {
+                                    if on {
+                                        Capsule()
+                                            .fill(
+                                                LinearGradient(
+                                                    colors: [Theme.ember, Theme.emberDeep],
+                                                    startPoint: .top,
+                                                    endPoint: .bottom
+                                                )
+                                            )
+                                    } else {
+                                        Capsule()
+                                            .fill(Theme.surfaceRaised.opacity(0.55))
+                                            .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                                    }
+                                }
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Appearance \(mode.title)")
+                        .accessibilityAddTraits(on ? .isSelected : [])
+                    }
+                }
+            }
+        }
     }
 
     var sourceCard: some View {
@@ -60,10 +101,8 @@ struct SettingsView: View {
                         }
                         .padding(.horizontal, 9)
                         .padding(.vertical, 4)
-                        .background(Theme.surfaceRaised)
-                        .foregroundStyle(Theme.emberSoft)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                        .foregroundStyle(Theme.textPrimary)
+                        .rallyGlassCapsule(.interactive)
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Add device or source")
@@ -89,8 +128,7 @@ struct SettingsView: View {
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(Theme.surface)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .rallyGlass(.clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
 
                     // Connected BLE sensors
                     ForEach(model.universalBle.connectedDeviceNames, id: \.self) { bleName in
@@ -113,8 +151,7 @@ struct SettingsView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .rallyGlass(.clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
 
                     // Connected Cloud Wearables
@@ -138,8 +175,7 @@ struct SettingsView: View {
                         }
                         .padding(.horizontal, 12)
                         .padding(.vertical, 8)
-                        .background(Theme.surface)
-                        .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                        .rallyGlass(.clear, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
                     }
                 }
             }
@@ -176,9 +212,15 @@ struct SettingsView: View {
                             }
                             .padding(.horizontal, 12)
                             .padding(.vertical, 10)
-                            .background(selected ? Theme.surfaceRaised : Theme.surface)
-                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 10).stroke(selected ? Theme.ember.opacity(0.4) : Theme.hairline, lineWidth: 1))
+                            .rallyGlass(
+                                selected ? .tinted : .clear,
+                                in: RoundedRectangle(cornerRadius: 10, style: .continuous),
+                                tint: Theme.emberDeep
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    .stroke(selected ? Theme.ember.opacity(0.5) : Color.clear, lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
@@ -217,8 +259,7 @@ struct SettingsView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 3)
-        .background(Theme.surfaceRaised)
-        .clipShape(Capsule())
+        .rallyGlassCapsule(.clear)
     }
 
     private func voiceOptionRow(_ p: Persona) -> some View {
@@ -290,21 +331,18 @@ struct SettingsView: View {
                         .tracking(0.8)
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(Theme.surfaceRaised)
                         .foregroundStyle(Theme.textPrimary)
-                        .clipShape(Capsule())
-                        .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                        .rallyGlassCapsule(.interactive)
                 }
                 .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
-        .background(isSelected ? Theme.ember.opacity(0.08) : Theme.surface)
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .overlay(
             RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .stroke(isSelected ? Theme.ember.opacity(0.4) : Theme.hairline, lineWidth: 1)
+                .stroke(isSelected ? Theme.ember.opacity(0.55) : Color.clear, lineWidth: 1)
         )
     }
 
@@ -315,8 +353,7 @@ struct SettingsView: View {
                 TextField("Name", text: Bindable(model).name)
                     .font(Theme.body(16))
                     .padding(12)
-                    .background(Theme.surfaceRaised)
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .rallyGlass(.clear, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
                 GoalStepper(label: "\(model.age) yrs", onMinus: {
                     model.age = max(14, model.age - 1)
                 }, onPlus: {

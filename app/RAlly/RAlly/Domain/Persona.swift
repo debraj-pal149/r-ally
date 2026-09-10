@@ -24,7 +24,7 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             id: .sarge,
             name: "Sarge",
             tagline: "Barked. Clipped. Zero pity.",
-            archetype: "a dry close-mic drill coach — clipped, commanding authority",
+            archetype: "a dry close-mic drill coach. Clipped, commanding authority",
             styleRules: "Barked, clipped, zero pity, intense authority. Clean language always. Sound like a drill instructor in the ear.",
             monogram: "G",
             symbol: "megaphone.fill",
@@ -137,7 +137,7 @@ enum EngineState: String, Codable, Sendable {
     case pausedUnknown = "PAUSED_UNKNOWN"
 }
 
-/// Sticky motion class — drives REST UI and rest-nag prompts. Independent of risk CRITICAL.
+/// Sticky motion class. Drives REST UI and rest-nag prompts. Independent of risk CRITICAL.
 enum Locomotion: String, Codable, Sendable {
     case moving
     case slowing

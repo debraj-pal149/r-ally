@@ -48,7 +48,7 @@ final class AnalyticsAndPBsTests: XCTestCase {
             currentPaceSecPerKm: 300
         )
         XCTAssertNotNil(line1)
-        XCTAssertTrue(line1!.contains("Kilometer 1"))
+        XCTAssertTrue(line1!.contains("Kilometre 1") || line1!.contains("Kilometer 1"))
         XCTAssertTrue(line1!.contains("5:12"))
 
         // Still in KM 1, should not repeat

@@ -16,8 +16,16 @@ final class LifetimePromptMemory {
     private let storageKey = "rally.lifetime.burned_records"
     private var entries: [BurnedPhraseEntry] = []
 
+    /// In-run spoken lines (cleared each workout). Used for hard near-dupe rejection.
+    private(set) var runSpokenLines: [String] = []
+    private let maxRunLines = 40
+
     init() {
         loadEntries()
+    }
+
+    func beginRun() {
+        runSpokenLines.removeAll(keepingCapacity: true)
     }
 
     private func loadEntries() {
@@ -42,6 +50,12 @@ final class LifetimePromptMemory {
         let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
+        runSpokenLines.removeAll { $0.caseInsensitiveCompare(trimmed) == .orderedSame }
+        runSpokenLines.insert(trimmed, at: 0)
+        if runSpokenLines.count > maxRunLines {
+            runSpokenLines = Array(runSpokenLines.prefix(maxRunLines))
+        }
+
         // Remove duplicate entry if already present and prepend fresh record
         entries.removeAll { $0.text.caseInsensitiveCompare(trimmed) == .orderedSame }
         entries.insert(BurnedPhraseEntry(text: trimmed, timestamp: Date()), at: 0)
@@ -54,6 +68,20 @@ final class LifetimePromptMemory {
         saveEntries()
     }
 
+    /// Priors for hard rejection: this-run lines first, then recent lifetime.
+    var rejectionPriors: [String] {
+        var seen = Set<String>()
+        var out: [String] = []
+        for line in runSpokenLines + recent3DayPhrases {
+            let key = line.lowercased()
+            if seen.insert(key).inserted {
+                out.append(line)
+            }
+            if out.count >= 24 { break }
+        }
+        return out
+    }
+
     /// Returns a lean list of phrases spoken within the last 3 days (max 6-8 items)
     /// to keep LLM token usage and latency to an absolute minimum.
     var recent3DayPhrases: [String] {
@@ -62,21 +90,28 @@ final class LifetimePromptMemory {
         return Array(activeRecent.prefix(8).map { $0.text })
     }
 
-    /// Dynamic blacklist for LLM prompt generation.
+    /// Dynamic blacklist for LLM prompt generation. Full lines (few) + lean motifs.
     var dynamicBlacklist: [String] {
-        recent3DayPhrases
+        var out: [String] = []
+        // Prefer freshest full lines from this run (exact avoid)
+        for line in runSpokenLines.prefix(4) {
+            out.append(line)
+        }
+        // Top lifetime lines not already included
+        for line in recent3DayPhrases where !out.contains(line) {
+            out.append(line)
+            if out.count >= 6 { break }
+        }
+        return out
     }
 
-    /// Checks if a proposed candidate line is too similar to any phrase from the last 3 days.
+    /// Token-cheap motif hints for the prompt (bigrams / short stems).
+    var leanMotifBlacklist: [String] {
+        PhraseFingerprint.leanMotifs(from: runSpokenLines + recent3DayPhrases, limit: 10)
+    }
+
+    /// Hard gate: candidate too similar to this-run or recent burned lines.
     func isTooSimilarToBurned(_ candidate: String) -> Bool {
-        let candidateLower = candidate.lowercased()
-        for phrase in recent3DayPhrases {
-            let phraseLower = phrase.lowercased()
-            if candidateLower == phraseLower { return true }
-            if candidateLower.contains(phraseLower) || phraseLower.contains(candidateLower) {
-                return true
-            }
-        }
-        return false
+        PhraseFingerprint.isTooSimilar(candidate, to: rejectionPriors)
     }
 }

@@ -98,12 +98,7 @@ struct WorkoutDetailView: View {
             }
         }
         .padding(18)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func metricCell(label: String, value: String) -> some View {
@@ -113,7 +108,7 @@ struct WorkoutDetailView: View {
                 .foregroundColor(Theme.secondaryText)
             Text(value)
                 .font(Theme.font(size: 18, weight: .black))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.textPrimary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -132,7 +127,7 @@ struct WorkoutDetailView: View {
                 HStack {
                     Text(pb.title)
                         .font(Theme.font(size: 13, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.textPrimary)
                     Spacer()
                     Text(pb.formattedValue)
                         .font(Theme.font(size: 13, weight: .black))
@@ -142,11 +137,6 @@ struct WorkoutDetailView: View {
             }
         }
         .padding(14)
-        .background(Theme.accent.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
-        )
+        .rallyGlass(.tinted, in: RoundedRectangle(cornerRadius: 14, style: .continuous), tint: Theme.accent)
     }
 }

@@ -39,7 +39,7 @@ targets:
     info:
       path: RAlly/Info.plist
       properties:
-        CFBundleDisplayName: r-ally
+        CFBundleDisplayName: R·ALLY
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait

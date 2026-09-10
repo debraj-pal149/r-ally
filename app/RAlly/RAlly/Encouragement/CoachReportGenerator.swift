@@ -27,6 +27,7 @@ final class CoachReportGenerator {
         Athlete Runner Level: \(runnerLevel.rawValue).
         Number of times they fought through quit-risk / rallied: \(record.rallyCount).
         Style: In-character, gritty, authentic, raw, proud. No generic corporate fitness advice.
+        Never use em dashes or en dashes. Use commas, periods, or a plain hyphen (-) only.
 
         Output ONLY valid JSON with keys:
         {
@@ -67,7 +68,13 @@ final class CoachReportGenerator {
                     return trimmed
                 }()
                 if let decoded = try? JSONDecoder().decode(CoachFieldReport.self, from: cleanJson.data(using: .utf8)!) {
-                    return decoded
+                    return CoachFieldReport(
+                        headline: DashNormalizer.normalize(decoded.headline),
+                        debrief: DashNormalizer.normalize(decoded.debrief),
+                        turningPointText: DashNormalizer.normalize(decoded.turningPointText),
+                        athleteGrade: decoded.athleteGrade,
+                        coachQuote: DashNormalizer.normalize(decoded.coachQuote)
+                    )
                 }
             }
         } catch {

@@ -9,8 +9,13 @@ struct RAllyApp: App {
         WindowGroup {
             RootView()
                 .environment(model)
-                .preferredColorScheme(.dark)
+                .preferredColorScheme(model.appearanceMode.preferredColorScheme)
                 .tint(Theme.ember)
+                // Forces SwiftUI trait refresh when switching System/Light/Dark.
+                .id(model.appearanceMode)
+                .onAppear {
+                    AppearanceMode.applyToWindows(model.appearanceMode)
+                }
         }
         .modelContainer(for: [WorkoutSessionRecord.self, RallyMomentRecord.self])
     }
@@ -36,7 +41,11 @@ struct RootView: View {
                 SettingsView()
             }
         }
+        .preferredColorScheme(model.appearanceMode.preferredColorScheme)
         .tint(Theme.ember)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .onChange(of: model.appearanceMode) { _, mode in
+            AppearanceMode.applyToWindows(mode)
+        }
     }
 }

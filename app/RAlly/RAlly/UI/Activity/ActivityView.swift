@@ -10,18 +10,20 @@ struct ActivityView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 20) {
-                    header
-                    lifetimeStatsCard
-                    personalBestsSection
-                    recentActivitiesSection
+            ZStack {
+                Atmosphere(intensity: 0.85)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 20) {
+                        header
+                        lifetimeStatsCard
+                        personalBestsSection
+                        recentActivitiesSection
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 16)
+                    .padding(.bottom, 120)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                .padding(.bottom, 100)
             }
-            .background(Theme.background.ignoresSafeArea())
             .navigationTitle("")
             .navigationBarHidden(true)
             .sheet(item: $selectedSession) { session in
@@ -36,10 +38,10 @@ struct ActivityView: View {
                 Text("ACTIVITY")
                     .font(Theme.font(size: 26, weight: .black))
                     .tracking(2.0)
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.textPrimary)
                 Text("LIFETIME METRICS & RECORDS")
                     .font(Theme.font(size: 11, weight: .bold))
-                    .foregroundColor(Theme.secondaryText)
+                    .foregroundStyle(Theme.secondaryText)
             }
             Spacer()
         }
@@ -69,12 +71,7 @@ struct ActivityView: View {
             }
         }
         .padding(18)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
     }
 
     private func statTile(label: String, value: String, unit: String) -> some View {
@@ -85,7 +82,7 @@ struct ActivityView: View {
             HStack(alignment: .firstTextBaseline, spacing: 2) {
                 Text(value)
                     .font(Theme.font(size: 20, weight: .black))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.textPrimary)
                 if !unit.isEmpty {
                     Text(unit)
                         .font(Theme.font(size: 11, weight: .bold))
@@ -94,9 +91,8 @@ struct ActivityView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
-        .background(Color.white.opacity(0.03))
-        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .padding(.vertical, 10)
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
     }
 
     private var personalBestsSection: some View {
@@ -127,12 +123,7 @@ struct ActivityView: View {
                     .padding(.vertical, 16)
                     Spacer()
                 }
-                .background(Theme.card)
-                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 16, style: .continuous)
-                        .stroke(Theme.cardBorder, lineWidth: 1)
-                )
+                .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
             } else {
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                     ForEach(badges) { badge in
@@ -148,18 +139,13 @@ struct ActivityView: View {
                             }
                             Text(badge.formattedValue)
                                 .font(Theme.font(size: 20, weight: .black))
-                                .foregroundColor(.white)
+                                .foregroundStyle(Theme.textPrimary)
                             Text(badge.achievedDate.formatted(date: .abbreviated, time: .omitted))
                                 .font(Theme.font(size: 10, weight: .regular))
                                 .foregroundColor(Theme.secondaryText.opacity(0.8))
                         }
                         .padding(14)
-                        .background(Theme.card)
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                                .stroke(Theme.cardBorder, lineWidth: 1)
-                        )
+                        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
             }
@@ -192,7 +178,7 @@ struct ActivityView: View {
                                     HStack(spacing: 6) {
                                         Text(s.activity.title.uppercased())
                                             .font(Theme.font(size: 13, weight: .black))
-                                            .foregroundColor(.white)
+                                            .foregroundStyle(Theme.textPrimary)
                                         Text("•")
                                             .foregroundColor(Theme.secondaryText)
                                         Text(s.startedAt.formatted(date: .abbreviated, time: .shortened))
@@ -216,12 +202,7 @@ struct ActivityView: View {
                                     .foregroundColor(Theme.secondaryText.opacity(0.6))
                             }
                             .padding(16)
-                            .background(Theme.card)
-                            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                                    .stroke(Theme.cardBorder, lineWidth: 1)
-                            )
+                            .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
                         .buttonStyle(.plain)
                     }

@@ -22,7 +22,7 @@ struct HRZoneChartView: View {
                     .tracking(1.5)
                     .foregroundColor(Theme.secondaryText)
                 Spacer()
-                Text("Z1 – Z5 DISTRIBUTION")
+                Text("Z1. Z5 DISTRIBUTION")
                     .font(Theme.font(size: 10, weight: .bold))
                     .foregroundColor(Theme.secondaryText.opacity(0.8))
             }
@@ -39,18 +39,18 @@ struct HRZoneChartView: View {
                             HStack {
                                 Text("Z\(zone.zoneIndex)  \(zone.name.uppercased())")
                                     .font(Theme.font(size: 11, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(Theme.textPrimary)
                                 Spacer()
                                 Text(zone.rangeBpm)
                                     .font(Theme.font(size: 10, weight: .regular))
-                                    .foregroundColor(Theme.secondaryText)
+                                    .foregroundStyle(Theme.secondaryText)
                                 Text(Formatters.clock(zone.durationSec))
                                     .font(Theme.font(size: 11, weight: .bold))
-                                    .foregroundColor(.white)
+                                    .foregroundStyle(Theme.textPrimary)
                                     .frame(width: 50, alignment: .trailing)
                                 Text(String(format: "%.0f%%", zone.percentage))
                                     .font(Theme.font(size: 11, weight: .bold))
-                                    .foregroundColor(colorForZone(zone.zoneIndex))
+                                    .foregroundStyle(colorForZone(zone.zoneIndex))
                                     .frame(width: 38, alignment: .trailing)
                             }
 
@@ -59,7 +59,7 @@ struct HRZoneChartView: View {
                                 let fillWidth = max(2, geo.size.width * CGFloat(zone.percentage / 100.0))
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(Color.white.opacity(0.08))
+                                        .fill(Theme.hairline)
                                     Capsule()
                                         .fill(colorForZone(zone.zoneIndex))
                                         .frame(width: fillWidth)
@@ -72,11 +72,6 @@ struct HRZoneChartView: View {
             }
         }
         .padding(16)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

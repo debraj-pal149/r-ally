@@ -1,6 +1,6 @@
 import Foundation
 
-/// Sticky locomotion — independent of QuitRisk risk state.
+/// Sticky locomotion. Independent of QuitRisk risk state.
 /// Entry AND exit are debounced (multi-tick), so GPS noise cannot flicker REST ↔ RUNNING.
 final class LocomotionClassifier {
     private(set) var state: Locomotion = .moving

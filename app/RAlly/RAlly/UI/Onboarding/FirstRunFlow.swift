@@ -28,12 +28,7 @@ struct FirstRunFlow: View {
                             TextField("Your name", text: Bindable(model).name)
                                 .font(Theme.body(20))
                                 .padding(18)
-                                .background(Theme.surface)
-                                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .stroke(Theme.hairline, lineWidth: 1)
-                                )
+                                .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
                                 .submitLabel(.continue)
                                 .onSubmit { advance() }
                         }
@@ -52,7 +47,7 @@ struct FirstRunFlow: View {
                     case 2:
                         VStack(alignment: .leading, spacing: 16) {
                             PosterText(text: "Who's in\nyour ear?", size: 40)
-                            Text("Put the buds in. The product is the voice at the moment you fade — not a screen.")
+                            Text("Put the buds in. The product is the voice at the moment you fade. Not a screen.")
                                 .font(Theme.body(15))
                                 .foregroundStyle(Theme.textSecondary)
                             PersonaPicker(preview: true)
@@ -107,12 +102,7 @@ struct FirstRunFlow: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.surface.opacity(0.85))
-        .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Theme.hairline, lineWidth: 1)
-        )
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title). \(why)")
     }

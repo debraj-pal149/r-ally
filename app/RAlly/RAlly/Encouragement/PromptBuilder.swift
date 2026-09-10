@@ -3,7 +3,7 @@ import Foundation
 enum PromptBuilder {
     static let systemTemplate = """
 You are {persona_name}, {persona_archetype_description}. In-ear coach for a runner mid-workout.
-Spoken motivational beats that make a human keep going RIGHT NOW — conviction, warmth, command.
+Spoken motivational beats that make a human keep going RIGHT NOW. Conviction, warmth, command.
 
 STYLE RULES:
 {persona_style_rules}
@@ -11,12 +11,18 @@ STYLE RULES:
 RUNNER LEVEL:
 {runner_level_instructions}
 
+DISTANCE UNIT:
+{distance_unit_rule}
+
 RULES:
-- 1–2 short spoken sentences. Natural breath cadence.
+- 1-2 short spoken sentences. Natural breath cadence.
 - Word counts: stopped (8-14 words), still_stopped (14-22 words), keep_going (16-24 words), pace_slip (14-22 words), pre_quit_fade (18-28 words), recovery/grind/milestone (12-22 words).
 - Never sound like a GPS or app. No raw numbers, no bpm, no sensor names.
+- If history_cue is present, weave that ONE fact into the line naturally. Do not invent other history.
 - No emojis, hashtags, quotes, or stage directions. Clean language.
+- Never use em dashes or en dashes. Use commas, periods, or a plain hyphen (-) only.
 - DO NOT repeat or closely paraphrase any line in avoid_repeating.
+- DO NOT reuse motifs in avoid_motifs. Pick a different verb, image, and cadence each line.
 
 OUTPUT FORMAT (JSON only):
 {"pre_quit_fade": ["line1","line2"],
@@ -43,9 +49,14 @@ OUTPUT FORMAT (JSON only):
         var milestoneState: MilestoneState? = nil
         var closedLoopFeedback: String? = nil
         var burnedPhrasesBlacklist: [String] = []
+        var distanceUnit: DistanceUnit = .kilometre
+        var athleteHistoryLines: [String] = []
+        var historyCue: String? = nil
+        /// Lean bigram/stem motifs already used (token-cheap).
+        var avoidMotifs: [String] = []
     }
 
-    static func system(persona: Persona, runnerLevel: RunnerLevel = .intermediate) -> String {
+    static func system(persona: Persona, runnerLevel: RunnerLevel = .intermediate, distanceUnit: DistanceUnit = .kilometre) -> String {
         let levelInstructions: String
         switch runnerLevel {
         case .beginner:
@@ -61,28 +72,36 @@ OUTPUT FORMAT (JSON only):
             .replacingOccurrences(of: "{persona_archetype_description}", with: persona.archetype)
             .replacingOccurrences(of: "{persona_style_rules}", with: persona.styleRules)
             .replacingOccurrences(of: "{runner_level_instructions}", with: levelInstructions)
+            .replacingOccurrences(of: "{distance_unit_rule}", with: distanceUnit.promptRule)
     }
 
     static func user(_ ctx: Context) -> String {
         let elapsed = Formatters.clock(ctx.elapsed)
-        // Merge recent in-run lines + last 3 days blacklist into a compact, deduplicated list (max 6 items)
         var avoid: [String] = []
         for line in (ctx.recent + ctx.burnedPhrasesBlacklist) {
             let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !trimmed.isEmpty && !avoid.contains(trimmed) {
+            if !trimmed.isEmpty && !avoid.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) {
                 avoid.append(trimmed)
             }
             if avoid.count >= 6 { break }
         }
         let avoidFormatted = avoid.isEmpty ? "[]" : avoid.map { "\"\($0)\"" }.joined(separator: ", ")
+        let motifs = Array(ctx.avoidMotifs.prefix(10))
+        let motifsFormatted = motifs.isEmpty ? "[]" : motifs.map { "\"\($0)\"" }.joined(separator: ", ")
 
         var lines: [String] = [
             "RUN CONTEXT",
             "- activity: \(ctx.activity.rawValue) | progress: \(ctx.progressLabel) (\(elapsed))",
-            "- level: \(ctx.runnerLevel.rawValue) | pace_trend: \(ctx.paceSlopeDescription)",
+            "- level: \(ctx.runnerLevel.rawValue) | pace_trend: \(ctx.paceSlopeDescription) | unit: \(ctx.distanceUnit.rawValue)",
             "- state: \(ctx.snapshot)"
         ]
 
+        for h in ctx.athleteHistoryLines.prefix(3) {
+            lines.append("- \(h)")
+        }
+        if let cue = ctx.historyCue, !cue.isEmpty {
+            lines.append("- history_cue: \(cue)")
+        }
         if let m = ctx.milestoneState {
             lines.append("- milestone: \(m.title)")
         }
@@ -96,6 +115,7 @@ OUTPUT FORMAT (JSON only):
             lines.append("- custom_intent: \(p)")
         }
         lines.append("- avoid_repeating: [\(avoidFormatted)]")
+        lines.append("- avoid_motifs: [\(motifsFormatted)]")
         lines.append("Generate JSON:")
 
         return lines.joined(separator: "\n")

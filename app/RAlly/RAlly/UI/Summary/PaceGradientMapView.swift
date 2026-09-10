@@ -45,7 +45,7 @@ struct PaceGradientMapView: View {
                         .stroke(Theme.cardBorder, lineWidth: 1)
                 )
             } else {
-                // Fallback placeholder when no GPS breadcrumbs were recorded (e.g. indoor / stationary run)
+                // Fallback placeholder when no GPS breadcrumbs were recorded (e.g. Indoor / stationary run)
                 ZStack {
                     RoundedRectangle(cornerRadius: 16, style: .continuous)
                         .fill(Theme.card)

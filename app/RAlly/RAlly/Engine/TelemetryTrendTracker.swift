@@ -322,19 +322,19 @@ final class TelemetryTrendTracker: @unchecked Sendable {
         let targetM = targetDistanceM ?? 5000.0
         let progressRatio = distanceM / targetM
 
-        // 1. targetSecured
+        // 1. TargetSecured
         if progressRatio >= 1.0 && !firedMilestones.contains(.targetSecured) {
             firedMilestones.insert(.targetSecured)
             return .targetSecured
         }
 
-        // 2. doubleTargetBeast
+        // 2. DoubleTargetBeast
         if progressRatio >= 1.5 && !firedMilestones.contains(.doubleTargetBeast) {
             firedMilestones.insert(.doubleTargetBeast)
             return .doubleTargetBeast
         }
 
-        // 3. overDistanceBonus
+        // 3. OverDistanceBonus
         if progressRatio >= 1.05 && progressRatio < 1.4 && !firedMilestones.contains(.overDistanceBonus) {
             firedMilestones.insert(.overDistanceBonus)
             return .overDistanceBonus
@@ -342,13 +342,13 @@ final class TelemetryTrendTracker: @unchecked Sendable {
 
         guard cooldownOk else { return nil }
 
-        // 4. theFirstStride
+        // 4. TheFirstStride
         if distanceM >= 80 && distanceM <= 300 && !firedMilestones.contains(.theFirstStride) {
             firedMilestones.insert(.theFirstStride)
             return .theFirstStride
         }
 
-        // 5. theLiarMile
+        // 5. TheLiarMile
         if distanceM >= 800 && distanceM <= 1500 && !firedMilestones.contains(.theLiarMile) {
             let slope = paceSlope(windowSec: 60)
             if slope < -15 {
@@ -357,7 +357,7 @@ final class TelemetryTrendTracker: @unchecked Sendable {
             }
         }
 
-        // 6. rhythmLock
+        // 6. RhythmLock
         if progressRatio >= 0.23 && progressRatio <= 0.28 && !firedMilestones.contains(.rhythmLock) {
             if let cadence = cadenceSpm, cadence >= 168 {
                 firedMilestones.insert(.rhythmLock)
@@ -365,62 +365,62 @@ final class TelemetryTrendTracker: @unchecked Sendable {
             }
         }
 
-        // 7. theHalfwayCross
+        // 7. TheHalfwayCross
         if progressRatio >= 0.48 && progressRatio <= 0.54 && !firedMilestones.contains(.theHalfwayCross) {
             firedMilestones.insert(.theHalfwayCross)
             return .theHalfwayCross
         }
 
-        // 8. theMidRunVoid
+        // 8. TheMidRunVoid
         if progressRatio >= 0.62 && progressRatio <= 0.74 && !firedMilestones.contains(.theMidRunVoid) {
             firedMilestones.insert(.theMidRunVoid)
             return .theMidRunVoid
         }
 
-        // 9. thePainCaveEntry
+        // 9. ThePainCaveEntry
         if progressRatio >= 0.80 && progressRatio <= 0.90 && !firedMilestones.contains(.thePainCaveEntry) {
             firedMilestones.insert(.thePainCaveEntry)
             return .thePainCaveEntry
         }
 
-        // 10. thePenultimateKm
+        // 10. ThePenultimateKm
         let distLeft = targetM - distanceM
         if distLeft > 800 && distLeft <= 1500 && progressRatio > 0.65 && !firedMilestones.contains(.thePenultimateKm) {
             firedMilestones.insert(.thePenultimateKm)
             return .thePenultimateKm
         }
 
-        // 11. theFinalKickLaunch
+        // 11. TheFinalKickLaunch
         if distLeft > 50 && distLeft <= 400 && !firedMilestones.contains(.theFinalKickLaunch) {
             firedMilestones.insert(.theFinalKickLaunch)
             return .theFinalKickLaunch
         }
 
-        // 12. thresholdRedline
+        // 12. ThresholdRedline
         if let hr = hrBpm, hr >= 0.95 * maxHR && !firedMilestones.contains(.thresholdRedline) {
             firedMilestones.insert(.thresholdRedline)
             return .thresholdRedline
         }
 
-        // 13. strideCollapse
+        // 13. StrideCollapse
         if isCadenceSagging() && !firedMilestones.contains(.strideCollapse) {
             firedMilestones.insert(.strideCollapse)
             return .strideCollapse
         }
 
-        // 14. cardiacDecoupling
+        // 14. CardiacDecoupling
         if isCardiacDecoupling() && !firedMilestones.contains(.cardiacDecoupling) {
             firedMilestones.insert(.cardiacDecoupling)
             return .cardiacDecoupling
         }
 
-        // 15. hillAscentAttack
+        // 15. HillAscentAttack
         if let grade = gradePercent, grade >= 3.0 && !firedMilestones.contains(.hillAscentAttack) {
             firedMilestones.insert(.hillAscentAttack)
             return .hillAscentAttack
         }
 
-        // 16. prevQuitVanquished
+        // 16. PrevQuitVanquished
         if previousWorkoutMaxDistanceM > 1000 && distanceM > previousWorkoutMaxDistanceM && !firedMilestones.contains(.prevQuitVanquished) {
             firedMilestones.insert(.prevQuitVanquished)
             return .prevQuitVanquished

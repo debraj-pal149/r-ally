@@ -11,7 +11,7 @@ enum CoachRhythm {
     /// Rest nag while stopped (escalation window).
     static let restNagSec: Double = 12
 
-    /// After this many rest nags in one stop episode, slow down (plateau — not an alarm clock).
+    /// After this many rest nags in one stop episode, slow down (plateau. Not an alarm clock).
     static let restNagEscalateMax: Int = 4
     static let restNagPlateauSec: Double = 22
 

@@ -8,9 +8,9 @@ struct TriggerDecision: Sendable {
 final class TriggerPolicy {
     var fadeShoutCap: Int = EngineConstants.defaultFadeShoutCap
     private var lastSpokenT: TimeInterval = -10_000
-    /// Session time when speech actually finished (real callback — never WPM estimate).
+    /// Session time when speech actually finished (real callback. Never WPM estimate).
     private var lastSpeechEndedT: TimeInterval = -10_000
-    /// True after `record` until `noteSpeechEnded` — blocks stacking while TTS plays.
+    /// True after `record` until `noteSpeechEnded`. Blocks stacking while TTS plays.
     private var awaitingSpeechEnd = false
     private var lastKind: TriggerKind?
     private var fadeTotal = 0
@@ -47,7 +47,7 @@ final class TriggerPolicy {
         lastStopRecoverT = t
     }
 
-    /// Call from SpeechEngine finish / booth drain — session `t` at real completion.
+    /// Call from SpeechEngine finish / booth drain. Session `t` at real completion.
     func noteSpeechEnded(t: TimeInterval) {
         lastSpeechEndedT = t
         awaitingSpeechEnd = false

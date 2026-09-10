@@ -49,19 +49,19 @@ struct LapSplitsTableView: View {
                         HStack {
                             Text("\(split.splitNumber)")
                                 .font(Theme.font(size: 13, weight: .bold))
-                                .foregroundColor(.white)
+                                .foregroundStyle(Theme.textPrimary)
                                 .frame(width: 32, alignment: .leading)
 
                             HStack(spacing: 4) {
                                 Text(Formatters.pace(split.paceSecPerKm))
                                     .font(Theme.font(size: 13, weight: .bold))
-                                    .foregroundColor(split.paceSecPerKm == fastestPace ? Theme.accent : .white)
+                                    .foregroundStyle(split.paceSecPerKm == fastestPace ? Theme.accent : Theme.textPrimary)
                             }
                             .frame(width: 60, alignment: .leading)
 
                             Text(Formatters.pace(split.gapPaceSecPerKm))
                                 .font(Theme.font(size: 12, weight: .regular))
-                                .foregroundColor(Theme.secondaryText)
+                                .foregroundStyle(Theme.secondaryText)
                                 .frame(width: 55, alignment: .leading)
 
                             // Relative Pace Bar
@@ -72,9 +72,9 @@ struct LapSplitsTableView: View {
 
                                 ZStack(alignment: .leading) {
                                     Capsule()
-                                        .fill(Color.white.opacity(0.1))
+                                        .fill(Theme.hairline)
                                     Capsule()
-                                        .fill(split.paceSecPerKm == fastestPace ? Theme.accent : Color.white.opacity(0.4))
+                                        .fill(split.paceSecPerKm == fastestPace ? Theme.accent : Theme.textSecondary.opacity(0.55))
                                         .frame(width: barWidth)
                                 }
                             }
@@ -99,11 +99,6 @@ struct LapSplitsTableView: View {
             }
         }
         .padding(16)
-        .background(Theme.card)
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Theme.cardBorder, lineWidth: 1)
-        )
+        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 }

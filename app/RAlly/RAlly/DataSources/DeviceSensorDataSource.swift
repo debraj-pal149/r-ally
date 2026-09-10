@@ -82,7 +82,7 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
             activityMgr.startActivityUpdates(to: .main) { [weak self] activity in
                 guard let self, let activity else { return }
                 let t = Date().timeIntervalSince(self.sessionStart)
-                // 1 = stationary — locomotion classifier uses this to veto fake GPS motion.
+                // 1 = stationary. Locomotion classifier uses this to veto fake GPS motion.
                 let stationary: Double = activity.stationary ? 1 : 0
                 self.handler?(MetricSample(kind: .motionStationary, value: stationary, timestamp: t, source: .device))
             }

@@ -37,7 +37,7 @@ struct CoachVoiceOption: Identifiable, Equatable, Sendable, Hashable {
             id: "ff5468d06c2443dba9b8d2f9c6aa26b0",
             title: "The Beast",
             subtitle: "Hardcore Motivator",
-            vibe: "Deep, aggressive mental toughness — pain is fuel",
+            vibe: "Deep, aggressive mental toughness. Pain is fuel",
             previewText: "Your mind wants to quit before your legs do. Push through the wall right now!",
             elevenLabsVoiceId: "pNInz6obpgDQGcFmaJgB"
         ),

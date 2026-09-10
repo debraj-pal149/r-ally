@@ -2,7 +2,7 @@ import Foundation
 
 struct EngineTickResult: Sendable {
     var risk: Double
-    /// Risk state machine (always advances — Bug A3). UI must prefer `locomotion` when stopped.
+    /// Risk state machine (always advances. Bug A3). UI must prefer `locomotion` when stopped.
     var state: EngineState
     var locomotion: Locomotion
     var trigger: TriggerKind?

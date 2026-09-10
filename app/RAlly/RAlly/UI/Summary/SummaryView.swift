@@ -49,7 +49,7 @@ struct SummaryView: View {
                                 persona: model.persona
                             )
                             ShareLink(
-                                item: "🏃 R·ALLY COACH DEBRIEF — \(model.persona.name.uppercased())\n\n\(report.headline)\n\n\(report.debrief)\n\n\"\(report.coachQuote)\"\n\nDistance: \(Formatters.km(record.distanceM)) | Time: \(Formatters.clock(record.durationSec)) | Grade: \(report.athleteGrade)"
+                                item: "🏃 R·ALLY COACH DEBRIEF. \(model.persona.name.uppercased())\n\n\(report.headline)\n\n\(report.debrief)\n\n\"\(report.coachQuote)\"\n\nDistance: \(Formatters.km(record.distanceM)) | Time: \(Formatters.clock(record.durationSec)) | Grade: \(report.athleteGrade)"
                             ) {
                                 HStack(spacing: 6) {
                                     Image(systemName: "square.and.arrow.up")
@@ -58,12 +58,10 @@ struct SummaryView: View {
                                         .font(Theme.label(11, .bold))
                                         .tracking(0.8)
                                 }
-                                .foregroundStyle(Theme.emberSoft)
+                                .foregroundStyle(Theme.textPrimary)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 8)
-                                .background(Theme.surfaceRaised)
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                                .rallyGlassCapsule(.regular)
                             }
                             .buttonStyle(.plain)
                         }
@@ -79,7 +77,7 @@ struct SummaryView: View {
                     RallyTimeline(spark: record.outputSpark, rallies: record.rallies, selected: $selected)
                     if let s = selected {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("\(Formatters.clock(s.t)) — YOU WERE FADING")
+                            Text("\(Formatters.clock(s.t)). YOU WERE FADING")
                                 .font(Theme.label(12, .bold))
                                 .tracking(1.5)
                                 .foregroundStyle(Theme.textMuted)
@@ -92,12 +90,7 @@ struct SummaryView: View {
                         }
                         .padding(20)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.surface.opacity(0.9))
-                        .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                                .stroke(Theme.hairline, lineWidth: 1)
-                        )
+                        .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
                         .transition(.opacity)
                     }
 
@@ -168,7 +161,7 @@ struct SummaryView: View {
                 HStack {
                     Text(pb.title)
                         .font(Theme.font(size: 13, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.onAccent)
                     Spacer()
                     Text(pb.formattedValue)
                         .font(Theme.font(size: 13, weight: .black))
@@ -177,12 +170,7 @@ struct SummaryView: View {
             }
         }
         .padding(14)
-        .background(Theme.accent.opacity(0.12))
-        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .stroke(Theme.accent.opacity(0.3), lineWidth: 1)
-        )
+        .rallyGlass(.tinted, in: RoundedRectangle(cornerRadius: 14, style: .continuous), tint: Theme.accent)
     }
 
     func stat(_ v: String, _ l: String) -> some View {

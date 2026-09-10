@@ -11,7 +11,7 @@ enum Formatters {
     }
 
     static func pace(_ secPerKm: Double) -> String {
-        guard secPerKm.isFinite, secPerKm > 0, secPerKm < 3600 else { return "–" }
+        guard secPerKm.isFinite, secPerKm > 0, secPerKm < 3600 else { return "-" }
         let m = Int(secPerKm) / 60
         let s = Int(secPerKm) % 60
         return String(format: "%d:%02d", m, s)
@@ -26,5 +26,36 @@ enum Formatters {
         if h < 12 { return "Morning" }
         if h < 17 { return "Afternoon" }
         return "Evening"
+    }
+}
+
+/// Strips em/en dashes from coach and UI-facing copy. Prefer periods, commas, or hyphens.
+enum DashNormalizer {
+    private static let em = "\u{2014}"
+    private static let en = "\u{2013}"
+
+    static func normalize(_ text: String) -> String {
+        var t = text
+        t = t.replacingOccurrences(of: " \(em) ", with: ". ")
+        t = t.replacingOccurrences(of: " \(en) ", with: ". ")
+        t = t.replacingOccurrences(of: em, with: ", ")
+        t = t.replacingOccurrences(of: en, with: "-")
+        var chars = Array(t)
+        var i = 0
+        while i + 2 < chars.count {
+            if chars[i] == ".", chars[i + 1] == " ", chars[i + 2].isLowercase {
+                chars[i + 2] = Character(chars[i + 2].uppercased())
+            }
+            i += 1
+        }
+        t = String(chars)
+        while t.contains("  ") {
+            t = t.replacingOccurrences(of: "  ", with: " ")
+        }
+        return t
+    }
+
+    static func normalizeLines(_ lines: [String]) -> [String] {
+        lines.map(normalize)
     }
 }

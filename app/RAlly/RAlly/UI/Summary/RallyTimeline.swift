@@ -36,12 +36,7 @@ struct RallyTimeline: View {
             }
             .frame(height: 88)
             .padding(16)
-            .background(Theme.surface.opacity(0.85))
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .overlay(
-                RoundedRectangle(cornerRadius: 22, style: .continuous)
-                    .stroke(Theme.hairline, lineWidth: 1)
-            )
+            .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         }
     }
 }

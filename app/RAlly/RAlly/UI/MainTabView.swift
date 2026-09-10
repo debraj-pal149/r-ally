@@ -26,9 +26,9 @@ enum MainTab: String, CaseIterable, Identifiable {
 
 struct MainTabView: View {
     @Environment(AppModel.self) private var model
+    @Namespace private var tabGlassNamespace
 
     var body: some View {
-        @Bindable var bindableModel = model
         ZStack(alignment: .bottom) {
             Group {
                 switch model.selectedTab {
@@ -42,63 +42,77 @@ struct MainTabView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            // Custom R·ALLY Bottom Tab Bar
             customTabBar
         }
         .ignoresSafeArea(.keyboard)
     }
 
     private var customTabBar: some View {
+        Group {
+            if #available(iOS 26.0, *) {
+                GlassEffectContainer(spacing: 12) {
+                    tabBarContent
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .glassEffect(.regular.interactive(), in: .capsule)
+                }
+            } else {
+                tabBarContent
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 4)
+                    .background(.ultraThinMaterial, in: Capsule())
+                    .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+            }
+        }
+        .padding(.horizontal, 28)
+        .padding(.bottom, 8)
+        .shadow(color: Theme.emberDeep.opacity(0.22), radius: 16, y: 8)
+    }
+
+    private var tabBarContent: some View {
         HStack(spacing: 0) {
             ForEach(MainTab.allCases) { tab in
+                let on = model.selectedTab == tab
                 Button {
                     Haptics.selection()
-                    model.selectedTab = tab
+                    withAnimation(Theme.spring) { model.selectedTab = tab }
                 } label: {
                     VStack(spacing: 3) {
                         Image(systemName: tab.icon)
-                            .font(.system(size: 16, weight: model.selectedTab == tab ? .black : .semibold))
-                            .foregroundColor(model.selectedTab == tab ? Theme.accent : Theme.secondaryText.opacity(0.65))
-                        
+                            .font(.system(size: 16, weight: on ? .black : .semibold))
                         Text(tab.title)
-                            .font(Theme.font(size: 9.5, weight: model.selectedTab == tab ? .black : .bold))
+                            .font(Theme.font(size: 9.5, weight: on ? .black : .bold))
                             .tracking(1.0)
-                            .foregroundColor(model.selectedTab == tab ? Theme.accent : Theme.secondaryText.opacity(0.65))
                     }
+                    .foregroundStyle(on ? Theme.emberSoft : Theme.secondaryText.opacity(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
+                    .padding(.horizontal, 4)
+                    .background {
+                        if on {
+                            Capsule()
+                                .fill(Theme.ember.opacity(0.18))
+                                .overlay(Capsule().stroke(Theme.emberDeep.opacity(0.35), lineWidth: 1))
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
+                .modifier(TabGlassIDModifier(id: tab.id, namespace: tabGlassNamespace, enabled: on))
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 4)
-        .background(
-            ZStack {
-                Theme.surface.opacity(0.94)
-                VisualEffectBlur(blurStyle: .systemUltraThinMaterialDark)
-            }
-            .clipShape(Capsule())
-            .overlay(
-                Capsule()
-                    .stroke(Theme.cardBorder, lineWidth: 1)
-            )
-            .shadow(color: Color.black.opacity(0.45), radius: 12, y: 6)
-        )
-        .padding(.horizontal, 32)
-        .padding(.bottom, 6)
     }
 }
 
-// SwiftUI Blur Helper
-struct VisualEffectBlur: UIViewRepresentable {
-    var blurStyle: UIBlurEffect.Style
+private struct TabGlassIDModifier: ViewModifier {
+    var id: String
+    var namespace: Namespace.ID
+    var enabled: Bool
 
-    func makeUIView(context: Context) -> UIVisualEffectView {
-        UIVisualEffectView(effect: UIBlurEffect(style: blurStyle))
-    }
-
-    func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
-        uiView.effect = UIBlurEffect(style: blurStyle)
+    func body(content: Content) -> some View {
+        if #available(iOS 26.0, *), enabled {
+            content.glassEffectID(id, in: namespace)
+        } else {
+            content
+        }
     }
 }

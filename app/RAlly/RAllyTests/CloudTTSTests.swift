@@ -18,7 +18,7 @@ final class CloudTTSTests: XCTestCase {
     }
 
     func testBreathChunking() {
-        let text = "Hold the standard — quiet mouth — drive through the burn."
+        let text = "Hold the standard. Quiet mouth. Drive through the burn."
         let chunks = SpeechEngine.breathChunks(text)
         XCTAssertEqual(chunks.count, 3)
         XCTAssertEqual(chunks[0], "Hold the standard")

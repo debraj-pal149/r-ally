@@ -42,7 +42,7 @@ enum EngineConstants {
     static let vResume: Double = 1.45
     /// Below this while not fully stopped ⇒ walk-break / slowing band.
     static let vJog: Double = 1.55
-    /// Debounced entry/exit (1 Hz ticks) — Bug A1/A2.
+    /// Debounced entry/exit (1 Hz ticks). Bug A1/A2.
     static let stopEntrySustainTicks: Int = 3
     static let resumeSustainTicks: Int = 3
     static let stopEnterSec: Double = 2.5
