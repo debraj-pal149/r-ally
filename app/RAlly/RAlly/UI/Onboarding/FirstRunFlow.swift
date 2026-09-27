@@ -3,13 +3,16 @@ import SwiftUI
 struct FirstRunFlow: View {
     @Environment(AppModel.self) private var model
     @State private var step = 0
+    @State private var weightText = ""
+    @State private var weightInPounds = false
+    private let stepCount = 5
 
     var body: some View {
         ZStack {
             Atmosphere()
             VStack(spacing: 0) {
                 HStack(spacing: 6) {
-                    ForEach(0..<4, id: \.self) { i in
+                    ForEach(0..<stepCount, id: \.self) { i in
                         Capsule()
                             .fill(i <= step ? Theme.ember : Theme.hairline)
                             .frame(height: 3)
@@ -17,7 +20,7 @@ struct FirstRunFlow: View {
                 }
                 .padding(.horizontal, 24)
                 .padding(.top, 16)
-                .accessibilityLabel("Step \(step + 1) of 4")
+                .accessibilityLabel("Step \(step + 1) of \(stepCount)")
 
                 Spacer()
                 Group {
@@ -45,6 +48,8 @@ struct FirstRunFlow: View {
                             })
                         }
                     case 2:
+                        weightStep
+                    case 3:
                         VStack(alignment: .leading, spacing: 16) {
                             PosterText(text: "Who's in\nyour ear?", size: 40)
                             Text("Put the buds in. The product is the voice at the moment you fade. Not a screen.")
@@ -64,23 +69,147 @@ struct FirstRunFlow: View {
                 }
                 .padding(.horizontal, 24)
                 Spacer()
-                Button(step < 3 ? "Continue" : "Let's go") {
-                    if step == 3 {
+                Button(continueTitle) {
+                    if step == 2 {
+                        guard commitWeight() else { return }
+                    }
+                    if step == stepCount - 1 {
                         model.prepareDevicePermissions()
                     }
                     advance()
                 }
                     .buttonStyle(RallyButtonStyle())
+                    .disabled(!canAdvance)
+                    .opacity(canAdvance ? 1 : 0.45)
                     .padding(24)
             }
         }
         .foregroundStyle(Theme.textPrimary)
+        .onAppear(perform: prefillWeight)
+    }
+
+    private var continueTitle: String {
+        if step == 2 { return "This weight is right" }
+        if step < stepCount - 1 { return "Continue" }
+        return "Let's go"
+    }
+
+    private var canAdvance: Bool {
+        if step == 2 { return parsedWeightKg != nil }
+        return true
+    }
+
+    private var weightStep: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            PosterText(text: "Your weight", size: 44)
+            Text("We use this to estimate calories on a run. If a watch sends its own calorie total for that run, we use the watch number instead. Check the figure before you continue.")
+                .font(Theme.body(15))
+                .foregroundStyle(Theme.textSecondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            HStack(spacing: 8) {
+                unitChip("KG", on: !weightInPounds) { setWeightUnit(pounds: false) }
+                unitChip("LB", on: weightInPounds) { setWeightUnit(pounds: true) }
+            }
+
+            TextField(weightInPounds ? "150" : "70", text: $weightText)
+                .keyboardType(.decimalPad)
+                .font(Theme.numeric(36, .bold))
+                .padding(18)
+                .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .accessibilityLabel("Body weight in \(weightInPounds ? "pounds" : "kilograms")")
+
+            if let kg = parsedWeightKg {
+                Text(confirmationLine(kg: kg))
+                    .font(Theme.body(14, .medium))
+                    .foregroundStyle(Theme.ember)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if !weightText.trimmingCharacters(in: .whitespaces).isEmpty {
+                Text("Enter a realistic weight so calorie estimates stay honest.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.warn)
+            }
+        }
+    }
+
+    private func unitChip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(Theme.label(12, .bold))
+                .tracking(0.8)
+                .foregroundStyle(on ? Theme.onAccent : Theme.textPrimary)
+                .frame(maxWidth: .infinity, minHeight: 36)
+                .background {
+                    if on {
+                        Capsule().fill(
+                            LinearGradient(
+                                colors: [Theme.ember, Theme.emberDeep],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    } else {
+                        Capsule()
+                            .fill(Theme.surfaceRaised.opacity(0.55))
+                            .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
+                    }
+                }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var parsedWeightKg: Double? {
+        let raw = weightText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+        guard let value = Double(raw), value > 0 else { return nil }
+        let kg = weightInPounds ? value / 2.2046226218 : value
+        guard (35...250).contains(kg) else { return nil }
+        return kg
+    }
+
+    private func confirmationLine(kg: Double) -> String {
+        if weightInPounds {
+            let lb = kg * 2.2046226218
+            return String(format: "Confirm %.0f lb (%.1f kg). This is what calorie estimates will use.", lb, kg)
+        }
+        return String(format: "Confirm %.1f kg. This is what calorie estimates will use.", kg)
+    }
+
+    private func setWeightUnit(pounds: Bool) {
+        guard pounds != weightInPounds else { return }
+        if let kg = parsedWeightKg {
+            weightInPounds = pounds
+            if pounds {
+                weightText = String(format: "%.0f", kg * 2.2046226218)
+            } else {
+                weightText = String(format: "%.1f", kg)
+            }
+        } else {
+            weightInPounds = pounds
+        }
+        Haptics.selection()
+    }
+
+    private func prefillWeight() {
+        weightInPounds = model.distanceUnit == .mile
+        guard weightText.isEmpty, let kg = model.bodyWeightKg else { return }
+        if weightInPounds {
+            weightText = String(format: "%.0f", kg * 2.2046226218)
+        } else {
+            weightText = String(format: "%.1f", kg)
+        }
+    }
+
+    @discardableResult
+    private func commitWeight() -> Bool {
+        guard let kg = parsedWeightKg else { return false }
+        model.bodyWeightKg = kg
+        return true
     }
 
     private func advance() {
         Haptics.tap()
         withAnimation(Theme.spring) {
-            if step < 3 { step += 1 } else { model.completeOnboarding() }
+            if step < stepCount - 1 { step += 1 } else { model.completeOnboarding() }
         }
     }
 

@@ -15,10 +15,19 @@ final class HealthKitWriter {
         let builder = HKWorkoutBuilder(healthStore: store, configuration: config, device: .local())
         do {
             try await builder.beginCollection(at: session.startedAt)
-            if session.distanceM > 0, let distType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
+            var samples: [HKSample] = []
+            if session.distanceM > 0,
+               let distType = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) {
                 let q = HKQuantity(unit: .meter(), doubleValue: session.distanceM)
-                let sample = HKQuantitySample(type: distType, quantity: q, start: session.startedAt, end: session.endedAt)
-                try await builder.addSamples([sample])
+                samples.append(HKQuantitySample(type: distType, quantity: q, start: session.startedAt, end: session.endedAt))
+            }
+            if session.activeEnergyKcal > 0,
+               let energyType = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) {
+                let q = HKQuantity(unit: .kilocalorie(), doubleValue: session.activeEnergyKcal)
+                samples.append(HKQuantitySample(type: energyType, quantity: q, start: session.startedAt, end: session.endedAt))
+            }
+            if !samples.isEmpty {
+                try await builder.addSamples(samples)
             }
             try await builder.endCollection(at: session.endedAt)
             _ = try await builder.finishWorkout()

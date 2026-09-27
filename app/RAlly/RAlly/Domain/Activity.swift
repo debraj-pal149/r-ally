@@ -91,9 +91,9 @@ enum ActivityKind: String, Codable, CaseIterable, Identifiable, Sendable {
 
     var tileKinds: [MetricKind] {
         switch self {
-        case .running: [.paceSecPerKm, .distanceM, .cadenceSpm]
-        case .cycling: [.powerWatts, .distanceM, .heartRateBpm]
-        case .rowing: [.powerWatts, .distanceM, .strokeRateSpm]
+        case .running: [.paceSecPerKm, .distanceM, .cadenceSpm, .activeEnergyKcal]
+        case .cycling: [.powerWatts, .distanceM, .heartRateBpm, .activeEnergyKcal]
+        case .rowing: [.powerWatts, .distanceM, .strokeRateSpm, .activeEnergyKcal]
         default: [.heartRateBpm, .distanceM]
         }
     }

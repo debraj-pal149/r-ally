@@ -4,6 +4,7 @@ import AVFoundation
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
     @State private var showAddDevice = false
+    @State private var settingsWeightText = ""
 
     var body: some View {
         ZStack {
@@ -359,6 +360,7 @@ struct SettingsView: View {
                 }, onPlus: {
                     model.age = min(80, model.age + 1)
                 })
+                weightRow
                 HStack {
                     Text("HR Max")
                         .font(Theme.body(14, .medium))
@@ -370,6 +372,57 @@ struct SettingsView: View {
                         .frame(width: 80, height: 38)
                 }
             }
+        }
+    }
+
+    private var weightRow: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("Weight")
+                    .font(Theme.body(14, .medium))
+                Spacer()
+                TextField(model.distanceUnit == .mile ? "lb" : "kg", text: weightFieldText)
+                    .keyboardType(.decimalPad)
+                    .multilineTextAlignment(.trailing)
+                    .font(Theme.numeric(16, .bold))
+                    .frame(width: 88, height: 38)
+                    .onSubmit(commitSettingsWeight)
+            }
+            Text("Used to estimate run calories. A watch calorie total overrides this.")
+                .font(Theme.body(11))
+                .foregroundStyle(Theme.textMuted)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .onAppear(perform: loadSettingsWeight)
+        .onChange(of: settingsWeightText) { _, _ in
+            commitSettingsWeight()
+        }
+    }
+
+    private var weightFieldText: Binding<String> {
+        Binding(
+            get: { settingsWeightText },
+            set: { settingsWeightText = $0 }
+        )
+    }
+
+    private func loadSettingsWeight() {
+        guard settingsWeightText.isEmpty else { return }
+        guard let kg = model.bodyWeightKg else { return }
+        if model.distanceUnit == .mile {
+            settingsWeightText = String(format: "%.0f", kg * 2.2046226218)
+        } else {
+            settingsWeightText = String(format: "%.1f", kg)
+        }
+    }
+
+    private func commitSettingsWeight() {
+        let raw = settingsWeightText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+        guard let value = Double(raw), value > 0 else { return }
+        let kg = model.distanceUnit == .mile ? value / 2.2046226218 : value
+        guard (35...250).contains(kg) else { return }
+        if model.bodyWeightKg != kg {
+            model.bodyWeightKg = kg
         }
     }
 

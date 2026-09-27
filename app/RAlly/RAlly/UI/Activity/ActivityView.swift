@@ -51,6 +51,7 @@ struct ActivityView: View {
         let totalDistanceM = sessions.reduce(0) { $0 + $1.distanceM }
         let totalDurationSec = sessions.reduce(0) { $0 + $1.durationSec }
         let totalElevationM = sessions.reduce(0) { $0 + $1.elevationGainM }
+        let totalKcal = sessions.reduce(0.0) { $0 + $1.activeEnergyKcal }
 
         return VStack(spacing: 16) {
             HStack {
@@ -68,6 +69,13 @@ struct ActivityView: View {
                 statTile(label: "DISTANCE", value: String(format: "%.1f", totalDistanceM / 1000.0), unit: "KM")
                 statTile(label: "TIME", value: formatHoursMinutes(totalDurationSec), unit: "")
                 statTile(label: "ELEVATION", value: "\(Int(totalElevationM))", unit: "M")
+                if totalKcal > 0 {
+                    statTile(
+                        label: "CALORIES",
+                        value: totalKcal > 9999 ? String(format: "%.1fK", totalKcal / 1000) : "\(Int(totalKcal))",
+                        unit: "KCAL"
+                    )
+                }
             }
         }
         .padding(18)

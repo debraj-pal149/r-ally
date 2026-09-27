@@ -25,6 +25,9 @@ final class WorkoutSessionRecord {
     var routeCoordinatesData: Data?
     var personalBestsData: Data?
 
+    /// Kilocalories burned. Device value when available, otherwise Minetti estimate.
+    var activeEnergyKcal: Double = 0
+
     // Coach's Field Report data
     var reportHeadline: String?
     var reportDebrief: String?
@@ -55,6 +58,7 @@ final class WorkoutSessionRecord {
         hrZones: [HRZoneBucket] = [],
         routeCoordinates: [GPSBreadcrumb] = [],
         personalBests: [PersonalBestAchievement] = [],
+        activeEnergyKcal: Double = 0,
         reportHeadline: String? = nil,
         reportDebrief: String? = nil,
         reportQuote: String? = nil,
@@ -76,6 +80,7 @@ final class WorkoutSessionRecord {
         self.elevationLossM = elevationLossM
         self.movingDurationSec = movingDurationSec
         self.gapAveragePaceSecPerKm = gapAveragePaceSecPerKm
+        self.activeEnergyKcal = activeEnergyKcal
         self.reportHeadline = reportHeadline
         self.reportDebrief = reportDebrief
         self.reportQuote = reportQuote

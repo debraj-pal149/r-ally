@@ -21,6 +21,16 @@ enum AppRoute: Equatable {
 final class AppModel {
     var name: String = UserDefaults.standard.string(forKey: "athlete.name") ?? ""
     var age: Int = UserDefaults.standard.object(forKey: "athlete.age") as? Int ?? 32
+    /// Body mass in kilograms. Required to estimate run calories. Nil until the athlete confirms it.
+    var bodyWeightKg: Double? = UserDefaults.standard.object(forKey: "athlete.weightKg") as? Double {
+        didSet {
+            if let bodyWeightKg {
+                UserDefaults.standard.set(bodyWeightKg, forKey: "athlete.weightKg")
+            } else {
+                UserDefaults.standard.removeObject(forKey: "athlete.weightKg")
+            }
+        }
+    }
     var hrMaxOverride: Double? = UserDefaults.standard.object(forKey: "athlete.hrMax") as? Double
     var thresholdPace: Double = UserDefaults.standard.object(forKey: "athlete.pace") as? Double ?? 330
     var persona: Persona = {
@@ -96,6 +106,7 @@ final class AppModel {
     }
 
     let engine = QuitRiskEngine()
+    let calorieEstimator = CalorieEstimator()
     let trendTracker = TelemetryTrendTracker()
     let splitEngine = PeriodicSplitEngine()
     var latestReport: CoachFieldReport?
@@ -170,6 +181,9 @@ final class AppModel {
     func persistProfile() {
         UserDefaults.standard.set(name, forKey: "athlete.name")
         UserDefaults.standard.set(age, forKey: "athlete.age")
+        if let bodyWeightKg {
+            UserDefaults.standard.set(bodyWeightKg, forKey: "athlete.weightKg")
+        }
         UserDefaults.standard.set(thresholdPace, forKey: "athlete.pace")
         UserDefaults.standard.set(sessionCap, forKey: "rally.cap")
         UserDefaults.standard.set(simulatorURLString, forKey: "sim.url")
@@ -218,6 +232,7 @@ final class AppModel {
         #endif
         if !activity.isShipped, sourceKind == .device { activity = .running }
         engine.reset(activity: activity, maxHR: hrMax, sessionCap: sessionCap)
+        calorieEstimator.reset()
         liveT = 0
         liveRisk = 0
         liveState = .cruising
@@ -322,6 +337,8 @@ final class AppModel {
         let hrZones = trendTracker.computeHRZones(maxHR: hrMax)
         let breadcrumbs = trendTracker.breadcrumbs
 
+        let finalKcal = calorieEstimator.totalKcal
+
         let unlockedPBs = PersonalBestStore.shared.evaluateSession(
             distanceM: distance,
             durationSec: duration,
@@ -348,7 +365,8 @@ final class AppModel {
             splits: splits,
             hrZones: hrZones,
             routeCoordinates: breadcrumbs,
-            personalBests: unlockedPBs
+            personalBests: unlockedPBs,
+            activeEnergyKcal: finalKcal
         )
         lastRecord = rec
         athleteHistory = AthleteHistoryBuilder.incorporateFinished(
@@ -373,7 +391,14 @@ final class AppModel {
     private func ingest(_ sample: MetricSample) {
         if livePaused { return }
         engine.ingest(sample)
-        liveLatest[sample.kind] = sample.value
+        if sample.kind == .activeEnergyKcal {
+            // Keep the highest cumulative device total. A lower blip must not
+            // replace the live number or the saved total.
+            calorieEstimator.receiveDeviceSample(sample.value)
+            liveLatest[.activeEnergyKcal] = calorieEstimator.totalKcal
+        } else {
+            liveLatest[sample.kind] = sample.value
+        }
         let sec = floor(sample.timestamp)
         liveT = sample.timestamp
         if sec > lastTick {
@@ -399,6 +424,20 @@ final class AppModel {
         let dist = liveLatest[.distanceM] ?? 0
         let lat = liveLatest[.latitude]
         let lon = liveLatest[.longitude]
+
+        // Calorie estimation (or passthrough if device already owns the value).
+        if !calorieEstimator.isDeviceOwned {
+            calorieEstimator.tick(
+                speedMps: speed,
+                gradePercent: grade ?? 0,
+                weightKg: bodyWeightKg
+            )
+            // Push estimate into liveLatest so MetricTiles picks it up.
+            if calorieEstimator.totalKcal > 0 {
+                liveLatest[.activeEnergyKcal] = calorieEstimator.totalKcal
+            }
+        }
+        // If device owns, liveLatest[.activeEnergyKcal] was already set by ingest().
 
         trendTracker.recordPoint(
             t: t,

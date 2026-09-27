@@ -45,6 +45,7 @@
 		538BECD7E621F301BD0D11C6 /* AnthropicClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA248B2AF96E6B81C88DDC72 /* AnthropicClient.swift */; };
 		5970FDEDE085D3E2A0793F1A /* CoachReportShareCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 635EF9BBF1850B9BCF146004 /* CoachReportShareCard.swift */; };
 		5D8D646DF9F3020FFA6C2571 /* GradeAdjustedCalculator.swift in Sources */ = {isa = PBXBuildFile; fileRef = A498CD391CAB3D51CC33C7C2 /* GradeAdjustedCalculator.swift */; };
+		B254DABE747C4DA4B2605487 /* CalorieEstimator.swift in Sources */ = {isa = PBXBuildFile; fileRef = B00C92BD83914CF29C21DBA9 /* CalorieEstimator.swift */; };
 		5EA4640B000AD1052CFD858C /* CloudTTSTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3AD0A260D822BD20763D849 /* CloudTTSTests.swift */; };
 		60FA75DC6435C5DACB87A5F0 /* PromptBuilderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 843051ADE81E761C021E306E /* PromptBuilderTests.swift */; };
 		6269B8ED7BAD442B65B6932E /* UniversalSourcesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BF319FC6587F9401C848CB0 /* UniversalSourcesTests.swift */; };
@@ -164,6 +165,7 @@
 		8DA07DFC159C00C9207F83DF /* MetricKind.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricKind.swift; sourceTree = "<group>"; };
 		99C63E18F6BEB1CC28CC5B09 /* DataSourceManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DataSourceManager.swift; sourceTree = "<group>"; };
 		A498CD391CAB3D51CC33C7C2 /* GradeAdjustedCalculator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradeAdjustedCalculator.swift; sourceTree = "<group>"; };
+		B00C92BD83914CF29C21DBA9 /* CalorieEstimator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalorieEstimator.swift; sourceTree = "<group>"; };
 		A5C756FD2D1F399BDE679E12 /* PersonaPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersonaPicker.swift; sourceTree = "<group>"; };
 		46A34BB658494AB8960FDCB4 /* PhraseFingerprintTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PhraseFingerprintTests.swift; sourceTree = "<group>"; };
 		AD5A875ED1B60C1CC02568A7 /* CoachHistoryAndUnitsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoachHistoryAndUnitsTests.swift; sourceTree = "<group>"; };
@@ -419,6 +421,7 @@
 				D6FDE49FDF8B5C18DC074113 /* CoachRhythm.swift */,
 				527873A3967F57901A8DFA2E /* EngineConstants.swift */,
 				A498CD391CAB3D51CC33C7C2 /* GradeAdjustedCalculator.swift */,
+				B00C92BD83914CF29C21DBA9 /* CalorieEstimator.swift */,
 				AE4C1FAFE0719E5AB673C735 /* LocomotionClassifier.swift */,
 				29E91061BB3A58818C932716 /* MetricStore.swift */,
 				7020656AB3F47F180BE302FE /* PeriodicSplitEngine.swift */,
@@ -619,6 +622,7 @@
 				A90AFBBB5D3F64600586442F /* Formatters.swift in Sources */,
 				BD820333B44C1797A02F9E36 /* GoalRow.swift in Sources */,
 				5D8D646DF9F3020FFA6C2571 /* GradeAdjustedCalculator.swift in Sources */,
+				B254DABE747C4DA4B2605487 /* CalorieEstimator.swift in Sources */,
 				FB16E141E6CF95B4B7B5BE8C /* HRZoneChartView.swift in Sources */,
 				70FA821DD2FDE46CC36E6873 /* HealthKitDataSource.swift in Sources */,
 				44F74B98CD3BDAEAF15E9A65 /* HealthKitWriter.swift in Sources */,

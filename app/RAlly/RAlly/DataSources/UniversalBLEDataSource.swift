@@ -307,13 +307,57 @@ final class UniversalBLEDataSource: NSObject, SupplementalHRSource, CBCentralMan
         }
     }
 
+    /// FTMS Treadmill Data (0x2ACD) — Bluetooth SIG FTMS Spec §3.64.
+    /// Flags word occupies bytes 0–1. Mandatory fields follow, then optional fields in flag order.
+    ///
+    /// Bit 0  – More Data (if 0, Instantaneous Speed is present)
+    /// Bit 1  – Average Speed present
+    /// Bit 2  – Total Distance present (3 bytes)
+    /// Bit 3  – Inclination + Ramp Angle present (4 bytes)
+    /// Bit 4  – Elevation Gain + Loss present (4 bytes)
+    /// Bit 5  – Instantaneous Pace present (2 bytes)
+    /// Bit 6  – Average Pace present (2 bytes)
+    /// Bit 7  – Expended Energy present (5 bytes) ← Total Energy (uint16 kcal) + Energy/hr + Energy/min
+    /// Bit 8  – Heart Rate present (1 byte)
+    /// Bit 9  – Metabolic Equivalent present (1 byte)
+    /// Bit 10 – Elapsed Time present (2 bytes)
+    /// Bit 11 – Remaining Time present (2 bytes)
+    /// Bit 12 – Force on Belt + Power Output present (4 bytes)
     private func parseTreadmill(_ data: Data, timestamp: TimeInterval) {
         guard data.count >= 4 else { return }
         let bytes = [UInt8](data)
-        let rawSpeed = UInt16(bytes[2]) | (UInt16(bytes[3]) << 8)
-        let kmh = Double(rawSpeed) / 100.0
-        let mps = kmh / 3.6
-        handler?(MetricSample(kind: .speedMps, value: mps, timestamp: timestamp, source: .ble))
+        let flags = UInt16(bytes[0]) | (UInt16(bytes[1]) << 8)
+
+        // Instantaneous Speed (uint16, 0.01 km/h) is present only when bit 0 is 0.
+        var offset = 2
+        if flags & 0x0001 == 0 {
+            guard bytes.count >= 4 else { return }
+            let rawSpeed = UInt16(bytes[2]) | (UInt16(bytes[3]) << 8)
+            let kmh = Double(rawSpeed) / 100.0
+            let mps = kmh / 3.6
+            if mps > 0.1 {
+                handler?(MetricSample(kind: .speedMps, value: mps, timestamp: timestamp, source: .ble))
+            }
+            offset = 4
+        }
+
+        // Walk optional fields to reach Expended Energy (bit 7).
+        // Total Energy is already kilocalories (FTMS spec), not kilojoules.
+        guard flags & 0x0080 != 0 else { return }
+        if flags & 0x0002 != 0 { offset += 2 }  // Average Speed
+        if flags & 0x0004 != 0 { offset += 3 }  // Total Distance
+        if flags & 0x0008 != 0 { offset += 4 }  // Inclination + Ramp Angle
+        if flags & 0x0010 != 0 { offset += 4 }  // Elevation Gain + Loss
+        if flags & 0x0020 != 0 { offset += 2 }  // Instantaneous Pace
+        if flags & 0x0040 != 0 { offset += 2 }  // Average Pace
+
+        guard bytes.count >= offset + 2 else { return }
+
+        // Total Energy: uint16, unit = kcal (FTMS spec, resolution 1).
+        let totalKcal = Double(UInt16(bytes[offset]) | (UInt16(bytes[offset + 1]) << 8))
+        if totalKcal > 0 {
+            handler?(MetricSample(kind: .activeEnergyKcal, value: totalKcal, timestamp: timestamp, source: .ble))
+        }
     }
 
     private func parseRower(_ data: Data, timestamp: TimeInterval) {

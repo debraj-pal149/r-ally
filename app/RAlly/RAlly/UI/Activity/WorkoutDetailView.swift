@@ -82,6 +82,9 @@ struct WorkoutDetailView: View {
                 metricCell(label: "DISTANCE", value: Formatters.km(session.distanceM))
                 metricCell(label: "TIME", value: Formatters.clock(session.durationSec))
                 metricCell(label: "AVG PACE", value: Formatters.pace(session.distanceM > 0 ? (session.durationSec / session.distanceM) * 1000 : 0))
+                if session.activeEnergyKcal > 0 {
+                    metricCell(label: "CALORIES", value: "\(Int(session.activeEnergyKcal.rounded())) kcal")
+                }
             }
 
             if let gap = session.gapAveragePaceSecPerKm, gap > 0 {

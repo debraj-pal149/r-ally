@@ -22,6 +22,7 @@ struct SummaryView: View {
                         stat(Formatters.clock(record.durationSec), "TIME")
                         stat(Formatters.km(record.distanceM), "KM")
                         if let hr = record.avgHR { stat("\(Int(hr))", "HR") }
+                        if record.activeEnergyKcal > 0 { stat("\(Int(record.activeEnergyKcal.rounded()))", "KCAL") }
                     }
                     .padding(.vertical, 8)
 
