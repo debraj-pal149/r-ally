@@ -33,11 +33,13 @@ struct SpokenLineOverlay: View {
             .frame(maxWidth: 340)
             .rallyGlass(.regular, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
             .shadow(color: .black.opacity(0.45), radius: 24, y: 10)
+            // Only the card takes taps (dismiss). Dim + empty space must not
+            // block Pause / End / Mute underneath.
+            .onTapGesture {
+                onDismiss?()
+            }
         }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            onDismiss?()
-        }
+        .allowsHitTesting(true)
         .transition(.opacity.combined(with: .scale(scale: 0.98)))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Coach says: \(text)")

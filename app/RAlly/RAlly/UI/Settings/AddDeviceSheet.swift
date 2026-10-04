@@ -32,7 +32,7 @@ struct AddDeviceSheet: View {
             name: "Apple Watch",
             subtitle: "Live heart rate, running power & stride analytics",
             systemIcon: "applewatch.radiowaves.left.and.right",
-            brandColor: Color.white,
+            brandColor: Color(red: 0.15, green: 0.15, blue: 0.17),
             protocolType: "WatchOS / HealthKit",
             type: .healthKitWatch
         ),

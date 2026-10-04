@@ -31,10 +31,14 @@ final class CalorieEstimator {
     /// - Parameters:
     ///   - speedMps: Current GPS/BLE speed in m/s.
     ///   - gradePercent: Current slope in % (+uphill, −downhill).
-    ///   - weightKg: Athlete body mass. Pass nil to skip estimation for this tick.
+    ///   - weightKg: Athlete body mass. Nil → `EngineConstants.defaultBodyWeightKg`.
     func tick(speedMps: Double, gradePercent: Double, weightKg: Double?) {
         // Same rest threshold as the quit engine so GPS wander does not mint calories.
-        guard !isDeviceOwned, let weightKg, weightKg > 0, speedMps >= EngineConstants.vStop else { return }
+        guard !isDeviceOwned, speedMps >= EngineConstants.vStop else { return }
+        let mass: Double = {
+            if let weightKg, weightKg > 0 { return weightKg }
+            return EngineConstants.defaultBodyWeightKg
+        }()
 
         // Minetti cost in J/kg/m (same clamping as GradeAdjustedCalculator)
         let g = max(-0.30, min(0.30, gradePercent / 100.0))
@@ -42,7 +46,7 @@ final class CalorieEstimator {
         let costJPerKgPerM = 155.4 * g5 - 30.4 * g4 - 43.3 * g3 + 46.3 * g2 + 19.5 * g + 3.6
 
         // Energy per second: cost(J/kg/m) × weight(kg) × speed(m/s) / 4184 (J→kcal)
-        let kcalPerSec = costJPerKgPerM * weightKg * speedMps / 4184.0
+        let kcalPerSec = costJPerKgPerM * mass * speedMps / 4184.0
         totalKcal += max(0, kcalPerSec)
     }
 

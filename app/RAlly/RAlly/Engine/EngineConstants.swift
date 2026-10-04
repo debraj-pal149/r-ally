@@ -82,4 +82,9 @@ enum EngineConstants {
     static let paceSlipDrop: Double = 0.07
     static let paceSlipHoldSec: Double = 8
     static let recoveryFraction: Double = 0.70
+
+    /// Used for calorie estimates when the athlete has not set a body weight.
+    /// Nike uses an unpublished default so calories still work; Strava requires weight.
+    /// 70 kg is the common adult reference mass in sports-science calorie examples.
+    static let defaultBodyWeightKg: Double = 70
 }

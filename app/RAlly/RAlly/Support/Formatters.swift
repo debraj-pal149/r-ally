@@ -21,6 +21,14 @@ enum Formatters {
         String(format: "%.2f", meters / 1000)
     }
 
+    /// Distance number for the athlete's unit (km or mi). Label separately.
+    static func distance(_ meters: Double, unit: DistanceUnit) -> String {
+        switch unit {
+        case .kilometre: String(format: "%.2f", meters / 1000)
+        case .mile: String(format: "%.2f", meters / 1609.344)
+        }
+    }
+
     static func greeting(now: Date = Date()) -> String {
         let h = Calendar.current.component(.hour, from: now)
         if h < 12 { return "Morning" }

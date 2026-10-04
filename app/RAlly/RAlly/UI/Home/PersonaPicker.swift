@@ -132,7 +132,7 @@ struct PersonaPicker: View {
                 Image(systemName: p.symbol)
                     .font(.system(size: 17, weight: .semibold))
                     .frame(width: 40, height: 40)
-                    .background(Color.white.opacity(0.06))
+                    .background(Theme.textPrimary.opacity(0.06))
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     .foregroundStyle(on ? Theme.emberSoft : Theme.textPrimary)
 

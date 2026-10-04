@@ -31,7 +31,7 @@ struct MetricTiles: View {
     func label(_ k: MetricKind) -> String {
         switch k {
         case .paceSecPerKm: "PACE"
-        case .distanceM: "KM"
+        case .distanceM: model.distanceUnit == .mile ? "MI" : "KM"
         case .cadenceSpm: "CADENCE"
         case .powerWatts: "WATTS"
         case .heartRateBpm: "HR"

@@ -65,7 +65,8 @@ struct MainTabView: View {
             }
         }
         .padding(.horizontal, 28)
-        .padding(.bottom, 8)
+        // Sit above the home indicator so tab labels are not clipped.
+        .safeAreaPadding(.bottom, 10)
         .shadow(color: Theme.emberDeep.opacity(0.22), radius: 16, y: 8)
     }
 

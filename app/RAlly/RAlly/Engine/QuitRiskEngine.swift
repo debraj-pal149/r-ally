@@ -66,7 +66,9 @@ final class QuitRiskEngine {
         store.ingest(sample)
     }
 
-    func tick(t: TimeInterval) -> EngineTickResult {
+    /// - Parameter speechBusy: When true, a line is already playing. Do not commit a
+    ///   new trigger (avoids locking `awaitingSpeechEnd` while AppModel cannot speak).
+    func tick(t: TimeInterval, speechBusy: Bool = false) -> EngineTickResult {
         let latest = storeLatest()
         var ch = adapter.channels(from: latest, t: t)
 
@@ -128,14 +130,17 @@ final class QuitRiskEngine {
             if announcedStop, locomotion == .moving, !recoveryFired {
                 if policy.allow(kind: .recovery, t: t, warmupOver: true, goalDone: goalDone) {
                     trigger = .recovery
-                    recoveryFired = true
-                    announcedStop = false
-                    clearFollowUp()
                 }
             }
         }
 
         if ch.plannedRest, trigger == .preQuitFade || trigger == .stopped || trigger == .stillStopped || trigger == .paceSlip {
+            trigger = nil
+        }
+
+        // Speech already playing (split / opening): skip commit so policy does not
+        // lock awaitingSpeechEnd for the rest of the session.
+        if speechBusy {
             trigger = nil
         }
 
@@ -155,6 +160,7 @@ final class QuitRiskEngine {
             }
             if kind == .recovery {
                 recoveryFired = true
+                announcedStop = false
                 clearFollowUp()
             }
             if kind == .keepGoing { lastKeepGoingT = t }

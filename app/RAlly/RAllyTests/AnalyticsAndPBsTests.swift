@@ -78,10 +78,16 @@ final class AnalyticsAndPBsTests: XCTestCase {
         let store = PersonalBestStore()
         store.reset()
 
-        let splits: [LapSplitRecord] = [
-            LapSplitRecord(splitNumber: 1, distanceM: 1000, durationSec: 280, paceSecPerKm: 280, gapPaceSecPerKm: 280),
-            LapSplitRecord(splitNumber: 2, distanceM: 1000, durationSec: 260, paceSecPerKm: 260, gapPaceSecPerKm: 260)
-        ]
+        // Five ~1 km splits → real consecutive 5K (not average-pace scaled).
+        let splits: [LapSplitRecord] = (1...5).map { n in
+            LapSplitRecord(
+                splitNumber: n,
+                distanceM: 1000,
+                durationSec: n == 2 ? 260 : 280,
+                paceSecPerKm: n == 2 ? 260 : 280,
+                gapPaceSecPerKm: n == 2 ? 260 : 280
+            )
+        }
 
         let newPBs = store.evaluateSession(
             distanceM: 5200,
@@ -96,6 +102,39 @@ final class AnalyticsAndPBsTests: XCTestCase {
         XCTAssertTrue(kinds.contains(.maxElevation))
         XCTAssertTrue(kinds.contains(.fastest1K))
         XCTAssertTrue(kinds.contains(.fastest5K))
+        // Sum of the five split durations — not (1400/5200)*5000.
+        XCTAssertEqual(store.records[.fastest5K]?.recordValue, 280 + 260 + 280 + 280 + 280)
+
+        // Without 5 consecutive km splits, no 5K PB even if distance ≥ 5 km.
+        store.reset()
+        let shortSplits = [
+            LapSplitRecord(splitNumber: 1, distanceM: 1000, durationSec: 280, paceSecPerKm: 280, gapPaceSecPerKm: 280),
+            LapSplitRecord(splitNumber: 2, distanceM: 1000, durationSec: 260, paceSecPerKm: 260, gapPaceSecPerKm: 260),
+        ]
+        let noFive = store.evaluateSession(distanceM: 5200, durationSec: 1400, elevationGainM: 45, splits: shortSplits)
+        XCTAssertFalse(noFive.map(\.kind).contains(.fastest5K))
+
+        // 7 km: fastest 5K is the best of km 1–5 / 2–6 / 3–7, not a scaled average.
+        store.reset()
+        let seven: [LapSplitRecord] = (1...7).map { n in
+            let dur: Double = n <= 5 ? 300 - Double(n) * 4 : 400
+            return LapSplitRecord(splitNumber: n, distanceM: 1000, durationSec: dur, paceSecPerKm: dur, gapPaceSecPerKm: dur)
+        }
+        _ = store.evaluateSession(distanceM: 7000, durationSec: 2400, elevationGainM: 20, splits: seven)
+        let expected = seven.prefix(5).reduce(0.0) { $0 + $1.durationSec }
+        XCTAssertEqual(store.records[.fastest5K]?.recordValue, expected)
+
+        // A glitch lap in the middle must not join km 2 and km 4 as "consecutive".
+        store.reset()
+        var glitchy = (1...5).map { n in
+            LapSplitRecord(splitNumber: n, distanceM: 1000, durationSec: 280, paceSecPerKm: 280, gapPaceSecPerKm: 280)
+        }
+        glitchy.insert(
+            LapSplitRecord(splitNumber: 3, distanceM: 1000, durationSec: 20, paceSecPerKm: 20, gapPaceSecPerKm: 20),
+            at: 2
+        )
+        let glitchPBs = store.evaluateSession(distanceM: 6000, durationSec: 1500, elevationGainM: 20, splits: glitchy)
+        XCTAssertFalse(glitchPBs.map(\.kind).contains(.fastest5K))
     }
 
     // MARK: - Telemetry HR Zones & Breadcrumb Tests

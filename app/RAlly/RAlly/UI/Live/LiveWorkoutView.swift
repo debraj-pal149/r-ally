@@ -71,11 +71,10 @@ struct LiveWorkoutView: View {
                     }
                     liveControl(model.muted ? "speaker.slash.fill" : "speaker.wave.2.fill", model.muted ? "Muted" : "Sound") {
                         Haptics.tap()
-                        model.muted.toggle()
-                        model.speech.muted = model.muted
+                        model.setMuted(!model.muted)
                     }
                 }
-                .padding(.bottom, 32)
+                .safeAreaPadding(.bottom, 16)
             }
 
             if let line = model.spokenLine {

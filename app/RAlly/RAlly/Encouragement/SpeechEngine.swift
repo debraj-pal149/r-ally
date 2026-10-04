@@ -216,6 +216,15 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         previewingVoiceId = nil
     }
 
+    /// Hard silence: cut current audio and fire the finish callback so coach policy unlocks.
+    func silenceNow() {
+        let finish = onFinish
+        onFinish = nil
+        stop()
+        deactivateSession()
+        finish?()
+    }
+
     nonisolated func speechSynthesizer(_ synthesizer: AVSpeechSynthesizer, didFinish utterance: AVSpeechUtterance) {
         Task { @MainActor in
             if self.useBooth { return }

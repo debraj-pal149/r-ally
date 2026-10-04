@@ -6,10 +6,10 @@ struct HomeView: View {
     @Query(sort: \WorkoutSessionRecord.startedAt, order: .reverse) private var sessions: [WorkoutSessionRecord]
     @State private var scrollTarget: String?
 
-    /// Custom tab bar + home indicator clearance.
-    private let chromeReserve: CGFloat = 112
+    /// Custom tab bar + home indicator clearance (tab sits in safe area).
+    private let chromeReserve: CGFloat = 128
     /// Intentional glimpse of the next section — kept *above* the floating tab.
-    private let foldPeek: CGFloat = 36
+    private let foldPeek: CGFloat = 28
 
     var body: some View {
         ZStack {

@@ -8,6 +8,7 @@ struct SummaryView: View {
     var liveRallies: [RallyMoment]
     @State private var selected: RallyMomentRecord?
     @State private var stravaMsg: String?
+    @State private var didPersist = false
 
     var body: some View {
         ZStack {
@@ -97,13 +98,14 @@ struct SummaryView: View {
 
                     // Health & Strava Export
                     HStack(spacing: 10) {
-                        Button("Save to Health") {
+                        Button(model.healthSavedSessionId == record.id ? "Saved to Health" : "Save to Health") {
                             Haptics.tap()
                             Task { @MainActor in
-                                await model.hkWriter.save(session: record)
+                                await model.saveToHealthIfNeeded(session: record)
                             }
                         }
                         .buttonStyle(GhostButtonStyle())
+                        .disabled(model.healthSavedSessionId == record.id)
 
                         if StravaClient.isConfigured {
                             Button("Upload to Strava") {
@@ -131,8 +133,7 @@ struct SummaryView: View {
         .safeAreaInset(edge: .bottom) {
             Button("Done") {
                 Haptics.success()
-                ctx.insert(record)
-                try? ctx.save()
+                persistSessionIfNeeded()
                 model.route = .home
             }
             .buttonStyle(RallyButtonStyle())
@@ -146,6 +147,19 @@ struct SummaryView: View {
         }
         .foregroundStyle(Theme.textPrimary)
         .navigationBarHidden(true)
+        // Persist as soon as summary appears so a kill/background before Done
+        // does not drop the run from Activity history.
+        .onAppear { persistSessionIfNeeded() }
+        .onChange(of: model.latestReport?.headline) { _, _ in
+            try? ctx.save()
+        }
+    }
+
+    private func persistSessionIfNeeded() {
+        guard !didPersist else { return }
+        didPersist = true
+        ctx.insert(record)
+        try? ctx.save()
     }
 
     private func personalBestsBanner(_ badges: [PersonalBestAchievement]) -> some View {

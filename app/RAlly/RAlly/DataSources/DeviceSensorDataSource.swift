@@ -22,6 +22,18 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
     private var accBuf: [Double] = []
     private var heartbeat: Timer?
     private var gpsDistanceActive = false
+    /// When true, GPS/pedometer must not advance `distance` (AppModel pause).
+    private var paused = false
+    /// Last absolute pedometer reading so pause gaps are not added on resume.
+    private var lastPedometerReading: Double = 0
+
+    func setPaused(_ value: Bool) {
+        paused = value
+        if value {
+            // Drop the segment across the pause so resume does not add idle travel.
+            lastLocation = nil
+        }
+    }
 
     func start(handler: @escaping @Sendable (MetricSample) -> Void) {
         self.handler = handler
@@ -35,6 +47,8 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
         lastLocation = nil
         gradeEWMA = 0
         gpsDistanceActive = false
+        paused = false
+        lastPedometerReading = 0
         location.delegate = self
         location.desiredAccuracy = kCLLocationAccuracyBest
         location.distanceFilter = 3
@@ -50,15 +64,22 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
             pedometer.startUpdates(from: Date()) { [weak self] data, _ in
                 guard let self, let data else { return }
                 let t = Date().timeIntervalSince(self.sessionStart)
-                if let cad = data.currentCadence {
+                if !self.paused, let cad = data.currentCadence {
                     let spm = cad.doubleValue * 60
                     self.lastCadence = spm
                     self.lastCadenceAt = Date()
                     self.handler?(MetricSample(kind: .cadenceSpm, value: spm, timestamp: t, source: .device))
                 }
-                // Prefer GPS distance outdoors. Pedometer distance only if GPS never locked.
-                if !self.gpsDistanceActive, let d = data.distance {
-                    self.handler?(MetricSample(kind: .distanceM, value: d.doubleValue, timestamp: t, source: .device))
+                // Prefer GPS outdoors. Pedometer only if GPS never locked.
+                // Advance by delta so a paused gap is not added on resume.
+                if let d = data.distance {
+                    let raw = d.doubleValue
+                    let delta = max(0, raw - self.lastPedometerReading)
+                    self.lastPedometerReading = raw
+                    if !self.paused, !self.gpsDistanceActive, delta > 0 {
+                        self.distance += delta
+                        self.handler?(MetricSample(kind: .distanceM, value: self.distance, timestamp: t, source: .device))
+                    }
                 }
             }
         }
@@ -133,16 +154,16 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
         }
         handler?(MetricSample(kind: .distanceM, value: distance, timestamp: t, source: .derived))
         if let cadAt = lastCadenceAt, now.timeIntervalSince(cadAt) > 6 {
-            // Stale cadence while slow ⇒ zero (do NOT invent a healthy walk cadence).
-            let low = smoothedSpeed < EngineConstants.vStop ? 0.0 : (smoothedSpeed < EngineConstants.vJog ? 95.0 : 140.0)
-            lastCadence = low
-            handler?(MetricSample(kind: .cadenceSpm, value: low, timestamp: t, source: .derived))
+            // Stale cadence ⇒ zero. Do not invent a healthy walk/run cadence.
+            lastCadence = 0
+            handler?(MetricSample(kind: .cadenceSpm, value: 0, timestamp: t, source: .derived))
         } else if let cad = lastCadence {
             handler?(MetricSample(kind: .cadenceSpm, value: cad, timestamp: t, source: .derived))
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard !paused else { return }
         guard let loc = locations.last, loc.horizontalAccuracy >= 0, loc.horizontalAccuracy < 30 else { return }
         let t = Date().timeIntervalSince(sessionStart)
         if let prev = lastLocation {

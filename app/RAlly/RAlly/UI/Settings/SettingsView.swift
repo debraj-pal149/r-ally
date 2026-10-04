@@ -388,7 +388,9 @@ struct SettingsView: View {
                     .frame(width: 88, height: 38)
                     .onSubmit(commitSettingsWeight)
             }
-            Text("Used to estimate run calories. A watch calorie total overrides this.")
+            Text(model.bodyWeightKg == nil
+                 ? "Empty = estimate with 70 kg (154 lb). A device calorie total still overrides."
+                 : "Used to estimate run calories. Clear the field to use the 70 kg default. A device calorie total overrides this.")
                 .font(Theme.body(11))
                 .foregroundStyle(Theme.textMuted)
                 .fixedSize(horizontal: false, vertical: true)
@@ -418,6 +420,12 @@ struct SettingsView: View {
 
     private func commitSettingsWeight() {
         let raw = settingsWeightText.replacingOccurrences(of: ",", with: ".").trimmingCharacters(in: .whitespaces)
+        if raw.isEmpty {
+            if model.bodyWeightKg != nil {
+                model.bodyWeightKg = nil
+            }
+            return
+        }
         guard let value = Double(raw), value > 0 else { return }
         let kg = model.distanceUnit == .mile ? value / 2.2046226218 : value
         guard (35...250).contains(kg) else { return }

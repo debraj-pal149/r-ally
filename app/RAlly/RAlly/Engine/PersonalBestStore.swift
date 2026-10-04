@@ -11,6 +11,7 @@ final class PersonalBestStore: ObservableObject {
 
     init() {
         loadRecords()
+        migrateScaledDistancePBsIfNeeded()
     }
 
     func reset() {
@@ -91,32 +92,30 @@ final class PersonalBestStore: ObservableObject {
             }
         }
 
-        // 4. Fastest 5K
-        if distanceM >= 5000 {
-            let estimated5kSec = (durationSec / distanceM) * 5000.0
+        // 4. Fastest 5K — best consecutive 5×~1 km splits (real segment, not pace-scaled).
+        if let best5K = bestConsecutiveSplitTime(splits: splits, lapCount: 5) {
             let prev5K = records[.fastest5K]?.recordValue ?? 999999
-            if estimated5kSec < prev5K {
+            if best5K < prev5K {
                 let badge = PersonalBestAchievement(
                     kind: .fastest5K,
                     title: "Fastest 5K",
-                    recordValue: estimated5kSec,
-                    formattedValue: Formatters.clock(estimated5kSec)
+                    recordValue: best5K,
+                    formattedValue: Formatters.clock(best5K)
                 )
                 records[.fastest5K] = badge
                 newlyUnlocked.append(badge)
             }
         }
 
-        // 5. Fastest 10K
-        if distanceM >= 10000 {
-            let estimated10kSec = (durationSec / distanceM) * 10000.0
+        // 5. Fastest 10K — best consecutive 10×~1 km splits.
+        if let best10K = bestConsecutiveSplitTime(splits: splits, lapCount: 10) {
             let prev10K = records[.fastest10K]?.recordValue ?? 999999
-            if estimated10kSec < prev10K {
+            if best10K < prev10K {
                 let badge = PersonalBestAchievement(
                     kind: .fastest10K,
                     title: "Fastest 10K",
-                    recordValue: estimated10kSec,
-                    formattedValue: Formatters.clock(estimated10kSec)
+                    recordValue: best10K,
+                    formattedValue: Formatters.clock(best10K)
                 )
                 records[.fastest10K] = badge
                 newlyUnlocked.append(badge)
@@ -133,5 +132,42 @@ final class PersonalBestStore: ObservableObject {
     /// All badges sorted by logical progression.
     var allBadges: [PersonalBestAchievement] {
         PersonalBestAchievement.PBKind.allCases.compactMap { records[$0] }
+    }
+
+    /// Fastest time across any window of `lapCount` consecutive km splits in order.
+    /// Example: a 7 km run yields three candidate 5Ks (km 1–5, 2–6, 3–7); the best wins.
+    /// Invalid laps (GPS jump / rest blob) are not dropped from the sequence — they
+    /// only invalidate windows that include them, so km 2 and km 4 never become "consecutive".
+    private func bestConsecutiveSplitTime(splits: [LapSplitRecord], lapCount: Int) -> Double? {
+        guard splits.count >= lapCount else { return nil }
+        var best: Double?
+        for i in 0...(splits.count - lapCount) {
+            let window = splits[i..<(i + lapCount)]
+            guard window.allSatisfy(Self.isPlausibleKmSplit) else { continue }
+            let dist = window.reduce(0.0) { $0 + $1.distanceM }
+            let time = window.reduce(0.0) { $0 + $1.durationSec }
+            // ~5.00–5.75 km for a 5-lap window; rejects a 2 km lump counted as one split.
+            guard dist >= Double(lapCount) * 950, dist <= Double(lapCount) * 1150 else { continue }
+            if best == nil || time < best! {
+                best = time
+            }
+        }
+        return best
+    }
+
+    /// One km lap: real distance and not a GPS teleport or a long standstill.
+    private static func isPlausibleKmSplit(_ split: LapSplitRecord) -> Bool {
+        (950...1150).contains(split.distanceM) && split.durationSec > 45 && split.durationSec < 1800
+    }
+
+    /// Old 5K/10K badges were average-pace projections. Drop them once so real
+    /// consecutive-split times can take their place.
+    private func migrateScaledDistancePBsIfNeeded() {
+        let flag = "rally.pb.consecutive_split_5k_v1"
+        guard !UserDefaults.standard.bool(forKey: flag) else { return }
+        records[.fastest5K] = nil
+        records[.fastest10K] = nil
+        saveRecords()
+        UserDefaults.standard.set(true, forKey: flag)
     }
 }

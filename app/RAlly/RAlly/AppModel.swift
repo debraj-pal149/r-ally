@@ -136,6 +136,13 @@ final class AppModel {
     private var recentLines: [String] = []
     private var simSource: SimulatorDataSource?
     private var deviceSource: DeviceSensorDataSource?
+    /// Guards against sim scenario-end + End button double-finishing one session.
+    private var isEndingWorkout = false
+    /// Running mean of HR samples this session (for summary avgHR).
+    private var hrSum: Double = 0
+    private var hrCount: Int = 0
+    /// Prevents a second HealthKit workout write for the same finished session.
+    private(set) var healthSavedSessionId: UUID?
 
     var hrMax: Double {
         hrMaxOverride ?? (211 - 0.64 * Double(age))
@@ -183,6 +190,8 @@ final class AppModel {
         UserDefaults.standard.set(age, forKey: "athlete.age")
         if let bodyWeightKg {
             UserDefaults.standard.set(bodyWeightKg, forKey: "athlete.weightKg")
+        } else {
+            UserDefaults.standard.removeObject(forKey: "athlete.weightKg")
         }
         UserDefaults.standard.set(thresholdPace, forKey: "athlete.pace")
         UserDefaults.standard.set(sessionCap, forKey: "rally.cap")
@@ -195,13 +204,13 @@ final class AppModel {
 
     func completeOnboarding() {
         didOnboard = true
+        UserDefaults.standard.set(true, forKey: "didOnboard")
         #if !targetEnvironment(simulator)
         sourceKind = .device
         #endif
         persistProfile()
         Task { @MainActor in
-            _ = await health.requestAuthorization()
-            healthAuthorized = true
+            healthAuthorized = await health.requestAuthorization()
         }
         route = .home
     }
@@ -233,6 +242,10 @@ final class AppModel {
         if !activity.isShipped, sourceKind == .device { activity = .running }
         engine.reset(activity: activity, maxHR: hrMax, sessionCap: sessionCap)
         calorieEstimator.reset()
+        isEndingWorkout = false
+        hrSum = 0
+        hrCount = 0
+        healthSavedSessionId = nil
         liveT = 0
         liveRisk = 0
         liveState = .cruising
@@ -315,9 +328,23 @@ final class AppModel {
 
     func togglePause() {
         livePaused.toggle()
+        // Stop GPS/pedometer distance accrual while paused so resume does not jump.
+        deviceSource?.setPaused(livePaused)
+    }
+
+    /// Mute means silence now — cut any line already playing, not only the next one.
+    func setMuted(_ on: Bool) {
+        muted = on
+        speech.muted = on
+        if on {
+            speech.silenceNow()
+            spokenLine = nil
+        }
     }
 
     func endWorkout() {
+        guard !isEndingWorkout else { return }
+        isEndingWorkout = true
         sources.stop()
         speech.stop()
         #if os(iOS)
@@ -338,6 +365,7 @@ final class AppModel {
         let breadcrumbs = trendTracker.breadcrumbs
 
         let finalKcal = calorieEstimator.totalKcal
+        let avgHR: Double? = hrCount > 0 ? hrSum / Double(hrCount) : liveLatest[.heartRateBpm]
 
         let unlockedPBs = PersonalBestStore.shared.evaluateSession(
             distanceM: distance,
@@ -352,7 +380,7 @@ final class AppModel {
             activityRaw: activity.rawValue,
             durationSec: duration,
             distanceM: distance,
-            avgHR: liveLatest[.heartRateBpm],
+            avgHR: avgHR,
             rallyCount: liveRallies.count,
             outputSpark: engine.store.sparkline(),
             rallies: liveRallies.map { RallyMomentRecord(t: $0.t, kindRaw: $0.kind.rawValue, text: $0.text, aftermath: $0.aftermath) },
@@ -376,7 +404,7 @@ final class AppModel {
             into: athleteHistory
         )
         Task { @MainActor in
-            await hkWriter.save(session: rec)
+            await self.saveToHealthIfNeeded(session: rec)
             let report = await CoachReportGenerator.shared.generateReport(
                 record: rec,
                 persona: persona,
@@ -384,8 +412,20 @@ final class AppModel {
                 client: AnthropicClient(apiKey: AnthropicClient.keyFromBundle())
             )
             self.latestReport = report
+            // Keep Activity detail / SwiftData copy in sync with the report.
+            rec.reportHeadline = report.headline
+            rec.reportDebrief = report.debrief
+            rec.reportQuote = report.coachQuote
+            rec.reportGrade = report.athleteGrade
         }
         route = .summary(rec)
+    }
+
+    /// Idempotent Health write for the finished session (auto + manual button).
+    func saveToHealthIfNeeded(session: WorkoutSessionRecord) async {
+        guard healthSavedSessionId != session.id else { return }
+        await hkWriter.save(session: session)
+        healthSavedSessionId = session.id
     }
 
     private func ingest(_ sample: MetricSample) {
@@ -399,6 +439,10 @@ final class AppModel {
         } else {
             liveLatest[sample.kind] = sample.value
         }
+        if sample.kind == .heartRateBpm, sample.value > 0 {
+            hrSum += sample.value
+            hrCount += 1
+        }
         let sec = floor(sample.timestamp)
         liveT = sample.timestamp
         if sec > lastTick {
@@ -409,7 +453,7 @@ final class AppModel {
 
     private func tick(_ t: TimeInterval) {
         updateGoalDone()
-        let result = engine.tick(t: t)
+        let result = engine.tick(t: t, speechBusy: speech.speaking || muted)
         liveRisk = result.risk
         liveState = result.state
         liveLocomotion = result.locomotion
@@ -463,15 +507,16 @@ final class AppModel {
 
         // Periodic distance split callouts (km or mile by locale)
         if activity == .running,
+           !muted,
+           !speech.speaking,
+           result.trigger == nil,
            let splitLine = splitEngine.checkKilometerSplit(
                currentDistanceM: dist,
                currentElapsedT: t,
                persona: persona,
                currentPaceSecPerKm: currentPace,
                unit: distanceUnit
-           ),
-           !speech.speaking,
-           result.trigger == nil {
+           ) {
             fireDirectSplitLine(DistanceUnitNormalizer.normalize(splitLine, to: distanceUnit), t: t)
             return
         }
@@ -481,6 +526,7 @@ final class AppModel {
         if !didFireOpeningPush,
            activity == .running,
            t >= 8, t <= 120,
+           !muted,
            !speech.speaking,
            result.trigger == nil,
            liveLocomotion != .stopped {
@@ -524,6 +570,7 @@ final class AppModel {
         // Breakthrough history moments: shout immediately at the right time.
         if let cue = historyCue,
            athleteHistory.shouldSpeakDirectly(cue),
+           !muted,
            !speech.speaking,
            result.trigger == nil,
            t - lastSpokenTimestamp >= 20 {
@@ -546,9 +593,9 @@ final class AppModel {
         }
 
         if let kind = result.trigger {
-            guard !speech.speaking else { return }
+            guard !muted, !speech.speaking else { return }
             fire(kind: kind, t: t, ctx: ctx, output: result.channels.output)
-        } else if milestone != nil, !speech.speaking, (t - lastSpokenTimestamp >= 45) {
+        } else if milestone != nil, !muted, !speech.speaking, (t - lastSpokenTimestamp >= 45) {
             fire(kind: .milestone, t: t, ctx: ctx, output: result.channels.output)
         }
     }
@@ -631,6 +678,7 @@ final class AppModel {
     }
 
     private func fireDirectSplitLine(_ text: String, t: TimeInterval) {
+        guard !muted else { return }
         let spokenText = DistanceUnitNormalizer.normalize(text, to: distanceUnit)
         lastSpokenTimestamp = t
         noteSpoken(spokenText)
@@ -729,8 +777,11 @@ final class AppModel {
                 return "-"
             }
             return Formatters.pace(v)
-        case .distanceM: return Formatters.km(v)
-        case .heartRateBpm, .cadenceSpm, .strokeRateSpm, .punchRatePpm, .powerWatts, .repCount:
+        case .distanceM: return Formatters.distance(v, unit: distanceUnit)
+        case .cadenceSpm:
+            // 0 means "no steps right now", not a real cadence reading.
+            return v > 0 ? String(Int(v.rounded())) : "-"
+        case .heartRateBpm, .strokeRateSpm, .punchRatePpm, .powerWatts, .repCount:
             return String(Int(v.rounded()))
         case .repVelocityMps, .speedMps, .motionIntensityG, .gradePercent:
             return String(format: "%.2f", v)

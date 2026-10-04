@@ -71,7 +71,12 @@ struct FirstRunFlow: View {
                 Spacer()
                 Button(continueTitle) {
                     if step == 2 {
-                        guard commitWeight() else { return }
+                        // Valid weight commits; empty skips and calories use the default mass.
+                        if !weightText.trimmingCharacters(in: .whitespaces).isEmpty {
+                            guard commitWeight() else { return }
+                        } else {
+                            model.bodyWeightKg = nil
+                        }
                     }
                     if step == stepCount - 1 {
                         model.prepareDevicePermissions()
@@ -89,20 +94,27 @@ struct FirstRunFlow: View {
     }
 
     private var continueTitle: String {
-        if step == 2 { return "This weight is right" }
+        if step == 2 {
+            let blank = weightText.trimmingCharacters(in: .whitespaces).isEmpty
+            if blank { return "Skip for now" }
+            return "This weight is right"
+        }
         if step < stepCount - 1 { return "Continue" }
         return "Let's go"
     }
 
     private var canAdvance: Bool {
-        if step == 2 { return parsedWeightKg != nil }
+        if step == 2 {
+            let blank = weightText.trimmingCharacters(in: .whitespaces).isEmpty
+            return blank || parsedWeightKg != nil
+        }
         return true
     }
 
     private var weightStep: some View {
         VStack(alignment: .leading, spacing: 16) {
             PosterText(text: "Your weight", size: 44)
-            Text("We use this to estimate calories on a run. If a watch sends its own calorie total for that run, we use the watch number instead. Check the figure before you continue.")
+            Text("Used to estimate calories on a run. Optional — if you skip, we use a standard adult weight (70 kg / 154 lb), same idea as Nike when height/weight are not shared. A device calorie total still wins when one is sent.")
                 .font(Theme.body(15))
                 .foregroundStyle(Theme.textSecondary)
                 .fixedSize(horizontal: false, vertical: true)
@@ -124,8 +136,13 @@ struct FirstRunFlow: View {
                     .font(Theme.body(14, .medium))
                     .foregroundStyle(Theme.ember)
                     .fixedSize(horizontal: false, vertical: true)
-            } else if !weightText.trimmingCharacters(in: .whitespaces).isEmpty {
-                Text("Enter a realistic weight so calorie estimates stay honest.")
+            } else if weightText.trimmingCharacters(in: .whitespaces).isEmpty {
+                Text("Skip and we estimate with 70 kg (154 lb). You can set your real weight later in Corner.")
+                    .font(Theme.body(13))
+                    .foregroundStyle(Theme.textMuted)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else {
+                Text("Enter a realistic weight, or clear the field to skip.")
                     .font(Theme.body(13))
                     .foregroundStyle(Theme.warn)
             }
