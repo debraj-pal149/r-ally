@@ -3,6 +3,53 @@ import XCTest
 
 final class AnalyticsAndPBsTests: XCTestCase {
 
+    func testActiveWorkoutClockRemovesPausedWallTime() {
+        let start = Date(timeIntervalSince1970: 1_000)
+        var clock = ActiveWorkoutClock()
+
+        clock.setPaused(true, now: start.addingTimeInterval(30 * 60))
+        clock.setPaused(false, now: start.addingTimeInterval(40 * 60))
+
+        // Raw sensors report 40 minutes, but only 30 were active.
+        XCTAssertEqual(clock.activeTimestamp(for: 40 * 60), 30 * 60, accuracy: 0.001)
+        XCTAssertEqual(clock.accumulatedPause, 10 * 60, accuracy: 0.001)
+    }
+
+    func testActiveWorkoutClockDoesNotDoubleCountPauseToggles() {
+        let start = Date(timeIntervalSince1970: 2_000)
+        var clock = ActiveWorkoutClock()
+
+        clock.setPaused(true, now: start)
+        clock.setPaused(true, now: start.addingTimeInterval(5))
+        clock.setPaused(false, now: start.addingTimeInterval(10))
+
+        XCTAssertEqual(clock.accumulatedPause, 10, accuracy: 0.001)
+        XCTAssertEqual(clock.activeTimestamp(for: 25), 15, accuracy: 0.001)
+    }
+
+    func testShareStoryThemeUsesRunStartHour() throws {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = try XCTUnwrap(TimeZone(secondsFromGMT: 0))
+
+        let morning = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026, month: 10, day: 19, hour: 6
+        )))
+        let afternoon = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026, month: 10, day: 19, hour: 17, minute: 59
+        )))
+        let evening = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026, month: 10, day: 19, hour: 18
+        )))
+        let beforeDawn = try XCTUnwrap(calendar.date(from: DateComponents(
+            year: 2026, month: 10, day: 20, hour: 5, minute: 59
+        )))
+
+        XCTAssertEqual(ShareStoryTheme.forRun(startedAt: morning, calendar: calendar), .receiptDay)
+        XCTAssertEqual(ShareStoryTheme.forRun(startedAt: afternoon, calendar: calendar), .receiptDay)
+        XCTAssertEqual(ShareStoryTheme.forRun(startedAt: evening, calendar: calendar), .bloodlineNight)
+        XCTAssertEqual(ShareStoryTheme.forRun(startedAt: beforeDawn, calendar: calendar), .bloodlineNight)
+    }
+
     // MARK: - GAP (Grade-Adjusted Pace) Tests
 
     func testGradeAdjustedPaceCalculations() {
@@ -170,5 +217,38 @@ final class AnalyticsAndPBsTests: XCTestCase {
         let z4 = zones.first(where: { $0.zoneIndex == 4 })
         XCTAssertNotNil(z4)
         XCTAssertGreaterThan(z4!.percentage, 80)
+    }
+}
+
+final class AnalyticsMemoryTests: XCTestCase {
+    func testActivationFiresOnceAfterOnboardingStartAndFinish() {
+        var memory = AnalyticsMemory.new(now: Date(timeIntervalSince1970: 1_700_000_000))
+        memory.onboardingCompleted = true
+        memory.workoutStarted = true
+        XCTAssertFalse(memory.noteReadyForActivation())
+        memory.workoutFinished = true
+        XCTAssertTrue(memory.noteReadyForActivation())
+        XCTAssertFalse(memory.noteReadyForActivation())
+    }
+
+    func testShortFinishDoesNotQualifyAsWorking() {
+        XCTAssertFalse(AnalyticsMemory.isQualifyingWorkout(activeSeconds: 45))
+        XCTAssertFalse(AnalyticsMemory.isQualifyingWorkout(activeSeconds: 59))
+        XCTAssertTrue(AnalyticsMemory.isQualifyingWorkout(activeSeconds: 60))
+    }
+
+    func testHealthPermissionTracksOnlyWhenTheAnswerChanges() {
+        var memory = AnalyticsMemory.new(now: Date(timeIntervalSince1970: 1_700_000_000))
+        XCTAssertTrue(memory.noteHealthPermission(granted: true))
+        XCTAssertFalse(memory.noteHealthPermission(granted: true))
+        XCTAssertTrue(memory.noteHealthPermission(granted: false))
+    }
+
+    func testDaysSinceInstallUsesCalendarDays() {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        let install = calendar.date(from: DateComponents(year: 2026, month: 10, day: 1, hour: 22))!
+        let later = calendar.date(from: DateComponents(year: 2026, month: 10, day: 3, hour: 1))!
+        XCTAssertEqual(AnalyticsMemory.daysSinceInstall(installAt: install, now: later, calendar: calendar), 2)
     }
 }

@@ -29,6 +29,7 @@ final class AppModel {
             } else {
                 UserDefaults.standard.removeObject(forKey: "athlete.weightKg")
             }
+            RallyAnalytics.noteWeight(hasWeight: bodyWeightKg != nil)
         }
     }
     var hrMaxOverride: Double? = UserDefaults.standard.object(forKey: "athlete.hrMax") as? Double
@@ -102,6 +103,7 @@ final class AppModel {
     var runnerLevel: RunnerLevel = .intermediate {
         didSet {
             UserDefaults.standard.set(runnerLevel.rawValue, forKey: "athlete.runnerLevel")
+            RallyAnalytics.noteRunnerLevel(runnerLevel.rawValue)
         }
     }
 
@@ -114,12 +116,16 @@ final class AppModel {
     var distanceUnit: DistanceUnit = DistanceUnit.detect()
     var appearanceMode: AppearanceMode = AppearanceMode.load() {
         didSet {
+            guard appearanceMode != oldValue else { return }
             UserDefaults.standard.set(appearanceMode.rawValue, forKey: "ui.appearance")
             AppearanceMode.applyToWindows(appearanceMode)
+            // Enqueue immediately so a cloud profile snapshot cannot snap appearance back.
+            SyncRecorder.profileChanged()
         }
     }
     private var didFireOpeningPush = false
     private var lastHistoryCueKey: String? = nil
+    private var engagementLineCount = 0
     let sources = DataSourceManager()
     let speech = SpeechEngine()
     let ble = BLEHeartRateDataSource()
@@ -136,6 +142,7 @@ final class AppModel {
     private var recentLines: [String] = []
     private var simSource: SimulatorDataSource?
     private var deviceSource: DeviceSensorDataSource?
+    private var activeClock = ActiveWorkoutClock()
     /// Guards against sim scenario-end + End button double-finishing one session.
     private var isEndingWorkout = false
     /// Running mean of HR samples this session (for summary avgHR).
@@ -185,7 +192,7 @@ final class AppModel {
         }
     }
 
-    func persistProfile() {
+    func persistProfile(touchSync: Bool = true) {
         UserDefaults.standard.set(name, forKey: "athlete.name")
         UserDefaults.standard.set(age, forKey: "athlete.age")
         if let bodyWeightKg {
@@ -200,19 +207,43 @@ final class AppModel {
         if let hrMaxOverride { UserDefaults.standard.set(hrMaxOverride, forKey: "athlete.hrMax") }
         UserDefaults.standard.set(voiceId, forKey: "coach.voiceId")
         UserDefaults.standard.set(appearanceMode.rawValue, forKey: "ui.appearance")
+        if touchSync {
+            SyncRecorder.profileChanged()
+        }
     }
 
     func completeOnboarding() {
         didOnboard = true
         UserDefaults.standard.set(true, forKey: "didOnboard")
+        UserDefaults.standard.set(true, forKey: AccountKeys.welcomeSeen)
+        UserDefaults.standard.set(true, forKey: AccountKeys.dayCoachPending)
         #if !targetEnvironment(simulator)
         sourceKind = .device
         #endif
         persistProfile()
+        RallyAnalytics.onboardingCompleted(
+            persona: persona.id.rawValue,
+            hasName: !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty,
+            hasWeight: bodyWeightKg != nil
+        )
         Task { @MainActor in
-            healthAuthorized = await health.requestAuthorization()
+            _ = await authorizeHealth()
         }
         route = .home
+    }
+
+    func authorizeHealth() async -> Bool {
+        let granted = await health.requestAuthorization()
+        healthAuthorized = granted
+        RallyAnalytics.healthPermission(granted: granted)
+        return granted
+    }
+
+    func selectPersona(_ next: Persona, source: String) {
+        let previous = persona.id.rawValue
+        guard persona.id != next.id else { return }
+        persona = next
+        RallyAnalytics.personaChanged(persona: next.id.rawValue, previous: previous, source: source)
     }
 
     /// Kick location/motion prompts before the first outdoor run.
@@ -255,6 +286,7 @@ final class AppModel {
         livePaused = false
         liveDisconnected = false
         liveStartedAt = Date()
+        activeClock.reset()
         lastTick = -1
         recentLines = []
         finishedAfterCritical = false
@@ -265,6 +297,7 @@ final class AppModel {
         latestReport = nil
         didFireOpeningPush = false
         lastHistoryCueKey = nil
+        engagementLineCount = 0
         distanceUnit = DistanceUnit.detect()
         athleteHistory = AthleteHistoryBuilder.loadPersisted()
         LifetimePromptMemory.shared.beginRun()
@@ -285,7 +318,10 @@ final class AppModel {
                 Task { @MainActor in
                     self?.connectedToSim = ok
                     self?.liveDisconnected = !ok
-                    if !ok { self?.livePaused = true }
+                    if !ok, let self, !self.livePaused {
+                        self.livePaused = true
+                        self.activeClock.setPaused(true)
+                    }
                 }
             }
             sim.onHello = { [weak self] _, act in
@@ -312,7 +348,7 @@ final class AppModel {
             // Ask Health once so the finished run can save. Not used for live tracking.
             Task { @MainActor in
                 if !self.healthAuthorized {
-                    self.healthAuthorized = await self.health.requestAuthorization()
+                    _ = await self.authorizeHealth()
                 }
             }
         }
@@ -320,6 +356,18 @@ final class AppModel {
             self?.ingest(sample)
         }
         sources.start()
+        let goalMeters: Double
+        if case .distance(let meters) = goal {
+            goalMeters = meters
+        } else {
+            goalMeters = 0
+        }
+        RallyAnalytics.workoutStarted(
+            persona: persona.id.rawValue,
+            goalMeters: goalMeters,
+            runnerLevel: runnerLevel.rawValue,
+            unit: distanceUnit.rawValue
+        )
         route = .live
         #if os(iOS)
         UIApplication.shared.isIdleTimerDisabled = true
@@ -328,14 +376,18 @@ final class AppModel {
 
     func togglePause() {
         livePaused.toggle()
+        activeClock.setPaused(livePaused)
+        RallyAnalytics.pauseChanged(paused: livePaused)
         // Stop GPS/pedometer distance accrual while paused so resume does not jump.
         deviceSource?.setPaused(livePaused)
     }
 
     /// Mute means silence now — cut any line already playing, not only the next one.
     func setMuted(_ on: Bool) {
+        let changed = muted != on
         muted = on
         speech.muted = on
+        if changed { RallyAnalytics.muteChanged(muted: on) }
         if on {
             speech.silenceNow()
             spokenLine = nil
@@ -403,34 +455,51 @@ final class AppModel {
             endedAt: ended,
             into: athleteHistory
         )
+        RallyAnalytics.workoutFinished(
+            activeSec: duration,
+            distanceM: distance,
+            paceSecPerKm: rawAvgPace,
+            kcal: finalKcal,
+            rallyCount: liveRallies.count,
+            persona: persona.id.rawValue,
+            pbCount: unlockedPBs.count,
+            hadGPS: !breadcrumbs.isEmpty,
+            finishedAfterCritical: finishedAfterCritical
+        )
         Task { @MainActor in
-            await self.saveToHealthIfNeeded(session: rec)
-            let report = await CoachReportGenerator.shared.generateReport(
+            await self.saveToHealthIfNeeded(session: rec, source: "auto")
+            let generated = await CoachReportGenerator.shared.generateReport(
                 record: rec,
                 persona: persona,
                 runnerLevel: runnerLevel,
                 client: AnthropicClient(apiKey: AnthropicClient.keyFromBundle())
             )
+            let report = generated.report
             self.latestReport = report
             // Keep Activity detail / SwiftData copy in sync with the report.
             rec.reportHeadline = report.headline
             rec.reportDebrief = report.debrief
             rec.reportQuote = report.coachQuote
             rec.reportGrade = report.athleteGrade
+            RallyAnalytics.coachReportReady(grade: report.athleteGrade, source: generated.source)
         }
         route = .summary(rec)
     }
 
     /// Idempotent Health write for the finished session (auto + manual button).
-    func saveToHealthIfNeeded(session: WorkoutSessionRecord) async {
+    func saveToHealthIfNeeded(session: WorkoutSessionRecord, source: String) async {
         guard healthSavedSessionId != session.id else { return }
-        await hkWriter.save(session: session)
+        let saved = await hkWriter.save(session: session)
+        guard saved else { return }
         healthSavedSessionId = session.id
+        RallyAnalytics.healthSaved(source: source)
     }
 
     private func ingest(_ sample: MetricSample) {
         if livePaused { return }
-        engine.ingest(sample)
+        var activeSample = sample
+        activeSample.timestamp = activeClock.activeTimestamp(for: sample.timestamp)
+        engine.ingest(activeSample)
         if sample.kind == .activeEnergyKcal {
             // Keep the highest cumulative device total. A lower blip must not
             // replace the live number or the saved total.
@@ -443,8 +512,8 @@ final class AppModel {
             hrSum += sample.value
             hrCount += 1
         }
-        let sec = floor(sample.timestamp)
-        liveT = sample.timestamp
+        let sec = floor(activeSample.timestamp)
+        liveT = activeSample.timestamp
         if sec > lastTick {
             lastTick = sec
             tick(sec)
@@ -453,7 +522,10 @@ final class AppModel {
 
     private func tick(_ t: TimeInterval) {
         updateGoalDone()
-        let result = engine.tick(t: t, speechBusy: speech.speaking || muted)
+        if speech.callInterrupted, spokenLine != nil {
+            withAnimation(.easeOut(duration: 0.15)) { spokenLine = nil }
+        }
+        let result = engine.tick(t: t, speechBusy: speech.speaking || speech.mustStaySilent)
         liveRisk = result.risk
         liveState = result.state
         liveLocomotion = result.locomotion
@@ -507,7 +579,7 @@ final class AppModel {
 
         // Periodic distance split callouts (km or mile by locale)
         if activity == .running,
-           !muted,
+           !speech.mustStaySilent,
            !speech.speaking,
            result.trigger == nil,
            let splitLine = splitEngine.checkKilometerSplit(
@@ -526,7 +598,7 @@ final class AppModel {
         if !didFireOpeningPush,
            activity == .running,
            t >= 8, t <= 120,
-           !muted,
+           !speech.mustStaySilent,
            !speech.speaking,
            result.trigger == nil,
            liveLocomotion != .stopped {
@@ -570,7 +642,7 @@ final class AppModel {
         // Breakthrough history moments: shout immediately at the right time.
         if let cue = historyCue,
            athleteHistory.shouldSpeakDirectly(cue),
-           !muted,
+           !speech.mustStaySilent,
            !speech.speaking,
            result.trigger == nil,
            t - lastSpokenTimestamp >= 20 {
@@ -593,9 +665,9 @@ final class AppModel {
         }
 
         if let kind = result.trigger {
-            guard !muted, !speech.speaking else { return }
+            guard !speech.mustStaySilent, !speech.speaking else { return }
             fire(kind: kind, t: t, ctx: ctx, output: result.channels.output)
-        } else if milestone != nil, !muted, !speech.speaking, (t - lastSpokenTimestamp >= 45) {
+        } else if milestone != nil, !speech.mustStaySilent, !speech.speaking, (t - lastSpokenTimestamp >= 45) {
             fire(kind: .milestone, t: t, ctx: ctx, output: result.channels.output)
         }
     }
@@ -607,6 +679,9 @@ final class AppModel {
         }
         let start = Date()
         let popped = cache.pop(kind: kind, ctx: ctx)
+        if kind == .engagement {
+            engagementLineCount += 1
+        }
         let spokenText = DistanceUnitNormalizer.normalize(popped.text, to: distanceUnit)
         let latency = Int(Date().timeIntervalSince(start) * 1000)
         noteSpoken(spokenText)
@@ -678,7 +753,7 @@ final class AppModel {
     }
 
     private func fireDirectSplitLine(_ text: String, t: TimeInterval) {
-        guard !muted else { return }
+        guard !speech.mustStaySilent else { return }
         let spokenText = DistanceUnitNormalizer.normalize(text, to: distanceUnit)
         lastSpokenTimestamp = t
         noteSpoken(spokenText)
@@ -750,7 +825,8 @@ final class AppModel {
             closedLoopFeedback: trendTracker.lastClosedLoopDescription,
             distanceUnit: distanceUnit,
             athleteHistoryLines: athleteHistory.leanPromptLines,
-            historyCue: historyCue
+            historyCue: historyCue,
+            engagementSequence: engagementLineCount
         )
     }
 

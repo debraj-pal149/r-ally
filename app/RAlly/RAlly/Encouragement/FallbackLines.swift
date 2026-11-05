@@ -3,6 +3,14 @@ import Foundation
 enum FallbackLines {
     @MainActor
     static func line(kind: TriggerKind, ctx: LineContext) -> String {
+        if kind == .engagement {
+            return EngagementLines.line(
+                persona: ctx.persona.id,
+                elapsed: ctx.elapsed,
+                sequence: ctx.engagementSequence,
+                recent: ctx.recent
+            )
+        }
         let bank = all(persona: ctx.persona.id, kind: kind)
         let priors = ctx.recent + LifetimePromptMemory.shared.rejectionPriors
         let start = abs(Int(ctx.elapsed) + ctx.recent.count) % max(bank.count, 1)
@@ -20,6 +28,9 @@ enum FallbackLines {
     }
 
     static func all(persona: Persona.ID, kind: TriggerKind) -> [String] {
+        if kind == .engagement {
+            return EngagementLines.sampleBank(persona: persona)
+        }
         let cores = core(persona, kind)
         let tails = tail(persona)
         let maxWords = maxWords(for: kind)
@@ -45,6 +56,9 @@ enum FallbackLines {
         case .preacher: "You decided who you are. Now rise into that decision and keep going."
         case .sarge: "On your feet. We are not done. Drive those legs and move now."
         case .steady: "Breathe. One more honest step. That is all you need right now."
+        case .major: "Hold the line. No debate. Drive those legs and move now."
+        case .whip: "I said move. Dig in, shout it back with your stride, and go."
+        case .hardline: "Yell it with your legs. Own this stretch and finish it."
         }
     }
 
@@ -54,7 +68,7 @@ enum FallbackLines {
         case .stillStopped, .paceSlip: 24
         case .keepGoing: 28
         case .preQuitFade: 32
-        case .recovery, .grindSupport, .finalPush, .milestone: 24
+        case .recovery, .grindSupport, .finalPush, .milestone, .engagement: 24
         }
     }
 
@@ -86,11 +100,18 @@ enum FallbackLines {
         case .preacher: ["", "Now.", "Rise.", "Believe."]
         case .sarge: ["", "Move.", "Now.", "Go."]
         case .steady: ["", "Breathe.", "Easy.", "Here."]
+        case .major: ["", "Now.", "Move.", "Hold."]
+        case .whip: ["", "Go.", "Now.", "Move."]
+        case .hardline: ["", "Own it.", "Now.", "Finish."]
         }
     }
 
     private static func core(_ p: Persona.ID, _ k: TriggerKind) -> [String] {
         switch (p, k) {
+        case (_, .engagement):
+            [
+                "Keep the mind sharp. Stay with this.",
+            ]
         case (.southpaw, .stopped):
             [
                 "Get back in there kid now",
@@ -301,6 +322,126 @@ enum FallbackLines {
             [
                 "Float it home with grace. Last minutes with calm strength, arrive whole",
             ]
+        case (.major, .stopped):
+            [
+                "On your feet. Move now",
+                "Unauthorized stop. Restart",
+                "I said go. Get moving",
+                "Hold the standard. Drive",
+            ]
+        case (.major, .stillStopped):
+            [
+                "Still frozen. That is not the plan. Up and drive",
+                "No debate. Motion now. I am waiting on the line",
+            ]
+        case (.major, .keepGoing):
+            [
+                "Good pace. Hold the line, quiet mouth, strong legs, keep driving",
+                "Solid output. Stay tactical and keep taking ground",
+            ]
+        case (.major, .paceSlip):
+            [
+                "Pace slip detected. Correct it now and reclaim tempo",
+                "I see the fade. Override it and drive those legs",
+            ]
+        case (.major, .preQuitFade):
+            [
+                "Drop the pity. Pain is data. Lock in and push through this",
+                "Quit is not an option. Straighten up and drive through",
+            ]
+        case (.major, .recovery):
+            [
+                "That's the standard. You earned the restart. Hold it",
+            ]
+        case (.major, .grindSupport):
+            [
+                "Hold the standard through the burn. Earn every meter",
+            ]
+        case (.major, .finalPush):
+            [
+                "Sprint the last bit. Finish the objective clean",
+            ]
+
+        case (.whip, .stopped):
+            [
+                "Get moving. Now",
+                "Don't park it. Go",
+                "On your feet. Dig in",
+                "I said move. Move",
+            ]
+        case (.whip, .stillStopped):
+            [
+                "Still here. That ends now. Stand up and run",
+                "No more freeze. Dig in and take the road back",
+            ]
+        case (.whip, .keepGoing):
+            [
+                "That's it. Stay sharp, stay loud with your stride, keep rolling",
+                "Good fire. Hold this rhythm and do not go soft",
+            ]
+        case (.whip, .paceSlip):
+            [
+                "Pace is slipping. Reel it in and push back up now",
+                "I see the dip. Speed up and take your tempo back",
+            ]
+        case (.whip, .preQuitFade):
+            [
+                "Don't you fade on me. This is the stretch that counts. Dig in",
+                "The doubt is lying. Get mean in the stride and stay in this",
+            ]
+        case (.whip, .recovery):
+            [
+                "There it is. You picked it back up. Hold that fire",
+            ]
+        case (.whip, .grindSupport):
+            [
+                "Beautiful ugly work. Stay sharp through the burn",
+            ]
+        case (.whip, .finalPush):
+            [
+                "Bring it home. Last stretch. Leave nothing out here",
+            ]
+
+        case (.hardline, .stopped):
+            [
+                "Restart now. No parking",
+                "Back on the throttle. Go",
+                "Rest is later. Move",
+                "Own the restart. Now",
+            ]
+        case (.hardline, .stillStopped):
+            [
+                "Still stopped. That is unacceptable. Restart and push",
+                "I said go. Get loud with your legs and reclaim the road",
+            ]
+        case (.hardline, .keepGoing):
+            [
+                "Clean power. Keep the engine loud and do not negotiate",
+                "You are rolling. Stay locked in and crush the meters",
+            ]
+        case (.hardline, .paceSlip):
+            [
+                "Output dropping. Correct it and push the throttle up",
+                "Pace slip. Do not accept slower. Reclaim it",
+            ]
+        case (.hardline, .preQuitFade):
+            [
+                "Pain is fuel. You are stronger than this. Keep rolling",
+                "Do not negotiate with tired legs. Yell through it and push",
+            ]
+        case (.hardline, .recovery):
+            [
+                "Yes. The engine is back. Keep it loud",
+            ]
+        case (.hardline, .grindSupport):
+            [
+                "This is the work. Hold it and keep the power coming",
+            ]
+        case (.hardline, .finalPush):
+            [
+                "Finish like you own it. Empty the tank now",
+            ]
+
         case (_, .milestone):
             [
                 "You're in the pocket now. Keep this exact tempo and drive through the mark.",

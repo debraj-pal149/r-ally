@@ -250,8 +250,8 @@ struct AddDeviceSheet: View {
         switch device.type {
         case .healthKitWatch:
             Task {
-                model.healthAuthorized = await model.health.requestAuthorization()
-                if model.healthAuthorized {
+                let granted = await model.authorizeHealth()
+                if granted {
                     statusToast = "Apple Watch & HealthKit Connected"
                 }
             }

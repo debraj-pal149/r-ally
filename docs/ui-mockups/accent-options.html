@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>R·ALLY — Accent Color Options (replace Strava orange)</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #04060a;
+    --ink: #eef1f2;
+    --dim: #8f9aa5;
+    --blue: #3f6d96;
+    --glass: rgba(20, 28, 38, 0.58);
+    --line: rgba(238, 241, 242, 0.12);
+    --gbg: #0b0b0c;
+    --gtext: #eceae6;
+    --gdim: #8b8b8f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--gbg); color: var(--gtext);
+    font-family: Barlow, system-ui, sans-serif;
+    padding: 28px 20px 100px; max-width: 1240px; margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  .kicker { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: #ff5a1f; font-weight: 700; }
+  h1 { font-size: clamp(26px, 4vw, 36px); margin: 8px 0 10px; font-weight: 800; }
+  .lead { color: var(--gdim); font-size: 14.5px; line-height: 1.65; max-width: 820px; }
+  .lead b { color: var(--gtext); }
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 22px 0 18px; }
+  .filters button {
+    background: #151517; border: 1px solid rgba(255,255,255,.09); color: var(--gdim);
+    padding: 9px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .filters button.active { background: #eef1f2; color: #0b0b0c; border-color: #eef1f2; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 18px;
+  }
+  .card {
+    background: #121317;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 20px;
+    overflow: hidden;
+    display: none;
+  }
+  .card.show { display: block; }
+  .phone {
+    position: relative; height: 340px; overflow: hidden;
+    background: var(--bg); color: var(--ink);
+    font-family: Barlow, sans-serif;
+  }
+  .atm {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(420px 320px at 10% 20%, rgba(63,109,150,.42), transparent 62%),
+      radial-gradient(380px 300px at 90% 100%, rgba(10,16,24,.9), transparent 60%),
+      linear-gradient(180deg, #04060a 0%, #060a12 55%, #04060a 100%);
+  }
+  .screen { position: relative; z-index: 2; padding: 22px 20px 18px; height: 100%; display: flex; flex-direction: column; }
+  .brand { font-family: 'Bebas Neue', sans-serif; letter-spacing: .22em; font-size: 13px; color: rgba(238,241,242,.5); }
+  .headline { font-family: 'Bebas Neue', sans-serif; font-size: 38px; line-height: .95; margin-top: auto; text-shadow: 0 0 40px rgba(63,109,150,.4); }
+  .headline .accent { color: var(--accent); }
+  .meta { font-size: 12px; color: var(--dim); margin-top: 10px; line-height: 1.45; }
+  .glass {
+    margin-top: 14px; background: var(--glass); backdrop-filter: blur(6px);
+    border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px;
+    display: flex; justify-content: space-between; gap: 12px;
+  }
+  .glass .label { font-size: 9.5px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+  .glass .val { font-family: 'Bebas Neue', sans-serif; font-size: 26px; margin-top: 2px; }
+  .glass .name { font-weight: 600; font-size: 14px; margin-top: 3px; }
+  .cta {
+    margin-top: 12px; height: 48px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .08em;
+    border: 1.75px solid var(--accent); color: var(--accent); background: transparent;
+    box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 28%, transparent);
+  }
+  .chips { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .chip {
+    font-size: 11px; padding: 6px 10px; border-radius: 999px;
+    border: 1px solid var(--line); color: var(--dim); background: rgba(255,255,255,.03);
+  }
+  .chip.on { border-color: color-mix(in srgb, var(--accent) 55%, transparent); background: color-mix(in srgb, var(--accent) 14%, transparent); color: var(--accentSoft); }
+  .meta-row {
+    padding: 14px 16px 16px; border-top: 1px solid rgba(255,255,255,.06);
+  }
+  .name-row { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .name-row h3 { font-size: 16px; font-weight: 700; }
+  .badge {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase; font-weight: 700;
+    padding: 4px 8px; border-radius: 999px; border: 1px solid rgba(255,255,255,.12); color: var(--gdim);
+  }
+  .badge.top { color: #0b0b0c; background: #eef1f2; border-color: #eef1f2; }
+  .badge.warn { color: #ffb4a8; border-color: rgba(255,90,31,.35); }
+  .swatches { display: flex; gap: 8px; margin: 8px 0 6px; }
+  .swatch {
+    flex: 1; height: 36px; border-radius: 10px; border: 1px solid rgba(255,255,255,.12);
+  }
+  .hexes { font-family: ui-monospace, monospace; font-size: 11px; color: var(--gdim); line-height: 1.5; }
+  .note { font-size: 13px; color: var(--gdim); line-height: 1.5; margin-top: 8px; }
+  .legend {
+    margin-top: 28px; padding: 16px 18px; border-radius: 16px;
+    background: #151517; border: 1px solid rgba(255,255,255,.08);
+    font-size: 13px; color: var(--gdim); line-height: 1.55;
+  }
+</style>
+</head>
+<body>
+
+<div class="kicker">R·ALLY · Accent audition</div>
+<h1>Replace Strava orange</h1>
+<p class="lead">
+  Same Cold Blue Hour stage (<b>#04060A</b> + <b>#3F6D96</b> glow). Only the <b>brand accent</b> changes —
+  CTA outline, “WE DO.”, selected chips. Strava’s orange is shown first as the thing to leave behind.
+</p>
+
+<div class="filters" id="filters">
+  <button class="active" data-f="all">All</button>
+  <button data-f="recommended">Recommended</button>
+  <button data-f="warm">Warm punch</button>
+  <button data-f="electric">Electric</button>
+  <button data-f="cold">Cold / Blue Hour</button>
+  <button data-f="avoid">Avoid / caution</button>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div class="legend">
+  <b style="color:var(--gtext)">How to judge:</b> squint — does the accent still feel like the only hot signal in a cold street?
+  Avoid anything that reads Strava (orange), Nike (volt-overuse), or purple SaaS.
+  Pick one family; soft token is for secondary labels (“CHANGE”, selected chip text).
+</div>
+
+<script>
+const options = [
+  {
+    id: 'strava-orange',
+    name: 'Current ember (Strava-adjacent)',
+    tag: 'avoid',
+    badge: 'Leave behind',
+    badgeClass: 'warn',
+    accent: '#FF5A1F',
+    soft: '#FF8A50',
+    deep: '#C43A12',
+    filters: ['all', 'avoid', 'warm'],
+    note: 'What you have now. Strong, but lives next to Strava’s brand orange.'
+  },
+  {
+    id: 'blood-crimson',
+    name: 'Blood crimson',
+    tag: 'recommended',
+    badge: 'Top pick',
+    badgeClass: 'top',
+    accent: '#FF2D3A',
+    soft: '#FF6B75',
+    deep: '#C41B28',
+    filters: ['all', 'recommended', 'warm'],
+    note: 'Same punch as ember, fight-poster / corner energy. Clearest swap if you want grit without Strava.'
+  },
+  {
+    id: 'volt-lime',
+    name: 'Volt lime',
+    tag: 'recommended',
+    badge: 'Most different',
+    badgeClass: 'top',
+    accent: '#C6FF00',
+    soft: '#D9FF4D',
+    deep: '#8FBF00',
+    filters: ['all', 'recommended', 'electric'],
+    note: 'Maximum distance from Strava. Modern athletic. CTA becomes electric, not fiery.'
+  },
+  {
+    id: 'signal-yellow',
+    name: 'Signal yellow',
+    tag: 'recommended',
+    badge: 'Urgency',
+    badgeClass: '',
+    accent: '#FFD400',
+    soft: '#FFE566',
+    deep: '#C4A100',
+    filters: ['all', 'recommended', 'warm', 'electric'],
+    note: 'High outdoor readability. “Don’t quit” warning energy. Slightly less grit than crimson.'
+  },
+  {
+    id: 'ice-cyan',
+    name: 'Ice cyan',
+    tag: 'cold',
+    badge: 'Blue Hour native',
+    badgeClass: '',
+    accent: '#00D4FF',
+    soft: '#5CE1FF',
+    deep: '#0099B8',
+    filters: ['all', 'recommended', 'cold', 'electric'],
+    note: 'Stays inside Cold Blue Hour. Strong, but colder — more instrument than ember.'
+  },
+  {
+    id: 'hot-magenta',
+    name: 'Hot magenta',
+    tag: 'warm',
+    badge: 'Distinctive',
+    badgeClass: '',
+    accent: '#FF2D6A',
+    soft: '#FF6B9A',
+    deep: '#C41B4E',
+    filters: ['all', 'warm', 'electric'],
+    note: 'Sexy and memorable. Watch for “fashion brand” if overused on chips.'
+  },
+  {
+    id: 'plasma-red',
+    name: 'Plasma red',
+    tag: 'warm',
+    badge: '',
+    badgeClass: '',
+    accent: '#FF0040',
+    soft: '#FF4D73',
+    deep: '#B8002E',
+    filters: ['all', 'warm'],
+    note: 'Harder, more neon than crimson. Night-race / LED board energy.'
+  },
+  {
+    id: 'coral-rose',
+    name: 'Coral rose',
+    tag: 'warm',
+    badge: '',
+    badgeClass: '',
+    accent: '#FF4B6E',
+    soft: '#FF8A9E',
+    deep: '#D12E52',
+    filters: ['all', 'warm'],
+    note: 'Warm without orange. Softer than blood; can feel friendlier / less drill-sergeant.'
+  },
+  {
+    id: 'amber-gold',
+    name: 'Amber gold',
+    tag: 'warm',
+    badge: 'Caution',
+    badgeClass: 'warn',
+    accent: '#F5A623',
+    soft: '#FFC85A',
+    deep: '#C47E10',
+    filters: ['all', 'warm', 'avoid'],
+    note: 'Championship belt vibe. Still warm-adjacent to Strava; easy to look generic sports.'
+  },
+  {
+    id: 'acid-chartreuse',
+    name: 'Acid chartreuse',
+    tag: 'electric',
+    badge: '',
+    badgeClass: '',
+    accent: '#A8FF1A',
+    soft: '#C6FF66',
+    deep: '#6FB300',
+    filters: ['all', 'electric'],
+    note: 'Sibling of volt, slightly greener. Very contemporary run-club.'
+  },
+  {
+    id: 'mint-pulse',
+    name: 'Mint pulse',
+    tag: 'electric',
+    badge: 'Caution',
+    badgeClass: 'warn',
+    accent: '#3EE08A',
+    soft: '#7AEFB0',
+    deep: '#1FA861',
+    filters: ['all', 'electric', 'avoid'],
+    note: 'This is already your HOLDING / pulse green. Don’t steal it for brand — keep for state.'
+  },
+  {
+    id: 'electric-teal',
+    name: 'Electric teal',
+    tag: 'cold',
+    badge: '',
+    badgeClass: '',
+    accent: '#00E6C3',
+    soft: '#5CFFDD',
+    deep: '#00A88F',
+    filters: ['all', 'cold', 'electric'],
+    note: 'Between cyan and mint. Fresh, less “alarm,” more premium device.'
+  },
+  {
+    id: 'cobalt-flare',
+    name: 'Cobalt flare',
+    tag: 'cold',
+    badge: 'Caution',
+    badgeClass: 'warn',
+    accent: '#4B7CFF',
+    soft: '#8AABFF',
+    deep: '#2E54C4',
+    filters: ['all', 'cold', 'avoid'],
+    note: 'Fights the blue-hour glow for attention. Brand and atmosphere become the same family.'
+  },
+  {
+    id: 'violet-edge',
+    name: 'Violet edge',
+    tag: 'avoid',
+    badge: 'Avoid',
+    badgeClass: 'warn',
+    accent: '#A855FF',
+    soft: '#C999FF',
+    deep: '#7A2FD4',
+    filters: ['all', 'avoid', 'electric'],
+    note: 'Purple SaaS trap. Strong, but wrong world for night-corner grit.'
+  },
+  {
+    id: 'white-hot',
+    name: 'White-hot',
+    tag: 'cold',
+    badge: '',
+    badgeClass: '',
+    accent: '#F4F1EC',
+    soft: '#FFFFFF',
+    deep: '#C8C4BC',
+    filters: ['all', 'cold'],
+    note: 'High-fashion sport. Accent = light slab / outline. Ember-level heat comes only from type weight.'
+  },
+  {
+    id: 'copper',
+    name: 'Burnished copper',
+    tag: 'warm',
+    badge: '',
+    badgeClass: '',
+    accent: '#E07A3D',
+    soft: '#F0A574',
+    deep: '#A8521F',
+    filters: ['all', 'warm', 'avoid'],
+    note: 'Warmer metal, less neon. Still orange-family — closer to Strava than crimson/volt.'
+  },
+];
+
+const grid = document.getElementById('grid');
+
+function cardHTML(o) {
+  return `
+  <article class="card show" data-filters="${o.filters.join(' ')}">
+    <div class="phone" style="--accent:${o.accent}; --accentSoft:${o.soft}">
+      <div class="atm"></div>
+      <div class="screen">
+        <div class="brand">R · A L L Y</div>
+        <div class="headline">THE STREET<br>DOESN'T CARE.<br><span class="accent">WE DO.</span></div>
+        <div class="meta">05:12 · Dawn loop · phone GPS, cadence, earbuds in.</div>
+        <div class="glass">
+          <div>
+            <div class="label">Distance</div>
+            <div class="val">5.0 KM</div>
+          </div>
+          <div style="text-align:right">
+            <div class="label">In your ear</div>
+            <div class="name">The Southpaw</div>
+          </div>
+        </div>
+        <div class="cta">LET'S RALLY</div>
+        <div class="chips">
+          <span class="chip on">Don't quit</span>
+          <span class="chip">Hold the line</span>
+          <span class="chip">Quiet grind</span>
+        </div>
+      </div>
+    </div>
+    <div class="meta-row">
+      <div class="name-row">
+        <h3>${o.name}</h3>
+        ${o.badge ? `<span class="badge ${o.badgeClass}">${o.badge}</span>` : ''}
+      </div>
+      <div class="swatches">
+        <div class="swatch" style="background:${o.accent}" title="accent"></div>
+        <div class="swatch" style="background:${o.soft}" title="soft"></div>
+        <div class="swatch" style="background:${o.deep}" title="deep"></div>
+      </div>
+      <div class="hexes">${o.accent} · soft ${o.soft} · deep ${o.deep}</div>
+      <p class="note">${o.note}</p>
+    </div>
+  </article>`;
+}
+
+grid.innerHTML = options.map(cardHTML).join('');
+
+const buttons = document.querySelectorAll('#filters button');
+buttons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    buttons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const f = btn.dataset.f;
+    document.querySelectorAll('.card').forEach(card => {
+      const ok = f === 'all' || card.dataset.filters.split(' ').includes(f);
+      card.classList.toggle('show', ok);
+    });
+  });
+});
+</script>
+</body>
+</html>

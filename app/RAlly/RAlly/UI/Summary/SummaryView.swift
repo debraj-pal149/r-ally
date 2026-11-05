@@ -50,22 +50,11 @@ struct SummaryView: View {
                                 report: report,
                                 persona: model.persona
                             )
-                            ShareLink(
-                                item: "🏃 R·ALLY COACH DEBRIEF. \(model.persona.name.uppercased())\n\n\(report.headline)\n\n\(report.debrief)\n\n\"\(report.coachQuote)\"\n\nDistance: \(Formatters.km(record.distanceM)) | Time: \(Formatters.clock(record.durationSec)) | Grade: \(report.athleteGrade)"
-                            ) {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .font(.system(size: 13, weight: .bold))
-                                    Text("SHARE COACH REPORT")
-                                        .font(Theme.label(11, .bold))
-                                        .tracking(0.8)
-                                }
-                                .foregroundStyle(Theme.textPrimary)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 8)
-                                .rallyGlassCapsule(.regular)
-                            }
-                            .buttonStyle(.plain)
+                            CoachShareControls(
+                                record: record,
+                                report: report,
+                                persona: model.persona
+                            )
                         }
                     }
 
@@ -101,7 +90,7 @@ struct SummaryView: View {
                         Button(model.healthSavedSessionId == record.id ? "Saved to Health" : "Save to Health") {
                             Haptics.tap()
                             Task { @MainActor in
-                                await model.saveToHealthIfNeeded(session: record)
+                                await model.saveToHealthIfNeeded(session: record, source: "manual")
                             }
                         }
                         .buttonStyle(GhostButtonStyle())
@@ -114,8 +103,10 @@ struct SummaryView: View {
                                     do {
                                         try await model.strava.upload(session: record)
                                         stravaMsg = "Uploaded"
+                                        RallyAnalytics.stravaUpload(ok: true)
                                     } catch {
                                         stravaMsg = error.localizedDescription
+                                        RallyAnalytics.stravaUpload(ok: false)
                                     }
                                 }
                             }
@@ -158,8 +149,13 @@ struct SummaryView: View {
     private func persistSessionIfNeeded() {
         guard !didPersist else { return }
         didPersist = true
+        record.updatedAt = Date()
+        if let uid = AuthService.shared.current?.uid {
+            record.ownerUid = uid
+        }
         ctx.insert(record)
         try? ctx.save()
+        SyncRecorder.workoutUpserted(id: record.id, updatedAt: record.updatedAt)
     }
 
     private func personalBestsBanner(_ badges: [PersonalBestAchievement]) -> some View {

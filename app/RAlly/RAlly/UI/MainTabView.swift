@@ -3,6 +3,7 @@ import SwiftUI
 enum MainTab: String, CaseIterable, Identifiable {
     case run = "run"
     case activity = "activity"
+    case profile = "profile"
     case corner = "corner"
 
     var id: String { rawValue }
@@ -11,6 +12,7 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .run: return "RUN"
         case .activity: return "ACTIVITY"
+        case .profile: return "PROFILE"
         case .corner: return "CORNER"
         }
     }
@@ -19,7 +21,8 @@ enum MainTab: String, CaseIterable, Identifiable {
         switch self {
         case .run: return "figure.run"
         case .activity: return "chart.bar.xaxis"
-        case .corner: return "person.crop.circle"
+        case .profile: return "person.crop.circle"
+        case .corner: return "slider.horizontal.3"
         }
     }
 }
@@ -29,45 +32,60 @@ struct MainTabView: View {
     @Namespace private var tabGlassNamespace
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch model.selectedTab {
-                case .run:
-                    HomeView()
-                case .activity:
-                    ActivityView()
-                case .corner:
-                    SettingsView()
-                }
+        Group {
+            switch model.selectedTab {
+            case .run:
+                HomeView()
+            case .activity:
+                ActivityView()
+            case .profile:
+                ProfileView()
+            case .corner:
+                SettingsView()
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        // Inset (not ZStack overlay): content lays out above the bar, and the
+        // chrome layer owns bottom hit-testing so list/CTA taps can't steal tabs.
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             customTabBar
         }
         .ignoresSafeArea(.keyboard)
     }
 
     private var customTabBar: some View {
-        Group {
-            if #available(iOS 26.0, *) {
-                GlassEffectContainer(spacing: 12) {
+        VStack(spacing: 0) {
+            Group {
+                if #available(iOS 26.0, *) {
+                    GlassEffectContainer(spacing: 12) {
+                        tabBarContent
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .glassEffect(.regular.interactive(), in: .capsule)
+                    }
+                } else {
                     tabBarContent
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .glassEffect(.regular.interactive(), in: .capsule)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 4)
+                        .background(.ultraThinMaterial, in: Capsule())
+                        .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
                 }
-            } else {
-                tabBarContent
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 4)
-                    .background(.ultraThinMaterial, in: Capsule())
-                    .overlay(Capsule().stroke(Theme.hairline, lineWidth: 1))
             }
+            .padding(.horizontal, 28)
+            .padding(.top, 8)
+            // Sit above the home indicator so tab labels are not clipped.
+            .safeAreaPadding(.bottom, 10)
+            .shadow(color: Theme.emberDeep.opacity(0.22), radius: 16, y: 8)
         }
-        .padding(.horizontal, 28)
-        // Sit above the home indicator so tab labels are not clipped.
-        .safeAreaPadding(.bottom, 10)
-        .shadow(color: Theme.emberDeep.opacity(0.22), radius: 16, y: 8)
+        .frame(maxWidth: .infinity)
+        // Full-width invisible hit shield: floating capsule alone left gaps
+        // where Activity rows / Home CTA received taps meant for RUN/HOME.
+        .contentShape(Rectangle())
+        .background {
+            Color.clear
+                .contentShape(Rectangle())
+                .ignoresSafeArea(edges: .bottom)
+        }
     }
 
     private var tabBarContent: some View {
@@ -89,6 +107,8 @@ struct MainTabView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 6)
                     .padding(.horizontal, 4)
+                    // Enlarge tap target to full tab cell, not just glyph+label.
+                    .contentShape(Rectangle())
                     .background {
                         if on {
                             Capsule()

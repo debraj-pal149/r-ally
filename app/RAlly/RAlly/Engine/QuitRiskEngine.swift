@@ -26,6 +26,7 @@ final class QuitRiskEngine {
 
     private var paceSlipSince: TimeInterval?
     private var lastKeepGoingT: TimeInterval = -10_000
+    private var lastEngagementT: TimeInterval = -10_000
     private var lastRestNagT: TimeInterval = -10_000
     private var announcedStop = false
     private var restNagCount = 0
@@ -54,6 +55,7 @@ final class QuitRiskEngine {
         goalDone = false
         paceSlipSince = nil
         lastKeepGoingT = -10_000
+        lastEngagementT = -10_000
         lastRestNagT = -10_000
         announcedStop = false
         restNagCount = 0
@@ -123,6 +125,9 @@ final class QuitRiskEngine {
             } else if goalDone,
                       policy.allow(kind: .finalPush, t: t, warmupOver: true, goalDone: true) {
                 trigger = .finalPush
+            } else if let eng = engagementTick(t: t, features: features) {
+                // Prefer tip/joke/health over keep-going when due so cadence is not starved.
+                trigger = eng
             } else if let keep = keepGoingTick(t: t, features: features) {
                 trigger = keep
             }
@@ -164,6 +169,10 @@ final class QuitRiskEngine {
                 clearFollowUp()
             }
             if kind == .keepGoing { lastKeepGoingT = t }
+            if kind == .engagement {
+                lastEngagementT = t
+                lastKeepGoingT = t // avoid stacking keep-going immediately after
+            }
             if kind == .paceSlip { paceSlipSince = nil }
         }
 
@@ -237,6 +246,24 @@ final class QuitRiskEngine {
         guard t - lastKeepGoingT >= EngineConstants.keepGoingSec else { return nil }
         if policy.allow(kind: .keepGoing, t: t, warmupOver: true, goalDone: goalDone) {
             return .keepGoing
+        }
+        return nil
+    }
+
+    /// Tips / jokes / health while cruising — never during fade, stop, or critical.
+    private func engagementTick(t: TimeInterval, features: Features) -> TriggerKind? {
+        guard locomotion == .moving, state == .cruising else { return nil }
+        guard t >= CoachRhythm.engagementWarmupSec, !goalDone else { return nil }
+        guard features.outputDrop < EngineConstants.paceSlipDrop * 0.85 else { return nil }
+        guard t - lastEngagementT >= CoachRhythm.engagementSec else { return nil }
+        // Don't stack on a recent fade / stop / grind shout.
+        if let last = policy.lastRecordedKind,
+           [.preQuitFade, .paceSlip, .stopped, .stillStopped, .grindSupport, .finalPush].contains(last),
+           policy.secondsSinceLastSpoken(t) < CoachRhythm.engagementMinGapAfterAnyLineSec {
+            return nil
+        }
+        if policy.allow(kind: .engagement, t: t, warmupOver: true, goalDone: goalDone) {
+            return .engagement
         }
         return nil
     }

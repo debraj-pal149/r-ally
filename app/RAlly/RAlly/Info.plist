@@ -4,10 +4,6 @@
 <dict>
 	<key>ANTHROPIC_API_KEY</key>
 	<string>$(ANTHROPIC_API_KEY)</string>
-	<key>FISH_AUDIO_API_KEY</key>
-	<string>$(FISH_AUDIO_API_KEY)</string>
-	<key>ELEVENLABS_API_KEY</key>
-	<string>$(ELEVENLABS_API_KEY)</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
@@ -34,9 +30,23 @@
 				<string>rally</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>GoogleSignIn</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.78490070871-euhiq54217po6lorgceq6q8dpcg7pmjn</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
+	<key>ELEVENLABS_API_KEY</key>
+	<string>$(ELEVENLABS_API_KEY)</string>
+	<key>FISH_AUDIO_API_KEY</key>
+	<string>$(FISH_AUDIO_API_KEY)</string>
+	<key>MIXPANEL_TOKEN</key>
+	<string>$(MIXPANEL_TOKEN)</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsLocalNetworking</key>
@@ -56,8 +66,8 @@
 	<string>r-ally uses motion and cadence to tell when your form starts to fade.</string>
 	<key>STRAVA_CLIENT_ID</key>
 	<string>$(STRAVA_CLIENT_ID)</string>
-	<key>STRAVA_CLIENT_SECRET</key>
-	<string>$(STRAVA_CLIENT_SECRET)</string>
+	<key>STRAVA_OAUTH_PROXY_URL</key>
+	<string>$(STRAVA_OAUTH_PROXY_URL)</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>audio</string>
@@ -69,7 +79,5 @@
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
 	</array>
-	<key>UIUserInterfaceStyle</key>
-	<string>Dark</string>
 </dict>
 </plist>

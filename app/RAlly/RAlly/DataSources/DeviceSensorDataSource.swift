@@ -130,7 +130,7 @@ final class DeviceSensorDataSource: NSObject, WorkoutDataSource, CLLocationManag
     }
 
     private func emitHeartbeat() {
-        guard handler != nil else { return }
+        guard handler != nil, !paused else { return }
         let now = Date()
         let t = now.timeIntervalSince(sessionStart)
         // If GPS has been quiet > 2.5s, decay speed toward a hard stop so "stopped" can fire.

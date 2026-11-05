@@ -2,10 +2,12 @@ import SwiftUI
 
 struct FirstRunFlow: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var modelContext
     @State private var step = 0
     @State private var weightText = ""
     @State private var weightInPounds = false
-    private let stepCount = 5
+    @State private var account = AccountController.shared
+    private let stepCount = 6
 
     var body: some View {
         ZStack {
@@ -55,7 +57,38 @@ struct FirstRunFlow: View {
                             Text("Put the buds in. The product is the voice at the moment you fade. Not a screen.")
                                 .font(Theme.body(15))
                                 .foregroundStyle(Theme.textSecondary)
-                            PersonaPicker(preview: true)
+                            PersonaPicker(preview: true, source: "onboarding")
+                        }
+                    case 4:
+                        VStack(alignment: .leading, spacing: 16) {
+                            PosterText(text: "Keep your\nruns safe", size: 40)
+                            Text("Sign in to sync history and prefs. Or continue on this phone only.")
+                                .font(Theme.body(15))
+                                .foregroundStyle(Theme.textSecondary)
+                            if account.isSignedIn {
+                                let label = {
+                                    let name = account.displayName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                                    if !name.isEmpty { return name }
+                                    return account.profileSubtitle ?? "your profile"
+                                }()
+                                Text("Signed in as \(label).")
+                                    .font(Theme.body(14, .medium))
+                                    .foregroundStyle(Theme.ember)
+                            } else {
+                                SignInButtons(
+                                    busy: account.isBusy,
+                                    onGoogle: { Task { await account.signInGoogle() } },
+                                    onApple: { Task { await account.signInApple() } }
+                                )
+                            }
+                            if let err = account.lastError, !err.isEmpty {
+                                Text(err)
+                                    .font(Theme.body(13))
+                                    .foregroundStyle(Theme.emberSoft)
+                            }
+                        }
+                        .onAppear {
+                            account.configure(modelContext: modelContext, appModel: model)
                         }
                     default:
                         VStack(alignment: .leading, spacing: 16) {
@@ -64,6 +97,11 @@ struct FirstRunFlow: View {
                             permission("location", "Location", "So outdoor runs have live pace.")
                             permission("heart.fill", "Apple Health", "To save workouts and read Nike Run Club history.")
                             permission("waveform", "Coach Voice", "Ultra-realistic rugged audio motivators powered by low-latency cloud neural speech.")
+                            Text("We use anonymous product analytics to see if the coach helps. Turn it off anytime in Corner → Data.")
+                                .font(Theme.body(12))
+                                .foregroundStyle(Theme.textMuted)
+                                .fixedSize(horizontal: false, vertical: true)
+                                .padding(.top, 4)
                         }
                     }
                 }
@@ -98,6 +136,9 @@ struct FirstRunFlow: View {
             let blank = weightText.trimmingCharacters(in: .whitespaces).isEmpty
             if blank { return "Skip for now" }
             return "This weight is right"
+        }
+        if step == 4 {
+            return account.isSignedIn ? "Continue" : "Continue without account"
         }
         if step < stepCount - 1 { return "Continue" }
         return "Let's go"

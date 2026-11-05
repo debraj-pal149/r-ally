@@ -5,20 +5,24 @@ struct HistoryView: View {
     @Environment(AppModel.self) private var model
     @Query(sort: \WorkoutSessionRecord.startedAt, order: .reverse) private var sessions: [WorkoutSessionRecord]
 
+    private var liveSessions: [WorkoutSessionRecord] {
+        sessions.filter { $0.deletedAt == nil }
+    }
+
     var body: some View {
         ZStack {
             Atmosphere(intensity: 0.5)
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 18) {
                     PosterText(text: "The sessions", size: 42)
-                    if sessions.isEmpty {
+                    if liveSessions.isEmpty {
                         Text("Nothing in the book yet. Finish a session and it lands here.")
                             .font(Theme.body(15))
                             .foregroundStyle(Theme.textSecondary)
                             .padding(.top, 24)
                     } else {
                         LazyVStack(spacing: 10) {
-                            ForEach(sessions) { s in
+                            ForEach(liveSessions) { s in
                                 Button {
                                     Haptics.tap()
                                     model.route = .summary(s)

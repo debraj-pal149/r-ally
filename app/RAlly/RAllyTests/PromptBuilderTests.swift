@@ -21,10 +21,12 @@ struct PromptBuilderTests {
 struct FallbackLinesTests {
     @Test func banksAreLarge() {
         for p in Persona.ID.allCases {
-            for k in TriggerKind.allCases {
+            for k in TriggerKind.allCases where k != .engagement {
                 let lines = FallbackLines.all(persona: p, kind: k)
                 #expect(lines.count >= 40)
             }
+            let engagement = FallbackLines.all(persona: p, kind: .engagement)
+            #expect(engagement.count >= 3)
         }
     }
 }

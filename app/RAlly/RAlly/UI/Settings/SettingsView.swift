@@ -20,10 +20,11 @@ struct SettingsView: View {
                     healthCard
                     if StravaClient.isConfigured { stravaCard }
                     intensityCard
+                    dataCard
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
-                .padding(.bottom, 110)
+                .padding(.bottom, 28)
             }
         }
         .foregroundStyle(Theme.textPrimary)
@@ -324,7 +325,7 @@ struct SettingsView: View {
                 Button {
                     Haptics.heavy()
                     withAnimation(Theme.spring) {
-                        model.persona = p
+                        model.selectPersona(p, source: "settings")
                     }
                 } label: {
                     Text("USE")
@@ -441,7 +442,7 @@ struct SettingsView: View {
                 Button(model.healthAuthorized ? "Health Authorized" : "Authorize Health") {
                     Haptics.tap()
                     Task {
-                        model.healthAuthorized = await model.health.requestAuthorization()
+                        _ = await model.authorizeHealth()
                         let n = await model.health.recentWorkouts().count
                         model.nrcWorkoutCount = n
                     }
@@ -460,8 +461,16 @@ struct SettingsView: View {
                 Button(model.strava.isConnected ? "Disconnect Strava" : "Connect Strava") {
                     if model.strava.isConnected {
                         model.strava.disconnect()
+                        RallyAnalytics.stravaDisconnected()
                     } else {
-                        Task { try? await model.strava.connect() }
+                        Task {
+                            do {
+                                try await model.strava.connect()
+                                RallyAnalytics.stravaConnect(ok: true)
+                            } catch {
+                                RallyAnalytics.stravaConnect(ok: false)
+                            }
+                        }
                     }
                 }
                 .font(Theme.label(14, .bold))
@@ -480,6 +489,40 @@ struct SettingsView: View {
                 }, onPlus: {
                     model.sessionCap = min(30, model.sessionCap + 1)
                 })
+            }
+        }
+    }
+
+    var dataCard: some View {
+        HairlineCard {
+            VStack(alignment: .leading, spacing: 12) {
+                SectionLabel(text: "Data")
+                Text("Account sign-in lives on the Profile tab.")
+                    .font(Theme.body(12))
+                    .foregroundStyle(Theme.textMuted)
+
+                Toggle(isOn: Binding(
+                    get: { !RallyAnalytics.isOptedOut },
+                    set: { RallyAnalytics.setOptOut(!$0) }
+                )) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Product analytics")
+                            .font(Theme.font(size: 15, weight: .bold))
+                        Text("Helps us see what works. No precise route or Health records. Off anytime.")
+                            .font(Theme.body(12))
+                            .foregroundStyle(Theme.textMuted)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .tint(Theme.ember)
+
+                Button("Show welcome again") {
+                    Haptics.selection()
+                    AccountController.shared.showWelcomeAgain(using: model)
+                }
+                .font(Theme.label(14, .bold))
+                .foregroundStyle(Theme.emberSoft)
+                .frame(minHeight: 38)
             }
         }
     }

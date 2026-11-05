@@ -11,6 +11,16 @@ configs:
 configFiles:
   Debug: Config/Base.xcconfig
   Release: Config/Base.xcconfig
+packages:
+  Mixpanel:
+    url: https://github.com/mixpanel/mixpanel-swift
+    from: 7.0.0
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.15.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 8.0.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -26,6 +36,12 @@ targets:
         excludes:
           - Info.plist
           - RAlly.entitlements
+          - GoogleService-Info.plist
+      - path: RAlly/GoogleService-Info.plist
+        buildPhase: resources
+        optional: true
+      - path: RAlly/PrivacyInfo.xcprivacy
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rally.RAlly
@@ -36,6 +52,22 @@ targets:
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         DEVELOPMENT_TEAM: "5LV8BN8Q4Q"
         CODE_SIGN_STYLE: Automatic
+      configs:
+        Debug:
+          MIXPANEL_TOKEN: $(MIXPANEL_DEV_TOKEN)
+        Release:
+          MIXPANEL_TOKEN: $(MIXPANEL_PROD_TOKEN)
+    dependencies:
+      - package: Mixpanel
+        product: Mixpanel
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseCore
+      - package: GoogleSignIn
+        product: GoogleSignIn
     info:
       path: RAlly/Info.plist
       properties:
@@ -43,7 +75,6 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
-        UIUserInterfaceStyle: Dark
         NSLocationWhenInUseUsageDescription: r-ally uses GPS to measure your pace and distance so it can shout at the right moment.
         NSMotionUsageDescription: r-ally uses motion and cadence to tell when your form starts to fade.
         NSBluetoothAlwaysUsageDescription: r-ally reads live heart rate from a Bluetooth strap or a watch in broadcast mode.
@@ -59,16 +90,22 @@ targets:
         FISH_AUDIO_API_KEY: $(FISH_AUDIO_API_KEY)
         ELEVENLABS_API_KEY: $(ELEVENLABS_API_KEY)
         STRAVA_CLIENT_ID: $(STRAVA_CLIENT_ID)
-        STRAVA_CLIENT_SECRET: $(STRAVA_CLIENT_SECRET)
+        STRAVA_OAUTH_PROXY_URL: $(STRAVA_OAUTH_PROXY_URL)
+        MIXPANEL_TOKEN: $(MIXPANEL_TOKEN)
         CFBundleURLTypes:
           - CFBundleURLSchemes:
               - rally
             CFBundleURLName: com.rally.RAlly
+          - CFBundleURLSchemes:
+              - com.googleusercontent.apps.78490070871-euhiq54217po6lorgceq6q8dpcg7pmjn
+            CFBundleURLName: GoogleSignIn
     entitlements:
       path: RAlly/RAlly.entitlements
       properties:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.background-delivery: true
+        com.apple.developer.applesignin:
+          - Default
     preBuildScripts:
       - name: Generate secrets
         basedOnDependencyAnalysis: false

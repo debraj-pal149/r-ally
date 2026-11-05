@@ -4,10 +4,12 @@ import XCTest
 final class CloudTTSTests: XCTestCase {
 
     func testTop5VoicesDefined() {
-        XCTAssertEqual(CoachVoiceOption.top5.count, 5)
+        XCTAssertEqual(CoachVoiceOption.catalog.count, Persona.all.count)
+        XCTAssertGreaterThanOrEqual(CoachVoiceOption.top5.count, 5)
         let defaultVoice = CoachVoiceOption.find(CoachVoiceOption.defaultVoiceId)
-        XCTAssertEqual(defaultVoice.title, "The Sarge")
+        XCTAssertEqual(defaultVoice.title, "Sarge")
         XCTAssertFalse(defaultVoice.previewText.isEmpty)
+        XCTAssertTrue(Persona.all.contains(where: \.prefersFemale))
     }
 
     func testCoachTextFormatting() {
@@ -28,7 +30,7 @@ final class CloudTTSTests: XCTestCase {
     func testSpeechEngineActiveVoice() {
         let engine = SpeechEngine()
         XCTAssertEqual(engine.voiceId, CoachVoiceOption.defaultVoiceId)
-        XCTAssertEqual(engine.activeVoiceOption.title, "The Sarge")
+        XCTAssertEqual(engine.activeVoiceOption.title, "Sarge")
 
         engine.voiceId = "6b2ef1931c30417981cb1f13742496b0"
         XCTAssertEqual(engine.activeVoiceOption.title, "The Southpaw")

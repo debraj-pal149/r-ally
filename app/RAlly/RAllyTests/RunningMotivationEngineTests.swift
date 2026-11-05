@@ -136,15 +136,16 @@ final class RunningMotivationEngineTests: XCTestCase {
             finishedAfterCritical: true
         )
 
-        let report = await CoachReportGenerator.shared.generateReport(
+        let generated = await CoachReportGenerator.shared.generateReport(
             record: record,
             persona: Persona.named(.sarge),
             runnerLevel: .beast,
             client: AnthropicClient(apiKey: "")
         )
 
-        XCTAssertFalse(report.headline.isEmpty)
-        XCTAssertFalse(report.debrief.isEmpty)
-        XCTAssertFalse(report.coachQuote.isEmpty)
+        XCTAssertEqual(generated.source, "fallback")
+        XCTAssertFalse(generated.report.headline.isEmpty)
+        XCTAssertFalse(generated.report.debrief.isEmpty)
+        XCTAssertFalse(generated.report.coachQuote.isEmpty)
     }
 }

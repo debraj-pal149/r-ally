@@ -3,6 +3,7 @@ import Foundation
 struct Persona: Identifiable, Equatable, Sendable, Hashable {
     enum ID: String, CaseIterable, Codable, Sendable {
         case southpaw, machine, preacher, sarge, steady
+        case major, whip, hardline
     }
 
     var id: ID
@@ -55,14 +56,16 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             name: "The Beast",
             tagline: "Pain is fuel. Crush the wall.",
             archetype: "a hardcore mental-toughness motivator who treats fatigue like fuel",
-            styleRules: "Hardcore mental toughness, absolute certainty, treats fatigue like fuel. Two-breath commands. Push through the wall.",
+            styleRules: "Hardcore mental toughness, absolute certainty, treats fatigue like fuel. Two-breath commands. Push through the wall. Loud and relentless.",
             monogram: "M",
             symbol: "bolt.fill",
             speechRate: 0.53,
             speechPitch: 0.95,
             prefersFemale: false,
             voiceHints: ["aaron", "evan", "reed", "daniel"],
-            voiceId: "ff5468d06c2443dba9b8d2f9c6aa26b0",
+            // Louder authoritative DI model (replaces quiet Goggins clone).
+            voiceId: "c00ebfd0ef74450889a749a2c07112f0",
+            // Distinct from Drill Master EL fallback.
             elevenLabsVoiceId: "pNInz6obpgDQGcFmaJgB"
         ),
         Persona(
@@ -91,9 +94,54 @@ struct Persona: Identifiable, Equatable, Sendable, Hashable {
             speechRate: 0.50,
             speechPitch: 0.94,
             prefersFemale: false,
-            voiceHints: ["zoe", "nicky", "martha", "susan"],
+            voiceHints: ["aaron", "daniel", "fred", "ralph"],
             voiceId: "9865a69980674b94b58a39daa5455cee",
             elevenLabsVoiceId: "N2lVS1w4EtoT3dr4eOWO"
+        ),
+        Persona(
+            id: .major,
+            name: "Major",
+            tagline: "Tactical command. No debate.",
+            archetype: "a ruthless female tactical commander who runs the ear like a war room",
+            styleRules: "Clipped female command voice. Military precision, zero softness, loud when it counts. Clean language. Bark orders like a major on the line.",
+            monogram: "A",
+            symbol: "scope",
+            speechRate: 0.54,
+            speechPitch: 1.02,
+            prefersFemale: true,
+            voiceHints: ["samantha", "karen", "moira", "tessa", "zoe"],
+            voiceId: "ebd72850e23d4fd39b52bbae76268449",
+            elevenLabsVoiceId: "21m00Tcm4TlvDq8ikWAM"
+        ),
+        Persona(
+            id: .whip,
+            name: "The Whip",
+            tagline: "Shouted fire. Move or get left.",
+            archetype: "a screaming female sideline coach who will not let the athlete fade",
+            styleRules: "Loud, sharp, shouted female intensity. Short punches. Demand motion. Clean language. Sound like a whip cracking in the ear.",
+            monogram: "W",
+            symbol: "flame.fill",
+            speechRate: 0.55,
+            speechPitch: 1.04,
+            prefersFemale: true,
+            voiceHints: ["samantha", "karen", "moira", "tessa"],
+            voiceId: "1836740041c74e65a71d0bbadd234e73",
+            elevenLabsVoiceId: "AZnzlk1XvdvUeBnXmlld"
+        ),
+        Persona(
+            id: .hardline,
+            name: "Hardline",
+            tagline: "Yell it. Own it. Finish it.",
+            archetype: "an aggressive female drill coach who shouts through the quit moment",
+            styleRules: "Aggressive shouted female drill energy. Relentless. Clean language. Make them move with volume and conviction.",
+            monogram: "H",
+            symbol: "bolt.horizontal.fill",
+            speechRate: 0.55,
+            speechPitch: 1.03,
+            prefersFemale: true,
+            voiceHints: ["samantha", "karen", "moira", "zoe"],
+            voiceId: "d2fd7e38733e47e7a208a1d553de76d3",
+            elevenLabsVoiceId: "MF3mGyEYCl7XYWbV9V6O"
         )
     ]
 
@@ -128,6 +176,8 @@ enum TriggerKind: String, Codable, CaseIterable, Sendable {
     case grindSupport = "grind_support"
     case finalPush = "final_push"
     case milestone = "milestone"
+    /// Rotating running tip / health tip / joke while cruising.
+    case engagement = "engagement"
 }
 
 enum EngineState: String, Codable, Sendable {

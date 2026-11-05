@@ -7,6 +7,10 @@ Secrets.xcconfig
 *.pem
 *.p12
 *.key
+*.p8
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+auth .p8 key for rally/
 
 # Local working notes / agent scratch (not product)
 problem.md
@@ -62,3 +66,5 @@ eval-reports/
 .cursor/
 *.swp
 *~
+.env.strava.server.local
+.firebase/

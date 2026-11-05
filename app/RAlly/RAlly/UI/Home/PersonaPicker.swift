@@ -3,6 +3,7 @@ import SwiftUI
 struct PersonaPicker: View {
     @Environment(AppModel.self) private var model
     var preview: Bool = false
+    var source: String = "home"
     var style: Style = .carousel
 
     enum Style {
@@ -74,7 +75,7 @@ struct PersonaPicker: View {
 
     private func select(_ p: Persona) {
         Haptics.tap()
-        withAnimation(Theme.spring) { model.persona = p }
+        withAnimation(Theme.spring) { model.selectPersona(p, source: source) }
         if preview {
             model.speech.speak(FallbackLines.preview(persona: p), persona: p) {}
         }

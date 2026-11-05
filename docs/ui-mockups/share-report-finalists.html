@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>R·ALLY — Share Story Finalists</title>
+  <style>
+    :root{--red:#c8102e;--hot:#ef3653;--ink:#080607;--cream:#eee8de;--white:#fffaf7;--muted:#9c9294}
+    *{box-sizing:border-box}body{margin:0;background:#100d0e;color:#f8f3f3;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"SF Pro Display",sans-serif}
+    header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:24px;padding:20px 30px;background:#100d0eed;backdrop-filter:blur(18px);border-bottom:1px solid #ffffff12}
+    header b{letter-spacing:.18em;font-size:17px}header p{margin:5px 0 0;color:#a69fa0;font-size:12px}.tag{border:1px solid #ffffff20;padding:8px 12px;border-radius:99px;font-size:10px;letter-spacing:.13em}
+    main{max-width:1480px;margin:auto;padding:34px 24px 70px}.intro{max-width:850px;margin-bottom:30px}.intro h1{font-size:clamp(32px,5vw,62px);line-height:.9;letter-spacing:-.06em;margin:0 0 16px}.intro p{color:#aaa;line-height:1.6;font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(360px,1fr));gap:45px 24px}.concept{display:flex;gap:18px;align-items:flex-start;justify-content:center}.caption{width:150px;padding-top:5px}.caption b{font-size:14px}.caption p{font-size:11px;line-height:1.5;color:#8e8788}.caption .n{display:block;color:var(--hot);font-size:26px;font-weight:950;letter-spacing:-.04em;margin-bottom:8px}
+    .story{width:360px;height:640px;position:relative;overflow:hidden;isolation:isolate;box-shadow:0 30px 90px #000d}.brand{font-size:13px;font-weight:950;letter-spacing:.17em}.eyebrow{font-size:7px;letter-spacing:.19em;font-weight:850;text-transform:uppercase}.hero{font-size:74px;font-weight:950;line-height:.8;letter-spacing:-.075em}.unit{font-size:8px;letter-spacing:.17em;font-weight:800}.route{width:100%;height:100%;overflow:visible}.route .glow{fill:none;stroke:currentColor;stroke-width:22;opacity:.15;filter:blur(7px)}.route .main{fill:none;stroke:currentColor;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.route circle{fill:currentColor}
+    .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}.metric b{display:block;font-size:15px;letter-spacing:-.04em}.metric small{display:block;font-size:6px;letter-spacing:.12em;text-transform:uppercase;margin-top:3px;opacity:.55}.summary-label{font-size:7px;letter-spacing:.18em;text-transform:uppercase;font-weight:900}.summary-title{font-size:16px;line-height:1.02;font-weight:900;letter-spacing:-.03em}.summary-copy{font-size:9px;line-height:1.42}.quote{font-size:13px;line-height:1.15;font-weight:800;letter-spacing:-.02em}.footer{position:absolute;left:24px;right:24px;bottom:20px;display:flex;justify-content:space-between;align-items:center;font-size:7px;letter-spacing:.13em;font-weight:850}.grade{width:38px;height:38px;display:grid;place-items:center;font-size:17px;font-weight:950}
+    .grain{position:absolute;inset:-80%;opacity:.1;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.55'/%3E%3C/svg%3E")}
+
+    /* 01 Bloodline — refined */
+    .c1{background:linear-gradient(150deg,#050405 0 57%,#20070c);padding:25px;color:#fff}.c1:before{content:"";position:absolute;width:390px;height:390px;border:68px solid var(--red);border-radius:50%;right:-270px;top:-170px;opacity:.82}.c1 .top{position:relative;display:flex;justify-content:space-between}.c1 .grade{border:1px solid #ffffff44}.c1 .map{height:213px;color:var(--hot);margin:35px -6px 15px}.c1 .hero em{font-style:normal;color:var(--hot)}.c1 .metrics{margin-top:20px;padding:14px 0;border-top:1px solid #ffffff25;border-bottom:1px solid #ffffff25}.c1 .summary{margin-top:18px}.c1 .summary-label{color:var(--hot)}.c1 .summary-title{margin-top:7px}.c1 .summary-copy{color:#c9c1c2;margin-top:7px}.c1 .quote{margin-top:13px;border-left:3px solid var(--hot);padding-left:10px}.c1 .footer{color:#938a8c}
+
+    /* 02 Receipt — refined */
+    .c2{background:var(--cream);color:#171214;padding:24px 25px;font-family:ui-monospace,"SFMono-Regular",monospace}.c2:after{content:"";position:absolute;left:0;right:0;bottom:-6px;height:14px;background:linear-gradient(135deg,transparent 7px,var(--cream) 0) 0 0/14px 14px repeat-x}.c2 .head{display:flex;justify-content:space-between;border-bottom:2px solid #191516;padding-bottom:15px}.c2 .stamp{border:2px solid var(--red);color:var(--red);font:900 9px Inter,sans-serif;padding:6px 8px;transform:rotate(5deg)}.c2 .hero{color:var(--red);margin-top:26px}.c2 .metrics{margin-top:17px;padding:13px 0;border-top:1px dashed #4c4445;border-bottom:1px dashed #4c4445}.c2 .metric b{font-size:13px}.c2 .map{height:138px;background:#ded6ca;color:#171214;margin-top:16px;padding:12px 20px}.c2 .summary{margin-top:17px}.c2 .summary-title{font-family:Inter,sans-serif;margin-top:6px}.c2 .summary-copy{font-family:Georgia,serif;margin-top:7px;color:#52494a}.c2 .quote{font-family:Georgia,serif;margin-top:13px}.c2 .barcode{height:24px;margin-top:16px;background:repeating-linear-gradient(90deg,#151112 0 2px,transparent 2px 5px,#151112 5px 6px,transparent 6px 10px)}.c2 .footer{left:25px;right:25px;color:#544c4d}
+
+    /* 03 Satellite — refined */
+    .c3{background:#080809;color:#fff}.c3 .world{position:absolute;inset:0;color:#ff3452;background:radial-gradient(circle at 45% 33%,#62101f,#080809 55%)}.c3 .world:after{content:"";position:absolute;inset:0;background:linear-gradient(#080809dd 0,transparent 22%,transparent 54%,#080809 77%)}.c3 .world .route{padding:76px 38px 205px}.c3 .top{position:absolute;z-index:2;left:24px;right:24px;top:23px;display:flex;justify-content:space-between}.c3 .status{border:1px solid var(--hot);padding:6px 8px;color:var(--hot)}.c3 .content{position:absolute;z-index:2;left:24px;right:24px;bottom:52px}.c3 .metrics{margin-top:16px;padding:13px 0;border-top:1px solid #ffffff22;border-bottom:1px solid #ffffff22}.c3 .summary{margin-top:16px;background:#130d0fee;border:1px solid #ffffff18;padding:13px}.c3 .summary-label{color:var(--hot)}.c3 .summary-title{margin-top:6px}.c3 .summary-copy{margin-top:6px;color:#bbb2b4}.c3 .quote{margin-top:10px;color:#ff637a}.c3 .footer{bottom:20px;color:#8f8587}
+
+    /* 04 Poster — refined */
+    .c4{background:var(--red);color:#fff}.c4 .redzone{height:302px;padding:22px;position:relative}.c4 .poster-title{font-size:54px;font-weight:1000;line-height:.77;letter-spacing:-.08em;margin-top:47px;position:relative;z-index:2}.c4 .poster-title span{color:#140a0d;text-shadow:7px 5px 0 #ffffff22}.c4 .map{position:absolute;right:15px;bottom:16px;width:190px;height:120px;color:#fff;opacity:.95}.c4 .data{background:#0a0809;height:338px;padding:20px 22px}.c4 .metrics{padding-bottom:15px;border-bottom:1px solid #ffffff25}.c4 .summary{margin-top:16px}.c4 .summary-label{color:var(--hot)}.c4 .summary-title{font-size:19px;margin-top:7px}.c4 .summary-copy{margin-top:8px;color:#c5bcbe;font-size:9px}.c4 .quote{margin-top:15px;color:#fff}.c4 .rallies{margin-top:16px;background:var(--red);display:flex;align-items:center;justify-content:space-between;padding:11px 12px}.c4 .rallies b{font-size:24px}.c4 .rallies span{font-size:8px;font-weight:900;letter-spacing:.1em;text-align:right}.c4 .footer{bottom:17px;color:#958b8d}
+    @media(max-width:980px){.grid{grid-template-columns:1fr}.concept{justify-content:flex-start;margin:auto}.caption{order:2}}@media(max-width:600px){header{align-items:flex-start;flex-direction:column}.concept{flex-direction:column;align-items:center}.caption{width:360px}.story{transform:none}main{padding:24px 12px}.grid{gap:55px}}
+  </style>
+</head>
+<body>
+  <header><div><b>R·ALLY / SHARE FINALISTS</b><p>First four, rebuilt around a complete coach debrief and all essential performance data.</p></div><div class="tag">1080 × 1920 · REFINED ROUND</div></header>
+  <main>
+    <section class="intro"><h1>THE REPORT<br>IS THE AD.</h1><p>Every finalist now communicates the same complete story: brand, route, coach identity, athlete grade, distance, active time, average pace, calories, a useful coach summary, an emotional quote, and a viewer-facing R·ALLY call to action. The difference is hierarchy and attitude.</p></section>
+    <section class="grid">
+
+      <article class="concept">
+        <div class="story c1"><div class="grain"></div><div class="top"><div><div class="brand">R·ALLY</div><div class="eyebrow" style="color:#ef3653;margin-top:6px">RUN REPORT · LONDON</div></div><div class="grade">A+</div></div>
+          <div class="map"><svg class="route" viewBox="0 0 300 210"><path class="glow" d="M29 165C64 143 52 90 96 86s35-54 78-32 15 62 57 67 39-30 53-63"/><path class="main" d="M29 165C64 143 52 90 96 86s35-54 78-32 15 62 57 67 39-30 53-63"/><circle cx="29" cy="165" r="5"/><circle cx="284" cy="58" r="5"/></svg></div>
+          <div class="hero">10<em>.04</em></div><div class="unit">KILOMETRES · ACTIVE PERFORMANCE</div>
+          <div class="metrics"><div class="metric"><b>10.04</b><small>Distance km</small></div><div class="metric"><b>48:12</b><small>Active time</small></div><div class="metric"><b>4:48</b><small>Avg pace /km</small></div><div class="metric"><b>712</b><small>Calories</small></div></div>
+          <div class="summary"><div class="summary-label">Sarge’s run summary</div><div class="summary-title">YOU WON THE LATE-RUN ARGUMENT.</div><div class="summary-copy">Your pace softened after kilometre eight, but you answered every fade, lifted cadence, and closed the final kilometre faster than you entered it.</div></div>
+          <div class="quote">“You didn’t survive the fade. You hunted through it.”</div>
+          <div class="footer"><span>SARGE · YOUR COACH</span><span>RUN WITH R·ALLY ↗</span></div>
+        </div>
+        <div class="caption"><span class="n">01</span><b>Bloodline / Complete</b><p>Balanced premium direction. Route and achievement lead; coach analysis adds substance without overpowering the share.</p></div>
+      </article>
+
+      <article class="concept">
+        <div class="story c2"><div class="head"><div><div class="brand">R·ALLY</div><div class="eyebrow" style="margin-top:6px">PROOF OF WORK · #0042</div></div><div class="stamp">EARNED<br>A+</div></div>
+          <div class="hero">10.04</div><div class="unit">KM / ROAD RUN / 19 OCT 2026</div>
+          <div class="metrics"><div class="metric"><b>10.04</b><small>Distance km</small></div><div class="metric"><b>48:12</b><small>Active time</small></div><div class="metric"><b>4:48</b><small>Avg pace /km</small></div><div class="metric"><b>712</b><small>Calories</small></div></div>
+          <div class="map"><svg class="route" viewBox="0 0 280 130"><path class="main" d="M11 98C49 87 42 42 91 54s42-32 82-10 31 63 91 19"/><circle cx="11" cy="98" r="4"/><circle cx="264" cy="63" r="4"/></svg></div>
+          <div class="summary"><div class="summary-label" style="color:#c8102e">Coach debrief / The Southpaw</div><div class="summary-title">TOOK THE HIT. KEPT THE ROUND.</div><div class="summary-copy">You lost rhythm on the climb, found it again within ninety seconds, and ran the final split with your best form of the day. That is composure under pressure.</div></div>
+          <div class="quote">“The road asked the question. You answered every time.”</div><div class="barcode"></div>
+          <div class="footer"><span>3 RALLIES ANSWERED</span><span>GET YOUR RECEIPT · RALLY.RUN</span></div>
+        </div>
+        <div class="caption"><span class="n">02</span><b>The Run Receipt / Complete</b><p>Most ownable social format. Stats become proof, while the coach debrief reads like the quality assessment.</p></div>
+      </article>
+
+      <article class="concept">
+        <div class="story c3"><div class="world"><svg class="route" viewBox="0 0 360 640"><path class="glow" d="M46 384C113 347 61 266 127 251s28-91 94-56 18 95 83 107"/><path class="main" d="M46 384C113 347 61 266 127 251s28-91 94-56 18 95 83 107"/><circle cx="46" cy="384" r="6"/><circle cx="304" cy="302" r="6"/></svg></div>
+          <div class="top"><div><div class="brand">R·ALLY</div><div class="eyebrow" style="margin-top:6px;color:#aaa">OCT 19 · EVENING RUN</div></div><div class="status eyebrow">FINISHED STRONG</div></div>
+          <div class="content"><div class="hero">10.04</div><div class="unit">KILOMETRES · GRADE A+</div>
+            <div class="metrics"><div class="metric"><b>10.04</b><small>Distance km</small></div><div class="metric"><b>48:12</b><small>Active time</small></div><div class="metric"><b>4:48</b><small>Avg pace /km</small></div><div class="metric"><b>712</b><small>Calories</small></div></div>
+            <div class="summary"><div class="summary-label">Sarge’s run summary</div><div class="summary-title">CONTROL RETURNED WHEN IT MATTERED.</div><div class="summary-copy">The hill pushed heart rate high and pace briefly drifted. You shortened the stride, rebuilt cadence, and finished with a clean negative final split.</div><div class="quote">“That last kilometre belongs to you now.”</div></div>
+          </div><div class="footer"><span>SARGE · COACH ONLINE</span><span>FIND YOUR FINISH · RALLY.RUN</span></div>
+        </div>
+        <div class="caption"><span class="n">03</span><b>Crimson Satellite / Complete</b><p>Closest to Strava’s route drama, but distinctly R·ALLY because the coach interprets what happened.</p></div>
+      </article>
+
+      <article class="concept">
+        <div class="story c4"><div class="redzone"><div class="brand">R·ALLY</div><div class="poster-title">THE ROAD<br><span>BLINKED</span><br>FIRST.</div><div class="map"><svg class="route" viewBox="0 0 240 140"><path class="main" d="M12 105C51 91 43 34 96 52s47-32 87-7 16 65 44 39"/><circle cx="12" cy="105" r="5"/><circle cx="227" cy="84" r="5"/></svg></div></div>
+          <div class="data"><div class="metrics"><div class="metric"><b>10.04</b><small>Distance km</small></div><div class="metric"><b>48:12</b><small>Active time</small></div><div class="metric"><b>4:48</b><small>Avg pace /km</small></div><div class="metric"><b>712</b><small>Calories</small></div></div>
+            <div class="summary"><div class="summary-label">Sarge’s run summary</div><div class="summary-title">YOU FINISHED FASTER THAN THE DOUBT.</div><div class="summary-copy">Three pace fades. Three recoveries. Your best response came in the final kilometre, where cadence rose and the finish stopped being a negotiation.</div></div>
+            <div class="quote">“The doubt got loud. You got louder.”</div>
+            <div class="rallies"><b>3×</b><span>THE RUN TRIED TO BREAK.<br>3× YOU RALLIED.</span></div>
+          </div><div class="footer"><span>COACHED BY SARGE · A+</span><span>RALLY.RUN ↗</span></div>
+        </div>
+        <div class="caption"><span class="n">04</span><b>Street Poster / Complete</b><p>Best campaign object. Headline earns the first glance; data and coach summary reward the second.</p></div>
+      </article>
+
+    </section>
+  </main>
+</body>
+</html>

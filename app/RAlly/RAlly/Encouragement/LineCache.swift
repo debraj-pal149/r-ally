@@ -19,6 +19,7 @@ struct LineContext: Sendable {
     var distanceUnit: DistanceUnit = .kilometre
     var athleteHistoryLines: [String] = []
     var historyCue: String? = nil
+    var engagementSequence: Int = 0
 }
 
 @MainActor
@@ -77,6 +78,7 @@ final class LineCache {
         case .stillStopped: lines.still_stopped ?? lines.stopped
         case .recovery: lines.recovery ?? lines.grind_support
         case .grindSupport, .finalPush, .milestone: lines.grind_support
+        case .engagement: [] // static EngagementLines bank only
         }
     }
 
@@ -112,6 +114,7 @@ final class LineCache {
             r.removeAll { $0 == dropping }
             p.recovery = r
         case .grindSupport, .finalPush, .milestone: p.grind_support.removeAll { $0 == dropping }
+        case .engagement: break
         }
         return p
     }

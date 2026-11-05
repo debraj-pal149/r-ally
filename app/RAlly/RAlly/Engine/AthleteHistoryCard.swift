@@ -49,9 +49,9 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
         _ = name
         if isNewAthlete || totalRuns == 0 {
             switch persona.id {
-            case .sarge: return "First days on the road. Lock in now, earn every \(unit.singular), and set the standard."
-            case .southpaw: return "Brand new fight kid. This is round one, stay mean and write your first honest \(unit.plural)."
-            case .machine: return "New engine online. Establish baseline output and hold form through the first \(unit.plural)."
+            case .sarge, .major: return "First days on the road. Lock in now, earn every \(unit.singular), and set the standard."
+            case .southpaw, .whip: return "Brand new fight kid. This is round one, stay mean and write your first honest \(unit.plural)."
+            case .machine, .hardline: return "New engine online. Establish baseline output and hold form through the first \(unit.plural)."
             case .preacher: return "A new chapter begins. Rise into this run and claim your first honest \(unit.plural)."
             case .steady: return "Fresh start. Breathe, settle the stride, and build something you can trust."
             }
@@ -63,15 +63,15 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
         // Inconsistent / spaced
         if consistency == .inconsistent || consistency == .spaced || days >= 5 {
             switch persona.id {
-            case .sarge:
+            case .sarge, .major:
                 return days >= 5
                     ? "\(days) days since your last run. That gap ends now. Drive harder than last time."
                     : "Your recent runs have been inconsistent. Today we fix that. Hold the standard."
-            case .southpaw:
+            case .southpaw, .whip:
                 return days >= 5
                     ? "Been \(days) days kid. Rust is talking. Shake it off and fight harder than last round."
                     : "You've been patchy lately. Today we stitch it back together. Stay mean."
-            case .machine:
+            case .machine, .hardline:
                 return "Output gap detected. \(days) days idle. Re-engage and exceed last session distance \(lastDist)."
             case .preacher:
                 return "You've been away. Return with purpose and outwork the last run."
@@ -83,9 +83,9 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
         // Improving streak
         if trend == .improving {
             switch persona.id {
-            case .sarge: return "You've been improving. Keep that climb. Match last run's \(lastDist) and push past it."
-            case .southpaw: return "You've been getting sharper kid. Keep the streak alive and take another step up."
-            case .machine: return "Positive trajectory confirmed. Maintain tempo from last run and extend the edge."
+            case .sarge, .major: return "You've been improving. Keep that climb. Match last run's \(lastDist) and push past it."
+            case .southpaw, .whip: return "You've been getting sharper kid. Keep the streak alive and take another step up."
+            case .machine, .hardline: return "Positive trajectory confirmed. Maintain tempo from last run and extend the edge."
             case .preacher: return "You have been rising. Honor that progress and keep walking into stronger work."
             case .steady: return "Nice progress lately. Settle into that rhythm and keep building."
             }
@@ -94,9 +94,9 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
         // Declining
         if trend == .declining {
             switch persona.id {
-            case .sarge: return "Recent runs slipped. Today we correct course. Stronger than last time, no excuses."
-            case .southpaw: return "Last few rounds got soft. Dig in, reclaim the fight, and outwork them."
-            case .machine: return "Downtrend flagged. Override it. Target better output than the last session."
+            case .sarge, .major: return "Recent runs slipped. Today we correct course. Stronger than last time, no excuses."
+            case .southpaw, .whip: return "Last few rounds got soft. Dig in, reclaim the fight, and outwork them."
+            case .machine, .hardline: return "Downtrend flagged. Override it. Target better output than the last session."
             case .preacher: return "You dipped. Rise again now. This run is the turn."
             case .steady: return "Things got harder lately. Breathe, reset, and reclaim one honest run."
             }
@@ -104,9 +104,9 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
 
         // Holding / default
         switch persona.id {
-        case .sarge: return "Back on the line. Last run was \(lastDist). Hold that tempo and earn more."
-        case .southpaw: return "Back in the ring. Last time \(lastDist). Keep that fire and stay mean."
-        case .machine: return "Session resume. Prior distance \(lastDist). Match baseline then exceed."
+        case .sarge, .major: return "Back on the line. Last run was \(lastDist). Hold that tempo and earn more."
+        case .southpaw, .whip: return "Back in the ring. Last time \(lastDist). Keep that fire and stay mean."
+        case .machine, .hardline: return "Session resume. Prior distance \(lastDist). Match baseline then exceed."
         case .preacher: return "You return. Last run \(lastDist). Stay faithful and build on it."
         case .steady: return "Welcome back. Last run \(lastDist). Find your breath and settle in."
         }
@@ -166,27 +166,27 @@ struct AthleteHistoryCard: Codable, Sendable, Equatable {
         let dist = spokenDistance(max(previousQuitDistanceM, longestDistanceM), unit: unit)
         if cue.contains("longest-ever") {
             switch persona.id {
-            case .sarge: return "That's your longest ever. Hold the line and keep taking ground."
-            case .southpaw: return "Longest fight of your life kid. Stay mean and don't give it back."
-            case .machine: return "Lifetime distance ceiling broken. Maintain output and extend."
+            case .sarge, .major: return "That's your longest ever. Hold the line and keep taking ground."
+            case .southpaw, .whip: return "Longest fight of your life kid. Stay mean and don't give it back."
+            case .machine, .hardline: return "Lifetime distance ceiling broken. Maintain output and extend."
             case .preacher: return "You have gone farther than ever. Honor it and keep rising."
             case .steady: return "Furthest you've ever gone. Breathe, stay honest, keep moving."
             }
         }
         if cue.contains("last stop") || cue.contains("historical quit") {
             switch persona.id {
-            case .sarge: return "Beyond your last stop. This is new ground. Earn it."
-            case .southpaw: return "Past where you usually fold. Keep the fists up and push through."
-            case .machine: return "Historical abort point exceeded. Continue sequence."
+            case .sarge, .major: return "Beyond your last stop. This is new ground. Earn it."
+            case .southpaw, .whip: return "Past where you usually fold. Keep the fists up and push through."
+            case .machine, .hardline: return "Historical abort point exceeded. Continue sequence."
             case .preacher: return "You have passed your old wall. Walk into the breakthrough."
             case .steady: return "You're past where you usually stop. Stay with it."
             }
         }
         if cue.contains("pace PB") {
             switch persona.id {
-            case .sarge: return "You're chasing a pace PB. Lock it and don't leak seconds."
-            case .southpaw: return "PB pace is right there kid. Hunt it down."
-            case .machine: return "Near thirty-day pace record. Hold the rate."
+            case .sarge, .major: return "You're chasing a pace PB. Lock it and don't leak seconds."
+            case .southpaw, .whip: return "PB pace is right there kid. Hunt it down."
+            case .machine, .hardline: return "Near thirty-day pace record. Hold the rate."
             case .preacher: return "A personal best pace is near. Claim it with faith."
             case .steady: return "You're near your best recent pace. Settle and hold."
             }

@@ -34,6 +34,11 @@ final class WorkoutSessionRecord {
     var reportQuote: String?
     var reportGrade: String?
 
+    /// Sync metadata. Soft-delete keeps the row for history until hard erase.
+    var updatedAt: Date = Date()
+    var deletedAt: Date?
+    var ownerUid: String?
+
     @Relationship(deleteRule: .cascade)
     var rallies: [RallyMomentRecord] = []
 

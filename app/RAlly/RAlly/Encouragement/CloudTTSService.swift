@@ -16,51 +16,22 @@ struct CoachVoiceOption: Identifiable, Equatable, Sendable, Hashable {
 
     static let defaultVoiceId = "a0ef13957a8442dca8139d6a345bdf66"
 
-    static let top5: [CoachVoiceOption] = [
+    static let catalog: [CoachVoiceOption] = Persona.all.map { p in
         CoachVoiceOption(
-            id: "a0ef13957a8442dca8139d6a345bdf66",
-            title: "The Sarge",
-            subtitle: "Drill Commander",
-            vibe: "Loud military drill coach delivery with zero pity",
-            previewText: "I see the slip! Pick your damn knees up and earn this run!",
-            elevenLabsVoiceId: "onwK4e9ZLuTAKqWW03F9"
-        ),
-        CoachVoiceOption(
-            id: "6b2ef1931c30417981cb1f13742496b0",
-            title: "The Southpaw",
-            subtitle: "Ringside Corner Coach",
-            vibe: "Raspy, gritty fighter intensity with urgent corner cadence",
-            previewText: "One more round! Dig into the dirt, find that second wind, and fight back!",
-            elevenLabsVoiceId: "ErXwobaYiN019PkySvjV"
-        ),
-        CoachVoiceOption(
-            id: "ff5468d06c2443dba9b8d2f9c6aa26b0",
-            title: "The Beast",
-            subtitle: "Hardcore Motivator",
-            vibe: "Deep, aggressive mental toughness. Pain is fuel",
-            previewText: "Your mind wants to quit before your legs do. Push through the wall right now!",
-            elevenLabsVoiceId: "pNInz6obpgDQGcFmaJgB"
-        ),
-        CoachVoiceOption(
-            id: "bc44dad8dbab41f28afbe4092094e07c",
-            title: "The Drill Master",
-            subtitle: "Iron Instructor",
-            vibe: "Booming, loud boot-camp delivery with zero mercy",
-            previewText: "You call that running? Move it, move it! Drop the excuses and drive!",
-            elevenLabsVoiceId: "VR6AewLTigWG4xSOukaG"
-        ),
-        CoachVoiceOption(
-            id: "9865a69980674b94b58a39daa5455cee",
-            title: "The Gunny",
-            subtitle: "Gravel & Grit Coach",
-            vibe: "Deep raspy gravel, hardcore battlefield intensity",
-            previewText: "Hold the standard! Quiet mouth, heavy lungs, keep pushing until the finish!",
-            elevenLabsVoiceId: "N2lVS1w4EtoT3dr4eOWO"
+            id: p.voiceId,
+            title: p.name,
+            subtitle: p.tagline,
+            vibe: p.archetype,
+            previewText: FallbackLines.preview(persona: p),
+            elevenLabsVoiceId: p.elevenLabsVoiceId
         )
-    ]
+    }
+
+    /// Back-compat alias used by older call sites.
+    static var top5: [CoachVoiceOption] { catalog }
 
     static func find(_ id: String) -> CoachVoiceOption {
-        top5.first { $0.id == id } ?? top5[0]
+        catalog.first { $0.id == id } ?? catalog[0]
     }
 }
 
@@ -182,11 +153,17 @@ actor CloudTTSService {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue("s2-pro", forHTTPHeaderField: "model")
 
+        // Louder coach over music: +7 dB with loudness normalize (Fish prosody).
         let payload: [String: Any] = [
             "text": text,
             "reference_id": voiceId,
             "format": "mp3",
-            "latency": "balanced"
+            "latency": "balanced",
+            "prosody": [
+                "speed": 1.0,
+                "volume": 7.0,
+                "normalize_loudness": true
+            ]
         ]
 
         request.httpBody = try JSONSerialization.data(withJSONObject: payload)
@@ -224,9 +201,9 @@ actor CloudTTSService {
             "text": text,
             "model_id": "eleven_turbo_v2_5",
             "voice_settings": [
-                "stability": 0.45,
-                "similarity_boost": 0.85,
-                "style": 0.4,
+                "stability": 0.40,
+                "similarity_boost": 0.90,
+                "style": 0.65,
                 "use_speaker_boost": true
             ]
         ]

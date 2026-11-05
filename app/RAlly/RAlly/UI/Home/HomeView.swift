@@ -6,8 +6,12 @@ struct HomeView: View {
     @Query(sort: \WorkoutSessionRecord.startedAt, order: .reverse) private var sessions: [WorkoutSessionRecord]
     @State private var scrollTarget: String?
 
-    /// Custom tab bar + home indicator clearance (tab sits in safe area).
-    private let chromeReserve: CGFloat = 128
+    private var liveSessions: [WorkoutSessionRecord] {
+        sessions.filter { $0.deletedAt == nil }
+    }
+
+    /// Extra air above the tab inset (bar itself is in safeAreaInset now).
+    private let chromeReserve: CGFloat = 24
     /// Intentional glimpse of the next section — kept *above* the floating tab.
     private let foldPeek: CGFloat = 28
 
@@ -37,10 +41,10 @@ struct HomeView: View {
                                 RallyCallSection(showCustomRow: true)
                                     .id("rallyCall")
 
-                                PersonaPicker(preview: true, style: .list)
+                                PersonaPicker(preview: true, source: "home", style: .list)
                                     .id("coaches")
 
-                                if let last = sessions.first {
+                                if let last = liveSessions.first {
                                     lastCard(last)
                                 }
                             }
@@ -63,7 +67,7 @@ struct HomeView: View {
         .navigationBarHidden(true)
         .onAppear {
             model.distanceUnit = DistanceUnit.detect()
-            model.refreshHistory(from: Array(sessions))
+            model.refreshHistory(from: Array(liveSessions))
         }
     }
 

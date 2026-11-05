@@ -19,6 +19,25 @@ final class PersonalBestStore: ObservableObject {
         UserDefaults.standard.removeObject(forKey: storageKey)
     }
 
+    /// Replace lifetime PBs from cloud or merge. Set `touchSync` false for inbound apply.
+    func replaceAll(_ badges: [PersonalBestAchievement], touchSync: Bool = true) {
+        records.removeAll()
+        for item in badges {
+            records[item.kind] = item
+        }
+        saveRecords(touchSync: touchSync)
+    }
+
+    private func saveRecords(touchSync: Bool) {
+        let array = Array(records.values)
+        if let data = try? JSONEncoder().encode(array) {
+            UserDefaults.standard.set(data, forKey: storageKey)
+        }
+        if touchSync {
+            SyncRecorder.personalBestsChanged()
+        }
+    }
+
     private func loadRecords() {
         if let data = UserDefaults.standard.data(forKey: storageKey),
            let decoded = try? JSONDecoder().decode([PersonalBestAchievement].self, from: data) {
@@ -29,10 +48,7 @@ final class PersonalBestStore: ObservableObject {
     }
 
     private func saveRecords() {
-        let array = Array(records.values)
-        if let data = try? JSONEncoder().encode(array) {
-            UserDefaults.standard.set(data, forKey: storageKey)
-        }
+        saveRecords(touchSync: true)
     }
 
     /// Evaluates completed session metrics and saves any newly unlocked Personal Bests.

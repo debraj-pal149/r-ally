@@ -1,9 +1,14 @@
 import SwiftUI
 import SwiftData
+import GoogleSignIn
 
 @main
 struct RAllyApp: App {
     @State private var model = AppModel()
+
+    init() {
+        AuthService.shared.configureIfNeeded()
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -11,10 +16,21 @@ struct RAllyApp: App {
                 .environment(model)
                 .preferredColorScheme(model.appearanceMode.preferredColorScheme)
                 .tint(Theme.ember)
-                // Forces SwiftUI trait refresh when switching System/Light/Dark.
-                .id(model.appearanceMode)
                 .onAppear {
                     AppearanceMode.applyToWindows(model.appearanceMode)
+                    RallyAnalytics.start()
+                    RallyAnalytics.sync(
+                        persona: model.persona.id.rawValue,
+                        runnerLevel: model.runnerLevel.rawValue,
+                        hasWeight: model.bodyWeightKg != nil,
+                        stravaConnected: model.strava.isConnected
+                    )
+                }
+                .onChange(of: model.appearanceMode) { _, mode in
+                    AppearanceMode.applyToWindows(mode)
+                }
+                .onOpenURL { url in
+                    GIDSignIn.sharedInstance.handle(url)
                 }
         }
         .modelContainer(for: [WorkoutSessionRecord.self, RallyMomentRecord.self])
@@ -23,6 +39,7 @@ struct RAllyApp: App {
 
 struct RootView: View {
     @Environment(AppModel.self) private var model
+    @Environment(\.modelContext) private var modelContext
 
     var body: some View {
         NavigationStack {
@@ -44,6 +61,9 @@ struct RootView: View {
         .preferredColorScheme(model.appearanceMode.preferredColorScheme)
         .tint(Theme.ember)
         .toolbarBackground(.hidden, for: .navigationBar)
+        .onAppear {
+            AccountController.shared.configure(modelContext: modelContext, appModel: model)
+        }
         .onChange(of: model.appearanceMode) { _, mode in
             AppearanceMode.applyToWindows(mode)
         }

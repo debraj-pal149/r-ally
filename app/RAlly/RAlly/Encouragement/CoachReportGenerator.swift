@@ -1,5 +1,10 @@
 import Foundation
 
+struct GeneratedCoachReport: Sendable {
+    var report: CoachFieldReport
+    var source: String
+}
+
 struct CoachFieldReport: Codable, Sendable {
     var headline: String
     var debrief: String
@@ -17,9 +22,12 @@ final class CoachReportGenerator {
         persona: Persona,
         runnerLevel: RunnerLevel,
         client: AnthropicClient
-    ) async -> CoachFieldReport {
+    ) async -> GeneratedCoachReport {
         guard client.isConfigured else {
-            return fallbackReport(record: record, persona: persona)
+            return GeneratedCoachReport(
+                report: fallbackReport(record: record, persona: persona),
+                source: "fallback"
+            )
         }
 
         let sys = """
@@ -68,12 +76,15 @@ final class CoachReportGenerator {
                     return trimmed
                 }()
                 if let decoded = try? JSONDecoder().decode(CoachFieldReport.self, from: cleanJson.data(using: .utf8)!) {
-                    return CoachFieldReport(
-                        headline: DashNormalizer.normalize(decoded.headline),
-                        debrief: DashNormalizer.normalize(decoded.debrief),
-                        turningPointText: DashNormalizer.normalize(decoded.turningPointText),
-                        athleteGrade: decoded.athleteGrade,
-                        coachQuote: DashNormalizer.normalize(decoded.coachQuote)
+                    return GeneratedCoachReport(
+                        report: CoachFieldReport(
+                            headline: DashNormalizer.normalize(decoded.headline),
+                            debrief: DashNormalizer.normalize(decoded.debrief),
+                            turningPointText: DashNormalizer.normalize(decoded.turningPointText),
+                            athleteGrade: decoded.athleteGrade,
+                            coachQuote: DashNormalizer.normalize(decoded.coachQuote)
+                        ),
+                        source: "llm"
                     )
                 }
             }
@@ -81,7 +92,10 @@ final class CoachReportGenerator {
             // Fallback on network failure
         }
 
-        return fallbackReport(record: record, persona: persona)
+        return GeneratedCoachReport(
+            report: fallbackReport(record: record, persona: persona),
+            source: "fallback"
+        )
     }
 
     private func fallbackReport(record: WorkoutSessionRecord, persona: Persona) -> CoachFieldReport {

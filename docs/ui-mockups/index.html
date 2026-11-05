@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>R·ALLY — UI Mockup Gallery (10+ directions)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #07080A;
+    --surface: #12151A;
+    --raised: #1A1F26;
+    --hair: rgba(255,255,255,0.08);
+    --ember: #FF5A1F;
+    --ember2: #C43A12;
+    --emberSoft: #FF8A50;
+    --pulse: #3EE08A;
+    --warn: #F5B942;
+    --t1: #F4F1EC;
+    --t2: #8B938C;
+    --t3: #5C6370;
+    --display: "Barlow Condensed", Impact, sans-serif;
+    --body: "IBM Plex Sans", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #0b0c0e; color: var(--t1); font-family: var(--body); }
+  body { min-height: 100vh; }
+
+  .page {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 100vh;
+  }
+  @media (max-width: 980px) {
+    .page { grid-template-columns: 1fr; }
+    .rail { position: sticky; top: 0; z-index: 20; max-height: none; }
+  }
+
+  .rail {
+    border-right: 1px solid var(--hair);
+    background: #0e1013;
+    padding: 28px 20px 40px;
+    overflow: auto;
+    max-height: 100vh;
+  }
+  .rail h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 34px;
+    letter-spacing: 0.02em;
+    margin: 0 0 6px;
+    text-transform: uppercase;
+  }
+  .rail .sub {
+    color: var(--t2);
+    font-size: 13px;
+    line-height: 1.45;
+    margin-bottom: 22px;
+  }
+  .rail .note {
+    font-size: 12px;
+    color: var(--t3);
+    line-height: 1.5;
+    padding: 12px;
+    border: 1px solid var(--hair);
+    border-radius: 12px;
+    background: #12151a;
+    margin-bottom: 18px;
+  }
+  .rail .note strong { color: var(--emberSoft); }
+  .nav-btn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--t2);
+    padding: 11px 12px;
+    border-radius: 12px;
+    cursor: pointer;
+    margin-bottom: 6px;
+    font: 500 13px/1.3 var(--body);
+    transition: .15s ease;
+  }
+  .nav-btn span {
+    display: block;
+    font-family: var(--display);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--t1);
+    margin-bottom: 2px;
+  }
+  .nav-btn:hover { background: #161a20; color: var(--t1); }
+  .nav-btn.active {
+    background: linear-gradient(135deg, rgba(255,90,31,0.18), rgba(196,58,18,0.08));
+    border-color: rgba(255,90,31,0.45);
+    color: var(--t1);
+  }
+  .nav-btn .tag {
+    display: inline-block;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ember);
+    margin-top: 4px;
+  }
+
+  .stage {
+    padding: 32px 28px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+  }
+  .stage-head {
+    width: min(920px, 100%);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+  }
+  .stage-head h2 {
+    margin: 0;
+    font-family: var(--display);
+    font-size: 42px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    line-height: 0.95;
+  }
+  .stage-head p {
+    margin: 8px 0 0;
+    max-width: 560px;
+    color: var(--t2);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .badge {
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ember);
+    border: 1px solid rgba(255,90,31,0.35);
+    padding: 6px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+
+  .phones {
+    width: min(920px, 100%);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 28px;
+    justify-content: center;
+  }
+
+  /* iPhone frame */
+  .phone {
+    width: 340px;
+    height: 700px;
+    border-radius: 42px;
+    padding: 12px;
+    background: linear-gradient(160deg, #2a2e35, #0a0b0d 40%, #1a1d22);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.08);
+    position: relative;
+    flex: 0 0 auto;
+  }
+  .phone-inner {
+    height: 100%;
+    border-radius: 32px;
+    overflow: hidden;
+    background: var(--bg);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .notch {
+    position: absolute;
+    top: 10px; left: 50%; transform: translateX(-50%);
+    width: 118px; height: 28px;
+    background: #000;
+    border-radius: 20px;
+    z-index: 5;
+  }
+  .screen {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    padding: 54px 18px 0;
+  }
+  .screen.scroll { overflow-y: auto; padding-bottom: 140px; }
+  .screen::-webkit-scrollbar { width: 0; }
+
+  .tabbar {
+    position: absolute;
+    left: 18px; right: 18px; bottom: 18px;
+    height: 64px;
+    border-radius: 999px;
+    background: rgba(18,21,26,0.92);
+    border: 1px solid var(--hair);
+    backdrop-filter: blur(16px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: center;
+    z-index: 8;
+  }
+  .tab {
+    text-align: center;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+  .tab.active { color: var(--ember); }
+  .tab .ic { font-size: 18px; display: block; margin-bottom: 2px; }
+
+  .cta-dock {
+    position: absolute;
+    left: 18px; right: 18px;
+    bottom: 92px;
+    z-index: 7;
+  }
+  .btn-rally {
+    width: 100%;
+    border: 0;
+    border-radius: 18px;
+    padding: 16px 18px;
+    font-family: var(--display);
+    font-size: 22px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-weight: 800;
+    color: white;
+    background: linear-gradient(135deg, var(--ember), var(--ember2));
+    box-shadow: 0 10px 40px rgba(255,90,31,0.35);
+    cursor: default;
+  }
+  .btn-ghost {
+    border: 1px solid var(--hair);
+    background: rgba(255,255,255,0.03);
+    color: var(--t1);
+    border-radius: 999px;
+    padding: 8px 12px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 600;
+  }
+  .poster {
+    font-family: var(--display);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.92;
+  }
+  .muted { color: var(--t2); }
+  .dim { color: var(--t3); }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--hair);
+    border-radius: 18px;
+    padding: 14px;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 999px; padding: 6px 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--hair);
+    font-size: 11px; color: var(--t2);
+  }
+  .stepper {
+    display: flex; gap: 8px;
+  }
+  .stepper button {
+    width: 36px; height: 36px; border-radius: 999px;
+    border: 1px solid var(--hair); background: var(--raised);
+    color: var(--t1); font-size: 18px;
+  }
+  .coach-h {
+    display: flex; gap: 10px; overflow: hidden;
+  }
+  .coach {
+    min-width: 140px;
+    border-radius: 16px;
+    border: 1px solid var(--hair);
+    background: var(--raised);
+    padding: 12px;
+  }
+  .coach.on {
+    background: linear-gradient(160deg, rgba(255,90,31,0.95), rgba(196,58,18,0.9));
+    border-color: transparent;
+    box-shadow: 0 8px 28px rgba(255,90,31,0.3);
+  }
+  .coach .n {
+    font-family: var(--display);
+    font-size: 18px;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin: 8px 0 4px;
+  }
+  .coach .d { font-size: 11px; color: rgba(255,255,255,0.7); line-height: 1.3; }
+  .coach:not(.on) .d { color: var(--t2); }
+
+  .atm::before {
+    content: "";
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(500px 280px at 90% -5%, rgba(255,90,31,0.28), transparent 60%),
+      radial-gradient(360px 220px at 10% 20%, rgba(196,58,18,0.12), transparent 55%);
+    pointer-events: none;
+  }
+  .screen > * { position: relative; z-index: 1; }
+
+  .legend {
+    width: min(920px, 100%);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .legend .box {
+    border: 1px solid var(--hair);
+    border-radius: 14px;
+    padding: 14px;
+    background: #111419;
+  }
+  .legend h4 {
+    margin: 0 0 6px;
+    font-family: var(--display);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 16px;
+  }
+  .legend p { margin: 0; font-size: 12px; color: var(--t2); line-height: 1.45; }
+
+  .hidden { display: none !important; }
+
+  /* Direction-specific bits */
+  .brand-hero {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: 72px;
+    line-height: 0.85;
+    letter-spacing: -0.02em;
+    text-transform: uppercase;
+    margin: 8px 0 10px;
+  }
+  .lane {
+    position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+    background: linear-gradient(180deg, var(--ember), transparent 70%);
+  }
+  .live-ring {
+    width: 220px; height: 220px; margin: 28px auto 18px;
+    border-radius: 999px;
+    border: 2px solid rgba(255,255,255,0.18);
+    box-shadow: 0 0 60px rgba(245,185,66,0.18);
+    display: grid; place-items: center;
+    text-align: center;
+  }
+  .live-ring.rest { border-color: rgba(139,147,140,0.5); }
+  .live-ring.hold { border-color: var(--pulse); box-shadow: 0 0 60px rgba(62,224,138,0.2); }
+  .live-ring.fade { border-color: var(--warn); }
+  .metric-bar {
+    display: grid; grid-template-columns: repeat(3,1fr);
+    background: var(--surface); border: 1px solid var(--hair);
+    border-radius: 18px; overflow: hidden;
+  }
+  .metric-bar div {
+    padding: 14px 8px; text-align: center;
+    border-right: 1px solid var(--hair);
+  }
+  .metric-bar div:last-child { border-right: 0; }
+  .metric-bar .v {
+    font-family: var(--display); font-size: 26px; font-weight: 700;
+  }
+  .metric-bar .l {
+    font-size: 10px; letter-spacing: 0.12em; color: var(--t3); margin-top: 2px;
+  }
+  .controls {
+    display: flex; justify-content: space-around; margin-top: 36px; padding: 0 8px;
+  }
+  .controls .c {
+    text-align: center; color: var(--t2); font-size: 10px; letter-spacing: 0.1em;
+  }
+  .controls .circ {
+    width: 58px; height: 58px; border-radius: 999px;
+    border: 1px solid var(--hair); background: var(--surface);
+    display: grid; place-items: center; margin: 0 auto 8px;
+    font-size: 16px; color: var(--t1);
+  }
+  .controls .circ.end {
+    width: 68px; height: 68px; border-width: 2px; border-color: rgba(255,255,255,0.35);
+  }
+
+  .pb-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  }
+  .pb {
+    background: var(--surface); border: 1px solid var(--hair);
+    border-radius: 14px; padding: 12px;
+  }
+  .pb .k { font-size: 10px; letter-spacing: 0.1em; color: var(--ember); text-transform: uppercase; }
+  .pb .v { font-family: var(--display); font-size: 28px; font-weight: 700; margin-top: 4px; }
+
+  .overlay-screen {
+    background: #000;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 40px 22px !important;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <aside class="rail">
+    <h1>R·ALLY</h1>
+    <p class="sub">Interactive mockup gallery — Home is the big bet. Activity & Corner get light polish. Features unchanged.</p>
+    <div class="note">
+      <strong>Design thesis:</strong> NRC’s one-job clarity + Strava’s post-run credibility, but the brand is a <em>corner man</em>, not a social network. Brand must be hero-level. Voice first. Ember stays. No purple / cream / dashboard soup.
+    </div>
+    <button class="nav-btn active" data-id="m1"><span>01 · Brand Fist Home</span>Hero wordmark. One story line. One CTA.<div class="tag">Recommended</div></button>
+    <button class="nav-btn" data-id="m2"><span>02 · Coach is the Product</span>Ear-first home. Coach hero, distance rail.</button>
+    <button class="nav-btn" data-id="m3"><span>03 · NRC Go Pattern</span>Bottom GO dock. Minimal above-the-fold.</button>
+    <button class="nav-btn" data-id="m4"><span>04 · Fight Card Editorial</span>Poster typography. Atmosphere first.</button>
+    <button class="nav-btn" data-id="m5"><span>05 · Ember Lane</span>Signature left rail. Magazine layout.</button>
+    <button class="nav-btn" data-id="m6"><span>06 · Last-Run Continuity</span>History whisper + start. Soft Strava.</button>
+    <button class="nav-btn" data-id="m7"><span>07 · Split Stage</span>Top story / bottom control deck.</button>
+    <button class="nav-btn" data-id="m8"><span>08 · Whisper vs Fist</span>Quiet copy, hard CTA contrast.</button>
+    <button class="nav-btn" data-id="m9"><span>09 · Live Stage Polish</span>State color + voice-ready status.</button>
+    <button class="nav-btn" data-id="m10"><span>10 · Overlay Breath</span>Spoken line with more presence.</button>
+    <button class="nav-btn" data-id="m11"><span>11 · Activity Unify</span>Keep data, add Atmosphere + poster.</button>
+    <button class="nav-btn" data-id="m12"><span>12 · Corner Voice Lead</span>No Back. Coach featured first.</button>
+  </aside>
+
+  <main class="stage">
+    <div class="stage-head">
+      <div>
+        <div class="badge" id="badge">HOME · DIRECTION 01</div>
+        <h2 id="title">Brand Fist Home</h2>
+        <p id="desc">R·ALLY becomes the first thing you feel. Greeting shrinks. Orange RUN card is removed so it stops fighting Let’s Rally. Distance + coach stay; hierarchy gets quiet and intentional.</p>
+      </div>
+    </div>
+    <div class="phones" id="phones"></div>
+    <div class="legend" id="legend"></div>
+  </main>
+</div>
+
+<script>
+const TAB = `
+<div class="tabbar">
+  <div class="tab active"><span class="ic">🏃</span>Run</div>
+  <div class="tab"><span class="ic">▦</span>Activity</div>
+  <div class="tab"><span class="ic">◎</span>Corner</div>
+</div>`;
+
+function phone(inner, opts={}) {
+  const cls = opts.scroll ? 'screen scroll atm' : 'screen atm';
+  return `<div class="phone"><div class="phone-inner"><div class="notch"></div>
+    <div class="${cls}">${inner}</div>
+    ${opts.noTab ? '' : TAB}
+  </div></div>`;
+}
+
+const coachesMini = `
+<div class="row" style="margin:14px 0 8px">
+  <div class="dim" style="font-size:11px;letter-spacing:.14em;text-transform:uppercase">In your ear</div>
+  <div style="color:var(--ember);font-size:11px;letter-spacing:.08em">HEAR IT ▸</div>
+</div>
+<div class="coach-h">
+  <div class="coach"><div style="font-size:16px">📣</div><div class="n">Sarge</div><div class="d">Barked. Clipped. Zero pity.</div></div>
+  <div class="coach on"><div style="font-size:16px">🥊</div><div class="n">Southpaw</div><div class="d">Gravel and corner grit.</div></div>
+</div>`;
+
+const distance = `
+<div class="card" style="margin-top:12px">
+  <div class="dim" style="font-size:10px;letter-spacing:.14em;text-transform:uppercase;margin-bottom:6px">Distance</div>
+  <div class="row">
+    <div class="poster" style="font-size:34px">5.0 km</div>
+    <div class="stepper"><button>−</button><button>+</button></div>
+  </div>
+</div>`;
+
+const mockups = {
+  m1: {
+    badge: 'HOME · DIRECTION 01 · RECOMMENDED',
+    title: 'Brand Fist Home',
+    desc: 'Steal NRC’s “one clear next action,” reject their lifestyle softness. Brand wordmark is the hero. Remove the giant orange RUN card (it currently competes with Let’s Rally). Keep distance + coach. Settings moves into Corner only.',
+    legend: [
+      ['Why it wins', 'Passes the brand test. One CTA. Voice stays visible without owning the whole fold.'],
+      ['From NRC', 'Low friction start — open app → adjust → go.'],
+      ['From Strava', 'Nothing — intentionally. No feed, no social chrome.'],
+      ['Kill', 'Orange activity pill, SETTINGS chip on Home, dual-orange hierarchy fight.']
+    ],
+    html: () => phone(`
+      <div class="eyebrow">R·ALLY</div>
+      <div class="brand-hero">R·ALLY</div>
+      <div class="muted" style="font-size:14px;margin-bottom:4px">Evening, Debraj.</div>
+      <div class="poster" style="font-size:28px;color:var(--t1);max-width:280px;margin-bottom:8px">The fade is coming.</div>
+      <div class="pill">Phone GPS · cadence · earbuds</div>
+      ${distance}
+      ${coachesMini}
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m2: {
+    badge: 'HOME · DIRECTION 02',
+    title: 'Coach is the Product',
+    desc: 'If the product is a voice, the home should feel like picking who stands in your corner. Coach becomes the stage. Distance is a slim control. Brand sits as a seal, not a greeting form.',
+    legend: [
+      ['Why try it', 'Makes “IN YOUR EAR” the brand moment before the run starts.'],
+      ['Risk', 'Distance can feel secondary — keep steppers fat for thumbs.'],
+      ['Keep', 'Hear It audition. Active coach glow.']
+    ],
+    html: () => phone(`
+      <div class="row">
+        <div class="eyebrow">R·ALLY</div>
+        <div class="pill">Tonight</div>
+      </div>
+      <div class="poster" style="font-size:40px;margin:12px 0 6px">Who’s in<br/>your ear?</div>
+      <div class="muted" style="font-size:13px;margin-bottom:14px">Southpaw is ready. Stay mean.</div>
+      <div class="coach on" style="width:100%;min-width:0;padding:18px;margin-bottom:10px">
+        <div class="row"><div style="font-size:28px">🥊</div><div class="pill" style="background:rgba(0,0,0,.2);border:0;color:#fff">ACTIVE</div></div>
+        <div class="n" style="font-size:28px;margin-top:10px">The Southpaw</div>
+        <div class="d" style="font-size:13px;color:rgba(255,255,255,.85)">Gravel and corner grit. One more round.</div>
+        <div style="margin-top:12px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.9">▶ Preview voice</div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div><div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Goal</div><div class="poster" style="font-size:28px">5.0 km</div></div>
+          <div class="stepper"><button>−</button><button>+</button></div>
+        </div>
+      </div>
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m3: {
+    badge: 'HOME · DIRECTION 03',
+    title: 'NRC Go Pattern',
+    desc: 'Borrow Nike’s “big GO, little setup.” Content is sparse above; Let’s Rally is a permanent dock that never collides with coach cards. Friendliest path for first-time runners.',
+    legend: [
+      ['UX win', 'Fixes CTA overlapping persona cards (your current bug).'],
+      ['Brand risk', 'Can feel too empty — compensated with strong wordmark + story line.'],
+      ['Best for', 'Beginners / Intermediate.']
+    ],
+    html: () => phone(`
+      <div style="height:100%;display:flex;flex-direction:column">
+        <div class="eyebrow">R·ALLY</div>
+        <div class="poster" style="font-size:48px;margin:18px 0 8px">Ready<br/>when you are.</div>
+        <div class="muted" style="font-size:14px;margin-bottom:20px">Evening, Debraj. The fade is coming — don’t wait for it.</div>
+        <div class="card" style="margin-bottom:10px">
+          <div class="row">
+            <div>
+              <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Run · Outdoor</div>
+              <div style="margin-top:4px;font-size:13px;color:var(--t2)">Phone GPS · cadence</div>
+            </div>
+            <div class="poster" style="font-size:22px;color:var(--ember)">5.0</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Corner</div>
+              <div style="font-weight:600;margin-top:4px">The Southpaw</div>
+            </div>
+            <div class="btn-ghost">Change</div>
+          </div>
+        </div>
+        <div style="flex:1"></div>
+      </div>
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `)
+  },
+
+  m4: {
+    badge: 'HOME · DIRECTION 04',
+    title: 'Fight Card Editorial',
+    desc: 'Lean into the fight-poster DNA. Huge stacked type. Almost no cards in the first viewport. Controls appear after the story lands. Most “R·ALLY” of the set — least “fitness app.”',
+    legend: [
+      ['Brand max', 'Hard to confuse with NRC/Strava.'],
+      ['Tradeoff', 'Slightly more scroll to reach distance/coach.'],
+      ['Copy', 'Keep grit. Don’t add lifestyle fluff.']
+    ],
+    html: () => phone(`
+      <div class="eyebrow">Round one · outdoor</div>
+      <div class="poster" style="font-size:64px;margin:10px 0 12px">Evening,<br/>Debraj.</div>
+      <div style="height:1px;background:var(--hair);margin:14px 0"></div>
+      <div class="poster" style="font-size:26px;color:var(--emberSoft);margin-bottom:8px">The fade<br/>is coming.</div>
+      <div class="muted" style="font-size:13px;line-height:1.45;margin-bottom:18px">You’ve got Southpaw in your ear and 5 kilometres on the card. Don’t negotiate.</div>
+      <div class="row" style="gap:8px;margin-bottom:12px">
+        <div class="pill">5.0 km</div>
+        <div class="pill">Southpaw</div>
+        <div class="pill">GPS live</div>
+      </div>
+      <div style="font-size:12px;color:var(--ember);letter-spacing:.1em;text-transform:uppercase">Edit setup ▸</div>
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m5: {
+    badge: 'HOME · DIRECTION 05',
+    title: 'Ember Lane',
+    desc: 'A vertical ember stripe becomes a brand signature across screens (Home → Live → Summary). Layout is left-weighted like a magazine. Feels premium without NRC photography.',
+    legend: [
+      ['System idea', 'Reuse the lane on Live + Summary for continuity.'],
+      ['Tone', 'Quiet confidence, still dark and ember.'],
+      ['Avoid', 'Turning the lane into neon gamer chrome.']
+    ],
+    html: () => phone(`
+      <div class="lane"></div>
+      <div style="padding-left:10px">
+        <div class="eyebrow">R·ALLY</div>
+        <div class="poster" style="font-size:44px;margin:10px 0 6px">Corner<br/>is set.</div>
+        <div class="muted" style="font-size:13px;margin-bottom:16px">Evening, Debraj · The fade is coming.</div>
+        <div class="card" style="margin-bottom:10px">
+          <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Distance</div>
+          <div class="row" style="margin-top:6px">
+            <div class="poster" style="font-size:32px">5.0 km</div>
+            <div class="stepper"><button>−</button><button>+</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="row">
+            <div>
+              <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">In your ear</div>
+              <div style="font-weight:600;margin-top:4px">The Southpaw</div>
+              <div class="muted" style="font-size:12px">Gravel and corner grit.</div>
+            </div>
+            <div class="btn-ghost">▶</div>
+          </div>
+        </div>
+      </div>
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m6: {
+    badge: 'HOME · DIRECTION 06',
+    title: 'Last-Run Continuity',
+    desc: 'Strava’s strength is continuity (“what did I do last?”). Surface one quiet last-run chip so the coach history push feels earned — without a social feed.',
+    legend: [
+      ['Feature sync', 'Pairs with first-minute opening push / history card.'],
+      ['Friendly', 'Gives returning runners a reason to trust the coach.'],
+      ['Don’t', 'Turn this into a feed or kudos.']
+    ],
+    html: () => phone(`
+      <div class="eyebrow">R·ALLY</div>
+      <div class="poster" style="font-size:42px;margin:12px 0 8px">Back on<br/>the line.</div>
+      <div class="card" style="margin-bottom:12px;background:rgba(255,90,31,0.08);border-color:rgba(255,90,31,0.25)">
+        <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ember)">Last time</div>
+        <div style="margin-top:6px;font-size:14px;line-height:1.4">4.03 km · 2 days ago<br/><span class="muted">You’ve been patchy — today we stitch it.</span></div>
+      </div>
+      ${distance}
+      ${coachesMini}
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m7: {
+    badge: 'HOME · DIRECTION 07',
+    title: 'Split Stage',
+    desc: 'Top half is pure brand/story (no cards). Bottom half is a control deck docked above the tab bar — like a mixing board for the bout. Clear zones = clearer UX.',
+    legend: [
+      ['UX', 'Story never fights controls.'],
+      ['Visual', 'Two temperatures: cold type above, warm ember deck below.'],
+      ['Fit', 'Great if you keep prompt chips later.']
+    ],
+    html: () => phone(`
+      <div style="min-height:250px">
+        <div class="eyebrow">R·ALLY</div>
+        <div class="poster" style="font-size:52px;margin:16px 0 10px">Don’t<br/>fold.</div>
+        <div class="muted" style="font-size:14px">Evening, Debraj. The fade is coming.</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:86px;padding:16px 18px 12px;background:linear-gradient(180deg,transparent,rgba(7,8,10,.95) 18%, #0d1014);border-top:1px solid var(--hair)">
+        <div class="row" style="margin-bottom:10px">
+          <div>
+            <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Distance</div>
+            <div class="poster" style="font-size:28px">5.0 km</div>
+          </div>
+          <div class="stepper"><button>−</button><button>+</button></div>
+        </div>
+        <div class="row" style="margin-bottom:12px">
+          <div>
+            <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Coach</div>
+            <div style="font-weight:600">Southpaw</div>
+          </div>
+          <div class="btn-ghost">Hear it</div>
+        </div>
+        <button class="btn-rally">Let’s Rally</button>
+      </div>
+    `)
+  },
+
+  m8: {
+    badge: 'HOME · DIRECTION 08',
+    title: 'Whisper vs Fist',
+    desc: 'Emotional contrast: soft lowercase story line, then a brutal CTA. Feels human and coach-like — not all-caps shout everywhere (your overlay can stay loud; Home can breathe).',
+    legend: [
+      ['Typography', 'Sentence case story + condensed CTA = modern premium.'],
+      ['Voice', 'Matches Southpaw gravel more than Sarge bark on Home.'],
+      ['Still dark', 'No cream lifestyle turn.']
+    ],
+    html: () => phone(`
+      <div class="eyebrow">R·ALLY</div>
+      <div style="font-size:15px;color:var(--t2);margin:18px 0 6px">Evening, Debraj</div>
+      <div style="font-size:34px;font-weight:600;line-height:1.15;letter-spacing:-0.02em;margin-bottom:10px">You’ve been patchy lately. Tonight we stitch it back together.</div>
+      <div class="muted" style="font-size:13px;margin-bottom:18px">Southpaw in your ear · 5.0 km on the card</div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="row">
+          <div class="poster" style="font-size:30px">5.0 km</div>
+          <div class="stepper"><button>−</button><button>+</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="row">
+          <div><strong>The Southpaw</strong><div class="muted" style="font-size:12px">Gravel and corner grit.</div></div>
+          <div class="btn-ghost">▶ USE</div>
+        </div>
+      </div>
+      <div class="cta-dock"><button class="btn-rally">Let’s Rally</button></div>
+    `, {scroll:true})
+  },
+
+  m9: {
+    badge: 'LIVE · DIRECTION 09',
+    title: 'Live Stage Polish',
+    desc: 'Keep the ring. Add state color + a human status line. REST should feel like the coach is watching, not a dead instrument panel. Still glanceable mid-run.',
+    legend: [
+      ['Now', 'Cold, grey, clinical — weak brand.'],
+      ['Change', 'State tint, microcopy, ember end affordance.'],
+      ['Don’t', 'Add charts to Live.']
+    ],
+    html: () => phone(`
+      <div class="row"><div class="eyebrow">Run</div><div class="pill" style="color:var(--warn);border-color:rgba(245,185,66,.35)">Coach ready</div></div>
+      <div class="live-ring rest">
+        <div>
+          <div class="poster" style="font-size:64px">0:04</div>
+          <div style="letter-spacing:.2em;font-size:12px;color:var(--t2);margin-top:4px">REST</div>
+        </div>
+      </div>
+      <div style="text-align:center;color:var(--t2);font-size:13px;margin:-4px 0 16px">Standing still — he’ll start shouting.</div>
+      <div class="metric-bar">
+        <div><div class="v">—</div><div class="l">Pace</div></div>
+        <div><div class="v">0.00</div><div class="l">Km</div></div>
+        <div><div class="v">—</div><div class="l">Cadence</div></div>
+      </div>
+      <div class="controls">
+        <div class="c"><div class="circ">❚❚</div>PAUSE</div>
+        <div class="c"><div class="circ end" style="border-color:rgba(255,90,31,.55);color:var(--ember)">END</div>HOLD</div>
+        <div class="c"><div class="circ">♬</div>SOUND</div>
+      </div>
+    `, {noTab:true})
+  },
+
+  m10: {
+    badge: 'OVERLAY · DIRECTION 10',
+    title: 'Overlay Breath',
+    desc: 'Keep the killer “IN YOUR EAR” moment. Improve breathing: slightly smaller type, clearer line breaks, soft vignette so it feels intimate, not a wall of Impact.',
+    legend: [
+      ['Keep', 'Orange live dot + grit copy.'],
+      ['Tune', 'Line length, weight, vertical rhythm.'],
+      ['Rule', 'Never put metrics on this overlay.']
+    ],
+    html: () => phone(`
+      <div class="overlay-screen" style="position:absolute;inset:0;padding:40px 24px">
+        <div style="text-align:center">
+          <div style="display:inline-flex;align-items:center;gap:8px;color:var(--ember);letter-spacing:.18em;font-size:11px;text-transform:uppercase;margin-bottom:28px">
+            <span style="width:8px;height:8px;border-radius:99px;background:var(--ember);box-shadow:0 0 12px var(--ember)"></span>
+            In your ear
+          </div>
+          <div class="poster" style="font-size:34px;line-height:1.05;max-width:280px;margin:0 auto">
+            You’ve been patchy lately — today we stitch it back together.<br/><span style="color:var(--emberSoft)">Stay mean.</span>
+          </div>
+        </div>
+      </div>
+    `, {noTab:true})
+  },
+
+  m11: {
+    badge: 'ACTIVITY · DIRECTION 11',
+    title: 'Activity Unify',
+    desc: 'You like this page — keep the data. Add Atmosphere + poster title so it shares DNA with Home/Summary. Slightly airier PB cards. Same features.',
+    legend: [
+      ['Keep', 'Lifetime totals, PBs, workout list.'],
+      ['Change', 'Atmosphere, brand type, ember accents only.'],
+      ['Avoid', 'Turning it into a social feed.']
+    ],
+    html: () => phone(`
+      <div class="poster" style="font-size:48px">Activity</div>
+      <div class="muted" style="font-size:12px;letter-spacing:.08em;text-transform:uppercase;margin:4px 0 16px">Lifetime · records · truth</div>
+      <div class="row" style="margin-bottom:8px"><div class="dim" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase">Lifetime</div><div style="color:var(--ember);font-size:12px">7 WORKOUTS</div></div>
+      <div class="row" style="gap:8px;margin-bottom:16px">
+        <div class="card" style="flex:1;text-align:center"><div class="dim" style="font-size:10px">KM</div><div class="poster" style="font-size:26px">8.6</div></div>
+        <div class="card" style="flex:1;text-align:center"><div class="dim" style="font-size:10px">TIME</div><div class="poster" style="font-size:26px">1h 4m</div></div>
+        <div class="card" style="flex:1;text-align:center"><div class="dim" style="font-size:10px">ELEV</div><div class="poster" style="font-size:26px">92</div></div>
+      </div>
+      <div class="dim" style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px">Personal bests</div>
+      <div class="pb-grid" style="margin-bottom:14px">
+        <div class="pb"><div class="k">⚡ Fastest 1K</div><div class="v">6:14</div></div>
+        <div class="pb"><div class="k">🗺 Longest</div><div class="v">4.03</div></div>
+      </div>
+      <div class="card">
+        <div class="row"><strong>RUN</strong><span class="muted" style="font-size:12px">3 Sep · 23:15</span></div>
+        <div class="muted" style="font-size:12px;margin-top:6px">0.56 km · 8m · — /km</div>
+      </div>
+    `, {scroll:true})
+  },
+
+  m12: {
+    badge: 'CORNER · DIRECTION 12',
+    title: 'Corner Voice Lead',
+    desc: 'You like Corner — remove &lt; HOME (it’s a tab). Lead with the active coach as a featured card. Keep level, athlete, Health, shout budget — just reordered for voice primacy.',
+    legend: [
+      ['Kill', 'Back to Home on a tab root.'],
+      ['Lead', 'Active coach + Fish Audio badge.'],
+      ['Keep', 'All settings sections.']
+    ],
+    html: () => phone(`
+      <div class="poster" style="font-size:48px">Corner</div>
+      <div class="muted" style="font-size:13px;margin:4px 0 14px">Your voice. Your rules.</div>
+      <div class="coach on" style="width:100%;min-width:0;margin-bottom:12px">
+        <div class="row"><div class="pill" style="background:rgba(0,0,0,.25);border:0;color:#fff">● FISH AUDIO</div><div class="pill" style="background:rgba(62,224,138,.15);border:0;color:var(--pulse)">ACTIVE</div></div>
+        <div class="n" style="font-size:26px">The Southpaw</div>
+        <div class="d">Gravel and corner grit.</div>
+        <div class="row" style="margin-top:12px"><div class="btn-ghost" style="border-color:rgba(255,255,255,.25)">▶ Preview</div><div class="btn-ghost" style="border-color:rgba(255,255,255,.25)">Change</div></div>
+      </div>
+      <div class="card" style="margin-bottom:10px">
+        <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Runner level</div>
+        <div style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,90,31,.5)">Intermediate · pacing & cadence</div>
+      </div>
+      <div class="card">
+        <div class="dim" style="font-size:10px;letter-spacing:.12em;text-transform:uppercase">Athlete</div>
+        <div class="row" style="margin-top:8px"><div>Debraj · 26</div><div class="muted" style="font-size:12px">HR max auto</div></div>
+      </div>
+    `, {scroll:true})
+  }
+};
+
+const phones = document.getElementById('phones');
+const legend = document.getElementById('legend');
+const title = document.getElementById('title');
+const desc = document.getElementById('desc');
+const badge = document.getElementById('badge');
+
+function show(id) {
+  const m = mockups[id];
+  badge.textContent = m.badge;
+  title.textContent = m.title;
+  desc.textContent = m.desc;
+  phones.innerHTML = m.html();
+  legend.innerHTML = m.legend.map(([h,p]) => `<div class="box"><h4>${h}</h4><p>${p}</p></div>`).join('');
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+}
+
+document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => show(b.dataset.id)));
+show('m1');
+</script>
+</body>
+</html>

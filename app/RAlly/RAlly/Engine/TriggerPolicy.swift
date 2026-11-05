@@ -73,12 +73,14 @@ final class TriggerPolicy {
             case .recovery: CoachRhythm.followUpRefractorySec
             case .keepGoing: CoachRhythm.keepGoingSec * 0.85
             case .paceSlip: CoachRhythm.paceSlipRefractorySec
+            // Cadence gated by QuitRiskEngine.lastEngagementT; only need a short gap here.
+            case .engagement: CoachRhythm.breathGapSec * 2
             default: EngineConstants.refractorySec
             }
         }()
         if t - lastSpokenT < refractory { return false }
         if t - lastStopRecoverT < EngineConstants.resumeGraceSec,
-           kind != .stopped, kind != .stillStopped, kind != .recovery, kind != .keepGoing {
+           kind != .stopped, kind != .stillStopped, kind != .recovery, kind != .keepGoing, kind != .engagement {
             return false
         }
         if usesFadeBudget(kind), fadeTotal >= fadeShoutCap { return false }
@@ -106,10 +108,18 @@ final class TriggerPolicy {
         }
     }
 
+    /// Most recent trigger kind (for engagement stacking guards).
+    var lastRecordedKind: TriggerKind? { lastKind }
+
+    func secondsSinceLastSpoken(_ t: TimeInterval) -> TimeInterval {
+        guard lastSpokenT > -9_000 else { return .greatestFiniteMagnitude }
+        return t - lastSpokenT
+    }
+
     private func usesFadeBudget(_ kind: TriggerKind) -> Bool {
         switch kind {
         case .preQuitFade, .paceSlip, .grindSupport, .finalPush: true
-        case .stopped, .stillStopped, .keepGoing, .recovery, .milestone: false
+        case .stopped, .stillStopped, .keepGoing, .recovery, .milestone, .engagement: false
         }
     }
 }

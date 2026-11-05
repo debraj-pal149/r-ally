@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>R·ALLY — Cold Blue Hour · Home / Activity / Corner</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #04060a;
+    --ink: #eef1f2;
+    --dim: #8f9aa5;
+    --ember: #ff5a1f;
+    --emberSoft: #ff8a50;
+    --blue: #3f6d96;
+    --glass: rgba(20, 28, 38, 0.58);
+    --line: rgba(238, 241, 242, 0.12);
+    --pulse: #3ee08a;
+    --gbg: #0b0b0c;
+    --gtext: #eceae6;
+    --gdim: #8b8b8f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--gbg); color: var(--gtext);
+    font-family: Inter, system-ui, sans-serif;
+    padding: 28px 20px 80px; max-width: 1180px; margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+  .kicker { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ember); font-weight: 700; }
+  h1 { font-size: clamp(24px, 4vw, 34px); margin: 8px 0 10px; font-weight: 800; }
+  .lead { color: var(--gdim); font-size: 14.5px; line-height: 1.65; max-width: 780px; }
+  .tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 24px 0 20px; }
+  .tabs button {
+    background: #151517; border: 1px solid rgba(255,255,255,.09); color: var(--gdim);
+    padding: 9px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+  }
+  .tabs button.active { background: var(--ember); color: #140900; border-color: var(--ember); }
+  .deck { display: none; }
+  .deck.active { display: block; }
+  .grid { display: grid; grid-template-columns: minmax(280px, 340px) 1fr; gap: 36px; align-items: start; }
+  @media (max-width: 800px) { .grid { grid-template-columns: 1fr; justify-items: center; } }
+  .spec .idx { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--ember); font-weight: 700; margin-bottom: 8px; }
+  .spec h2 { font-size: 24px; margin-bottom: 8px; }
+  .spec p { color: var(--gdim); font-size: 14px; line-height: 1.6; max-width: 520px; }
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
+  .swatch {
+    display: flex; align-items: center; gap: 6px; background: #151517;
+    border: 1px solid rgba(255,255,255,.09); border-radius: 8px; padding: 5px 9px 5px 5px;
+    font-size: 10.5px; color: var(--gdim); font-family: ui-monospace, monospace;
+  }
+  .swatch i { width: 16px; height: 16px; border-radius: 5px; display: block; border: 1px solid rgba(255,255,255,.15); }
+
+  .phone {
+    width: 335px; aspect-ratio: 375/812; max-width: 88vw; position: relative; overflow: hidden;
+    border-radius: 46px; background: var(--bg); color: var(--ink);
+    box-shadow: 0 0 0 8px #060606, 0 0 0 9px #2c2c2c, 0 40px 80px -25px rgba(0,0,0,.75);
+    font-family: Barlow, sans-serif;
+  }
+  .notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 118px; height: 24px; background: #000; border-radius: 0 0 14px 14px; z-index: 9; }
+  .atm {
+    position: absolute; inset: 0; pointer-events: none;
+    background:
+      radial-gradient(460px 380px at 15% 0%, rgba(63,109,150,.42), transparent 62%),
+      radial-gradient(500px 400px at 90% 100%, rgba(10,16,24,.9), transparent 60%),
+      linear-gradient(180deg, #04060a 0%, #060a12 55%, #04060a 100%);
+  }
+  .screen { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; }
+  .status { display: flex; justify-content: space-between; padding: 15px 24px 2px; font-size: 14px; font-weight: 700; position: relative; z-index: 6; }
+  .scroll { flex: 1; overflow-y: auto; position: relative; z-index: 2; padding: 8px 20px 110px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .brand { font-family: 'Bebas Neue'; letter-spacing: .18em; font-size: 13px; color: rgba(238,241,242,.55); margin-top: 8px; }
+  .headline { font-family: 'Bebas Neue'; font-size: 40px; line-height: .95; margin-top: 16px; text-shadow: 0 0 40px rgba(63,109,150,.45); }
+  .ember { color: var(--ember); }
+  .meta { font-size: 13px; color: var(--dim); margin-top: 12px; line-height: 1.5; max-width: 250px; }
+  .glass {
+    margin-top: 16px; background: var(--glass); backdrop-filter: blur(6px);
+    border: 1px solid var(--line); border-radius: 22px; padding: 14px 16px;
+  }
+  .label { font-size: 10px; letter-spacing: .12em; color: var(--dim); text-transform: uppercase; }
+  .bebas { font-family: 'Bebas Neue'; }
+  .dist-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .step-col { display: flex; flex-direction: column; gap: 6px; }
+  .step {
+    width: 34px; height: 34px; border-radius: 999px; border: 1px solid rgba(238,241,242,.18);
+    background: rgba(255,255,255,.04); color: var(--ink); font-size: 18px; display: grid; place-items: center;
+  }
+  .ear {
+    display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding-top: 12px;
+    border-top: 1px solid var(--line); cursor: pointer;
+  }
+  .intent-head { display: flex; justify-content: space-between; align-items: baseline; margin-top: 16px; }
+  .intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .intent {
+    border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.03);
+    padding: 12px 12px 11px; text-align: left;
+  }
+  .intent.on { border-color: rgba(255,90,31,.55); background: rgba(255,90,31,.12); }
+  .intent .t { font-size: 13px; font-weight: 700; color: var(--ink); line-height: 1.25; }
+  .intent.on .t { color: var(--emberSoft); }
+  .intent .s { font-size: 11px; color: var(--dim); margin-top: 4px; line-height: 1.35; }
+  .intent.wide { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; }
+  .cta {
+    margin-top: 16px; height: 54px; border-radius: 999px; display: flex; align-items: center; justify-content: center;
+    font-family: 'Bebas Neue'; font-size: 19px; letter-spacing: .06em;
+    border: 1.5px solid var(--ember); color: var(--emberSoft); background: transparent;
+    box-shadow: 0 0 30px rgba(255,90,31,.22);
+  }
+  .hint { font-size: 11px; color: #6f7a86; margin-top: 8px; line-height: 1.4; }
+  .section { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin: 22px 0 10px; }
+  .coach {
+    display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 18px;
+    border: 1px solid var(--line); background: rgba(20,28,38,.4); margin-bottom: 8px;
+  }
+  .coach.on { border-color: rgba(255,90,31,.55); background: rgba(255,90,31,.12); }
+  .coach .ico { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,.06); display: grid; place-items: center; font-size: 18px; }
+  .coach .n { font-weight: 700; font-size: 14px; }
+  .coach .d { font-size: 12px; color: var(--dim); margin-top: 2px; }
+  .use { margin-left: auto; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--emberSoft); border: 1px solid rgba(255,90,31,.4); border-radius: 999px; padding: 6px 10px; }
+  .tabbar {
+    position: absolute; left: 20px; right: 20px; bottom: 12px; display: flex; justify-content: space-around;
+    align-items: center; padding: 10px 4px; border-radius: 999px; z-index: 8;
+    background: rgba(10,14,20,.65); color: var(--dim); backdrop-filter: blur(10px);
+  }
+  .tab { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 9.5px; font-weight: 800; letter-spacing: .04em; }
+  .tab.on { color: var(--ember); }
+  .poster { font-family: 'Bebas Neue'; font-size: 42px; line-height: .95; margin-top: 10px; }
+  .card { background: var(--glass); backdrop-filter: blur(6px); border: 1px solid var(--line); border-radius: 18px; padding: 14px; margin-top: 10px; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .stat { text-align: center; padding: 10px 6px; border-radius: 14px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); }
+  .stat .v { font-family: 'Bebas Neue'; font-size: 22px; }
+  .stat .l { font-size: 9px; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-top: 2px; }
+  .list-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+  .list-row:last-child { border-bottom: 0; }
+</style>
+</head>
+<body>
+
+<div class="kicker">R·ALLY · Cold Blue Hour ship preview</div>
+<h1>Three screens · Blue Hour primary</h1>
+<p class="lead">
+  Atmosphere is Cold Blue Hour throughout. Home keeps the cinematic UX you liked, with a richer
+  <b>Rally call</b> section (renamed from Prompts), vertical distance steppers, and coach list below Let’s Rally.
+  Activity and Corner keep their current information architecture — restyled into the same dawn-street world.
+</p>
+
+<div class="tabs" id="tabs">
+  <button class="active" data-t="home">1 · Home</button>
+  <button data-t="activity">2 · Activity</button>
+  <button data-t="corner">3 · Corner</button>
+</div>
+
+<!-- HOME -->
+<section class="deck active" id="deck-home">
+  <div class="grid">
+    <div>
+      <div class="phone">
+        <div class="atm"></div>
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span>05:12</span><span style="opacity:.7">●●●● ▮</span></div>
+          <div class="scroll" id="homeScroll">
+            <div class="brand">R · A L L Y</div>
+            <div class="headline">THE STREET<br>DOESN'T CARE.<br><span class="ember">WE DO.</span></div>
+            <div class="meta">05:12 · Dawn loop · phone GPS, cadence, earbuds in.</div>
+
+            <div class="glass">
+              <div class="dist-row">
+                <div>
+                  <div class="label">Distance</div>
+                  <div class="bebas" style="font-size:32px;margin-top:2px">5.0 KM</div>
+                </div>
+                <div class="step-col">
+                  <div class="step">+</div>
+                  <div class="step">−</div>
+                </div>
+              </div>
+              <div class="ear" onclick="document.getElementById('coachSection').scrollIntoView({behavior:'smooth',block:'start'})">
+                <div>
+                  <div class="label">In your ear</div>
+                  <div style="font-weight:600;margin-top:4px">The Southpaw</div>
+                </div>
+                <div style="font-size:12px;color:var(--emberSoft);letter-spacing:.08em;text-transform:uppercase">Change ▾</div>
+              </div>
+            </div>
+
+            <div class="intent-head">
+              <div class="label">Rally call</div>
+              <div style="font-size:11px;color:var(--dim)">What he hammers today</div>
+            </div>
+            <div class="intent-grid">
+              <div class="intent on">
+                <div class="t">Don’t quit on me</div>
+                <div class="s">When the fade hits — stay in it.</div>
+              </div>
+              <div class="intent">
+                <div class="t">Hold the line</div>
+                <div class="s">Lock pace. No negotiation.</div>
+              </div>
+              <div class="intent">
+                <div class="t">Negative split</div>
+                <div class="s">Second half harder than first.</div>
+              </div>
+              <div class="intent">
+                <div class="t">Breath & form</div>
+                <div class="s">Settle the stride, then push.</div>
+              </div>
+              <div class="intent">
+                <div class="t">Outlast last run</div>
+                <div class="s">Past where you usually stop.</div>
+              </div>
+              <div class="intent">
+                <div class="t">Quiet grind</div>
+                <div class="s">Less bark. More work.</div>
+              </div>
+              <div class="intent wide">
+                <div>
+                  <div class="t">Write your own call</div>
+                  <div class="s">Custom line for this bout only.</div>
+                </div>
+                <div style="color:var(--emberSoft);font-size:18px">＋</div>
+              </div>
+            </div>
+
+            <div class="cta">LET'S RALLY</div>
+            <div class="hint">Tap “In your ear” to jump to coaches below.</div>
+
+            <div id="coachSection">
+              <div class="section">Choose your corner</div>
+              <div class="coach"><div class="ico">📣</div><div><div class="n">Sarge</div><div class="d">Barked. Clipped. Zero pity.</div></div><div class="use">Use</div></div>
+              <div class="coach on"><div class="ico">🥊</div><div><div class="n">The Southpaw</div><div class="d">Gravel and corner grit.</div></div><div class="use">Active</div></div>
+              <div class="coach"><div class="ico">⚡</div><div><div class="n">The Beast</div><div class="d">Pain is fuel.</div></div><div class="use">Use</div></div>
+              <div class="coach"><div class="ico">🛡</div><div><div class="n">The Drill Master</div><div class="d">Booming iron command.</div></div><div class="use">Use</div></div>
+              <div class="coach"><div class="ico">★</div><div><div class="n">The Gunny</div><div class="d">Hold the line.</div></div><div class="use">Use</div></div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab on">🏃<span>RUN</span></div>
+            <div class="tab">▦<span>ACTIVITY</span></div>
+            <div class="tab">◎<span>CORNER</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="idx">Mockup 1 · Home</div>
+      <h2>Cold Blue Hour · street hero</h2>
+      <p>
+        Dawn-navy atmosphere. Ember is the only warm signal.
+        “Prompts” → <b>Rally call</b>: richer 2-column intents + custom row, not a thin chip strip.
+      </p>
+      <div class="swatches">
+        <div class="swatch"><i style="background:#04060a"></i>#04060A</div>
+        <div class="swatch"><i style="background:#3f6d96"></i>#3F6D96 blue-hour</div>
+        <div class="swatch"><i style="background:#ff5a1f"></i>#FF5A1F ember</div>
+        <div class="swatch"><i style="background:#142038"></i>glass</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACTIVITY -->
+<section class="deck" id="deck-activity">
+  <div class="grid">
+    <div>
+      <div class="phone">
+        <div class="atm"></div>
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span>05:18</span><span style="opacity:.7">●●●● ▮</span></div>
+          <div class="scroll">
+            <div class="brand">R · A L L Y</div>
+            <div class="poster">ACTIVITY</div>
+            <div class="meta" style="margin-top:6px">Lifetime · records · truth</div>
+
+            <div class="card">
+              <div style="display:flex;justify-content:space-between">
+                <div class="label">Lifetime</div>
+                <div style="color:var(--emberSoft);font-size:12px">7 WORKOUTS</div>
+              </div>
+              <div class="stats">
+                <div class="stat"><div class="v">8.6</div><div class="l">Km</div></div>
+                <div class="stat"><div class="v">1h 4m</div><div class="l">Time</div></div>
+                <div class="stat"><div class="v">92</div><div class="l">Elev</div></div>
+              </div>
+            </div>
+
+            <div class="section">Personal bests</div>
+            <div class="stats">
+              <div class="stat"><div class="l" style="color:var(--emberSoft)">⚡ 1K</div><div class="v">6:14</div></div>
+              <div class="stat"><div class="l" style="color:var(--emberSoft)">🗺 Long</div><div class="v">4.03</div></div>
+              <div class="stat"><div class="l" style="color:var(--emberSoft)">⛰ Elev</div><div class="v">92m</div></div>
+            </div>
+
+            <div class="section">Workout history</div>
+            <div class="card" style="padding:4px 14px">
+              <div class="list-row">
+                <div><b>RUN</b><div class="meta" style="margin:0">3 Sep · 0.56 km · 8m</div></div>
+                <div style="opacity:.4">›</div>
+              </div>
+              <div class="list-row">
+                <div><b>RUN</b><div class="meta" style="margin:0">1 Sep · 4.03 km · 27m</div></div>
+                <div style="opacity:.4">›</div>
+              </div>
+              <div class="list-row">
+                <div><b>RUN</b><div class="meta" style="margin:0">30 Aug · 2.10 km · 14m</div></div>
+                <div style="opacity:.4">›</div>
+              </div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">🏃<span>RUN</span></div>
+            <div class="tab on">▦<span>ACTIVITY</span></div>
+            <div class="tab">◎<span>CORNER</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="idx">Mockup 2 · Activity</div>
+      <h2>Same UX · Blue Hour skin</h2>
+      <p>
+        Lifetime, PBs, history — unchanged structure. Atmosphere + glass cards so it matches Home’s dawn street, not a separate dashboard app.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- CORNER -->
+<section class="deck" id="deck-corner">
+  <div class="grid">
+    <div>
+      <div class="phone">
+        <div class="atm"></div>
+        <div class="notch"></div>
+        <div class="screen">
+          <div class="status"><span>05:18</span><span style="opacity:.7">●●●● ▮</span></div>
+          <div class="scroll">
+            <div class="brand">R · A L L Y</div>
+            <div class="poster">CORNER</div>
+            <div class="meta" style="margin-top:6px">Your voice. Your rules.</div>
+
+            <div class="card" style="border-color:rgba(255,90,31,.4)">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div class="label" style="color:var(--pulse)">● Fish Audio · Active</div>
+                <div class="label">Preview</div>
+              </div>
+              <div class="bebas" style="font-size:28px;margin-top:8px">THE SOUTHPAW</div>
+              <div class="meta" style="margin:4px 0 0">Gravel and corner grit.</div>
+            </div>
+
+            <div class="card">
+              <div class="label">Source</div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between;align-items:center">
+                <span>iPhone & Apple Health</span>
+                <span style="width:8px;height:8px;border-radius:99px;background:var(--pulse);display:inline-block"></span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Runner level</div>
+              <div style="margin-top:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,90,31,.45)">Intermediate · pacing & cadence</div>
+            </div>
+
+            <div class="card">
+              <div class="label">Athlete</div>
+              <div style="margin-top:8px;display:flex;justify-content:space-between">
+                <span>Debraj · 26</span>
+                <span class="meta" style="margin:0">HR max auto</span>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="label">Fade shout budget</div>
+              <div class="bebas" style="font-size:28px;margin-top:4px">30 SHOUTS</div>
+            </div>
+          </div>
+          <div class="tabbar">
+            <div class="tab">🏃<span>RUN</span></div>
+            <div class="tab">▦<span>ACTIVITY</span></div>
+            <div class="tab on">◎<span>CORNER</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="idx">Mockup 3 · Corner</div>
+      <h2>Same sections · no Back · Blue Hour</h2>
+      <p>
+        Coach first, then source / level / athlete / budget. No &lt; HOME. Same Cold Blue Hour ambient as Home and Activity.
+      </p>
+    </div>
+  </div>
+</section>
+
+<script>
+  const tabs = [...document.querySelectorAll('#tabs button')];
+  const decks = [...document.querySelectorAll('.deck')];
+  tabs.forEach(btn => btn.addEventListener('click', () => {
+    tabs.forEach(b => b.classList.remove('active'));
+    decks.forEach(d => d.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('deck-' + btn.dataset.t).classList.add('active');
+  }));
+</script>
+</body>
+</html>

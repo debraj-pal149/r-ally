@@ -6,20 +6,38 @@ import UIKit
 
 @MainActor
 final class StravaClient: NSObject, ASWebAuthenticationPresentationContextProviding {
+    private static let accessAccount = "strava.access"
+    private static let refreshAccount = "strava.refresh"
+    private static let legacyAccessDefaultsKey = "strava.access"
+    private static let legacyRefreshDefaultsKey = "strava.refresh"
+
     static var clientId: String {
-        (Bundle.main.object(forInfoDictionaryKey: "STRAVA_CLIENT_ID") as? String) ?? ""
-    }
-    static var clientSecret: String {
-        (Bundle.main.object(forInfoDictionaryKey: "STRAVA_CLIENT_SECRET") as? String) ?? ""
-    }
-    static var isConfigured: Bool {
-        !clientId.isEmpty && !clientSecret.isEmpty
+        cleanedInfo("STRAVA_CLIENT_ID")
     }
 
-    private let defaults = UserDefaults.standard
-    var isConnected: Bool { defaults.string(forKey: "strava.access") != nil }
+    /// HTTPS Cloud Function that performs Strava token exchange (secret stays server-side).
+    static var oauthProxyURL: String {
+        cleanedInfo("STRAVA_OAUTH_PROXY_URL")
+    }
+
+    static var isConfigured: Bool {
+        !clientId.isEmpty && !oauthProxyURL.isEmpty
+    }
+
+    var isConnected: Bool { accessToken != nil }
+
+    private var accessToken: String? {
+        migrateLegacyTokensIfNeeded()
+        return KeychainStore.get(account: Self.accessAccount)
+    }
+
+    private var refreshToken: String? {
+        migrateLegacyTokensIfNeeded()
+        return KeychainStore.get(account: Self.refreshAccount)
+    }
 
     func connect() async throws {
+        guard Self.isConfigured else { throw URLError(.unsupportedURL) }
         let url = URL(string: "https://www.strava.com/oauth/mobile/authorize?client_id=\(Self.clientId)&redirect_uri=rally://strava/callback&response_type=code&approval_prompt=auto&scope=activity:write,activity:read_all&redirect_uri=rally://strava/callback")!
         let code: String = try await withCheckedThrowingContinuation { cont in
             let session = ASWebAuthenticationSession(url: url, callbackURLScheme: "rally") { callback, error in
@@ -38,17 +56,20 @@ final class StravaClient: NSObject, ASWebAuthenticationPresentationContextProvid
     }
 
     func disconnect() {
-        defaults.removeObject(forKey: "strava.access")
-        defaults.removeObject(forKey: "strava.refresh")
+        KeychainStore.remove(account: Self.accessAccount)
+        KeychainStore.remove(account: Self.refreshAccount)
+        UserDefaults.standard.removeObject(forKey: Self.legacyAccessDefaultsKey)
+        UserDefaults.standard.removeObject(forKey: Self.legacyRefreshDefaultsKey)
     }
 
     func upload(session: WorkoutSessionRecord) async throws {
-        var token = defaults.string(forKey: "strava.access") ?? ""
         let data = TCXExporter.tcx(session: session)
         var req = URLRequest(url: URL(string: "https://www.strava.com/api/v3/uploads")!)
         req.httpMethod = "POST"
         let boundary = UUID().uuidString
-        req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        if let token = accessToken {
+            req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        }
         req.addValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         var body = Data()
         func field(_ name: String, _ value: String) {
@@ -81,7 +102,7 @@ final class StravaClient: NSObject, ASWebAuthenticationPresentationContextProvid
         for _ in 0..<20 {
             try await Task.sleep(for: .seconds(2))
             var req = URLRequest(url: URL(string: "https://www.strava.com/api/v3/uploads/\(id)")!)
-            if let token = defaults.string(forKey: "strava.access") {
+            if let token = accessToken {
                 req.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             }
             let (data, resp) = try await URLSession.shared.data(for: req)
@@ -97,41 +118,66 @@ final class StravaClient: NSObject, ASWebAuthenticationPresentationContextProvid
     }
 
     private func exchange(code: String) async throws {
-        var req = URLRequest(url: URL(string: "https://www.strava.com/oauth/token")!)
-        req.httpMethod = "POST"
-        req.addValue("application/json", forHTTPHeaderField: "content-type")
-        let payload = [
-            "client_id": Self.clientId,
-            "client_secret": Self.clientSecret,
-            "code": code,
+        try await postToProxy([
             "grant_type": "authorization_code",
-        ]
-        req.httpBody = try JSONEncoder().encode(payload)
-        let (data, _) = try await URLSession.shared.data(for: req)
-        try storeTokens(data)
+            "code": code,
+        ])
     }
 
     private func refresh() async throws {
-        guard let refresh = defaults.string(forKey: "strava.refresh") else { throw URLError(.userAuthenticationRequired) }
-        var req = URLRequest(url: URL(string: "https://www.strava.com/oauth/token")!)
+        guard let refresh = refreshToken else {
+            throw URLError(.userAuthenticationRequired)
+        }
+        try await postToProxy([
+            "grant_type": "refresh_token",
+            "refresh_token": refresh,
+        ])
+    }
+
+    private func postToProxy(_ payload: [String: String]) async throws {
+        guard let url = URL(string: Self.oauthProxyURL) else {
+            throw URLError(.badURL)
+        }
+        var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.addValue("application/json", forHTTPHeaderField: "content-type")
-        let payload = [
-            "client_id": Self.clientId,
-            "client_secret": Self.clientSecret,
-            "refresh_token": refresh,
-            "grant_type": "refresh_token",
-        ]
         req.httpBody = try JSONEncoder().encode(payload)
-        let (data, _) = try await URLSession.shared.data(for: req)
+        let (data, resp) = try await URLSession.shared.data(for: req)
+        guard let http = resp as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            throw URLError(.userAuthenticationRequired)
+        }
         try storeTokens(data)
     }
 
     private func storeTokens(_ data: Data) throws {
         struct Tok: Codable { var access_token: String; var refresh_token: String }
         let t = try JSONDecoder().decode(Tok.self, from: data)
-        defaults.set(t.access_token, forKey: "strava.access")
-        defaults.set(t.refresh_token, forKey: "strava.refresh")
+        KeychainStore.set(t.access_token, account: Self.accessAccount)
+        KeychainStore.set(t.refresh_token, account: Self.refreshAccount)
+        UserDefaults.standard.removeObject(forKey: Self.legacyAccessDefaultsKey)
+        UserDefaults.standard.removeObject(forKey: Self.legacyRefreshDefaultsKey)
+    }
+
+    /// One-time move of pre-P1 tokens out of UserDefaults.
+    private func migrateLegacyTokensIfNeeded() {
+        let defaults = UserDefaults.standard
+        if let access = defaults.string(forKey: Self.legacyAccessDefaultsKey), !access.isEmpty,
+           KeychainStore.get(account: Self.accessAccount) == nil {
+            KeychainStore.set(access, account: Self.accessAccount)
+            defaults.removeObject(forKey: Self.legacyAccessDefaultsKey)
+        }
+        if let refresh = defaults.string(forKey: Self.legacyRefreshDefaultsKey), !refresh.isEmpty,
+           KeychainStore.get(account: Self.refreshAccount) == nil {
+            KeychainStore.set(refresh, account: Self.refreshAccount)
+            defaults.removeObject(forKey: Self.legacyRefreshDefaultsKey)
+        }
+    }
+
+    private static func cleanedInfo(_ key: String) -> String {
+        let raw = (Bundle.main.object(forInfoDictionaryKey: key) as? String) ?? ""
+        let value = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, !value.contains("$") else { return "" }
+        return value
     }
 
     nonisolated func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {

@@ -18,12 +18,23 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     private var energeticDelivery = true
     /// Bumps on every stop/speak so late TTS tasks cannot play after cancellation.
     private var speakGeneration: UInt64 = 0
+    /// Cancels a pending soft-deactivate so a short call cannot leave the session dead.
+    private var deactivateGeneration: UInt64 = 0
 
     var voiceId: String = CoachVoiceOption.defaultVoiceId
     var muted = false
+    /// Hard block while a phone call / Siri / other audio session interruption is active.
+    var callInterrupted = false
     var speaking = false
     var isPreviewing = false
     var previewingVoiceId: String?
+
+    /// True when the coach must not speak (mute or active call/Siri interruption).
+    /// Do NOT gate on `secondaryAudioShouldBeSilencedHint` — that is often true
+    /// while Spotify/podcasts play via mixWithOthers and would mute coaching entirely.
+    var mustStaySilent: Bool {
+        muted || callInterrupted
+    }
 
     var activeVoiceOption: CoachVoiceOption {
         CoachVoiceOption.find(voiceId)
@@ -37,7 +48,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         case .elevenLabs:
             return "ElevenLabs · \(activeVoiceOption.title)"
         case .appleFallback:
-            return "Apple Neural · Coach Male"
+            let gender = activePersona.prefersFemale ? "Female" : "Male"
+            return "Apple Neural · Coach \(gender)"
         }
     }
 
@@ -49,7 +61,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         case .elevenLabs:
             return "ElevenLabs Turbo v2.5 low-latency active"
         case .appleFallback:
-            return "No cloud API key in .env. Using Apple male fallback"
+            let gender = activePersona.prefersFemale ? "female" : "male"
+            return "No cloud API key in .env. Using Apple \(gender) fallback"
         }
     }
 
@@ -76,16 +89,13 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
             switch type {
             case .began:
-                self.stop()
-                self.finishSpeaking()
+                // Mirror mute: hard silence + block new lines until the call ends.
+                self.callInterrupted = true
+                self.silenceNow()
             case .ended:
-                if let optVal = info[AVAudioSessionInterruptionOptionKey] as? UInt {
-                    let opts = AVAudioSession.InterruptionOptions(rawValue: optVal)
-                    if opts.contains(.shouldResume) {
-                        // Restore route without ducking Spotify until we actually speak again.
-                        self.activateSession(duckOthers: false)
-                    }
-                }
+                self.callInterrupted = false
+                // Restore route without ducking music; do not resume the cut mid-line.
+                self.activateSession(duckOthers: false)
             @unknown default:
                 break
             }
@@ -98,7 +108,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     }
 
     func preview(voice: CoachVoiceOption, onFinish: (() -> Void)? = nil) {
-        guard !muted else { onFinish?(); return }
+        guard !mustStaySilent else { onFinish?(); return }
         stop()
         isPreviewing = true
         previewingVoiceId = voice.id
@@ -108,13 +118,23 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
             onFinish?()
         }
         let spoken = DistanceUnitNormalizer.normalize(Self.coachText(voice.previewText), to: DistanceUnit.detect())
+        let previewPersona = Persona.all.first(where: { $0.voiceId == voice.id }) ?? Persona.named(.sarge)
+        activePersona = previewPersona
         speaking = true
         let generation = speakGeneration
 
         Task { @MainActor in
+            guard !self.mustStaySilent else {
+                self.finishSpeaking()
+                return
+            }
             do {
                 let data = try await CloudTTSService.shared.synthesize(text: spoken, voiceId: voice.id)
                 guard self.speakGeneration == generation, self.speaking else { return }
+                guard !self.mustStaySilent else {
+                    self.finishSpeaking()
+                    return
+                }
                 self.activateSession(duckOthers: true)
                 if await self.playAudioData(data, fadeIn: true) {
                     return
@@ -123,13 +143,17 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
                 // Fallback to Apple voice preview if cloud request fails
             }
             guard self.speakGeneration == generation, self.speaking || self.isPreviewing else { return }
+            guard !self.mustStaySilent else {
+                self.finishSpeaking()
+                return
+            }
             self.activateSession(duckOthers: true)
-            self.speakApple(spoken, persona: Persona.named(.sarge), energetic: true, labelPrefix: "Preview · ")
+            self.speakApple(spoken, persona: previewPersona, energetic: true, labelPrefix: "Preview · ")
         }
     }
 
     func speak(_ text: String, persona: Persona, onFinish: @escaping () -> Void) {
-        guard !muted else { onFinish(); return }
+        guard !mustStaySilent else { onFinish(); return }
         stop()
         self.onFinish = onFinish
         let spoken = DistanceUnitNormalizer.normalize(Self.coachText(text), to: DistanceUnit.detect())
@@ -140,20 +164,32 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         let generation = speakGeneration
 
         Task { @MainActor in
+            guard !self.mustStaySilent else {
+                self.finishSpeaking()
+                return
+            }
             // Synthesize FIRST. Only duck music when audio is ready to play.
             if CloudTTSService.hasCloudAPI {
                 do {
                     let data = try await CloudTTSService.shared.synthesize(text: spoken, voiceId: persona.voiceId)
                     guard self.speakGeneration == generation, self.speaking else { return }
+                    guard !self.mustStaySilent else {
+                        self.finishSpeaking()
+                        return
+                    }
                     self.activateSession(duckOthers: true)
                     if await self.playAudioData(data, fadeIn: true) {
                         return
                     }
                 } catch {
-                    // Failover seamlessly to Apple male neural
+                    // Failover seamlessly to Apple neural (gender matches persona)
                 }
             }
             guard self.speakGeneration == generation, self.speaking else { return }
+            guard !self.mustStaySilent else {
+                self.finishSpeaking()
+                return
+            }
             self.activateSession(duckOthers: true)
             self.speakApple(spoken, persona: persona, energetic: true, labelPrefix: "Fallback · ")
         }
@@ -177,15 +213,19 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
             player.delegate = self
             player.enableRate = true
             player.rate = 1.05
+            // Peak playback; Fish prosody already adds ~+7 dB upstream.
+            let target: Float = 1.0
             if fadeIn {
                 player.volume = 0.0
+            } else {
+                player.volume = target
             }
             player.prepareToPlay()
             audioPlayer = player
             speaking = true
             if !player.play() { return false }
             if fadeIn {
-                player.setVolume(1.0, fadeDuration: 0.05)
+                player.setVolume(target, fadeDuration: 0.05)
             }
             return true
         } catch {
@@ -195,8 +235,8 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
     private func speakApple(_ spoken: String, persona: Persona, energetic: Bool, labelPrefix: String) {
         energeticDelivery = energetic
-        let voice = Self.voice(for: persona, preferredID: nil, forceMale: true)
-        booth.apply(BoothPreset.preset(for: .sarge))
+        _ = labelPrefix
+        booth.apply(BoothPreset.preset(for: persona.id))
         pendingChunks = Self.breathChunks(spoken)
         speaking = true
         useBooth = true
@@ -293,16 +333,21 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     }
 
     private func makeUtterance(_ chunk: String) -> AVSpeechUtterance {
-        let voice = Self.voice(for: activePersona, preferredID: nil, forceMale: true)
+        let forceMale = !activePersona.prefersFemale
+        let voice = Self.voice(for: activePersona, preferredID: nil, forceMale: forceMale)
         let attr = Self.attributedCoach(chunk)
         let u = AVSpeechUtterance(attributedString: attr)
         u.voice = voice
         let jitterR = Float.random(in: -0.015...0.015)
         let jitterP = Float.random(in: -0.012...0.012)
         let baseRate = energeticDelivery ? max(activePersona.speechRate, 0.52) + 0.04 : activePersona.speechRate
-        let basePitch = energeticDelivery ? min(activePersona.speechPitch, 0.96) - 0.04 : activePersona.speechPitch
+        let basePitch = energeticDelivery
+            ? (activePersona.prefersFemale
+                ? min(activePersona.speechPitch, 1.08) - 0.02
+                : min(activePersona.speechPitch, 0.96) - 0.04)
+            : activePersona.speechPitch
         u.rate = max(0.44, min(0.58, baseRate + jitterR))
-        u.pitchMultiplier = max(0.88, min(1.03, basePitch + jitterP))
+        u.pitchMultiplier = max(0.88, min(1.12, basePitch + jitterP))
         u.volume = 1.0
         u.preUtteranceDelay = 0.04
         u.postUtteranceDelay = 0.12
@@ -313,8 +358,7 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
     nonisolated static func voice(for persona: Persona, preferredID: String?, forceMale: Bool = true) -> AVSpeechSynthesisVoice? {
         if let preferredID, let v = AVSpeechSynthesisVoice(identifier: preferredID) { return v }
         let all = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix("en") }
-        let coachPersona = (forceMale && persona.prefersFemale) ? Persona.named(.sarge) : persona
-        return all.max { score($0, persona: coachPersona, forceMale: forceMale) < score($1, persona: coachPersona, forceMale: forceMale) }
+        return all.max { score($0, persona: persona, forceMale: forceMale) < score($1, persona: persona, forceMale: forceMale) }
     }
 
     nonisolated private static func score(_ v: AVSpeechSynthesisVoice, persona: Persona, forceMale: Bool = false) -> Int {
@@ -325,26 +369,29 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
         if id.contains("premium") { s += 100 }
         if v.quality == .premium { s += 90 }
         if v.quality == .enhanced { s += 50 }
-        for needle in ["aaron", "reed", "daniel", "nathan", "tom", "evan", "ralph", "fred", "gordon", "oliver", "arthur", "rishi"] {
-            if name.contains(needle) { s += 40 }
-        }
         if v.language.hasPrefix("en-US") { s += 10 }
         if v.language.hasPrefix("en-GB") { s += 6 }
         if v.voiceTraits.contains(.isNoveltyVoice) { s -= 260 }
         if v.voiceTraits.contains(.isPersonalVoice) { s -= 20 }
-        if name.contains("samantha") { s -= 120 }
-        if name.contains("karen") || name.contains("moira") || name.contains("tessa") { s -= 30 }
         if id.contains("compact") && !id.contains("siri") && v.quality == .default { s -= 50 }
         if ["albert", "bad news", "bahh", "bells", "boing", "bubbles", "cellos", "deranged", "good news", "hysterical", "pipe organ", "trinoids", "whisper", "zarvox", "kathy", "princess", "junior", "superstar", "wobble"].contains(where: { name.contains($0) }) {
             s -= 220
         }
-        let wantMale = forceMale || !persona.prefersFemale
+        let wantMale = forceMale && !persona.prefersFemale
         if wantMale {
+            for needle in ["aaron", "reed", "daniel", "nathan", "tom", "evan", "ralph", "fred", "gordon", "oliver", "arthur", "rishi"] {
+                if name.contains(needle) { s += 40 }
+            }
+            if name.contains("samantha") { s -= 120 }
+            if name.contains("karen") || name.contains("moira") || name.contains("tessa") { s -= 30 }
             if v.gender == .male { s += 50 }
             if v.gender == .female { s -= 80 }
         } else {
-            if v.gender == .female { s += 18 }
-            if v.gender == .male { s -= 4 }
+            for needle in ["samantha", "karen", "moira", "tessa", "zoe", "nicky", "susan", "allison", "ava", "serena"] {
+                if name.contains(needle) { s += 40 }
+            }
+            if v.gender == .female { s += 55 }
+            if v.gender == .male { s -= 80 }
         }
         for needle in persona.voiceHints {
             if name.contains(needle) || id.contains(needle) { s += 24 }
@@ -419,8 +466,12 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
     private func activateSession(duckOthers: Bool = true) {
         #if os(iOS)
+        if callInterrupted { return }
+        // Cancel any pending soft-deactivate from a prior silenceNow / finish.
+        deactivateGeneration &+= 1
         let session = AVAudioSession.sharedInstance()
         do {
+            // Duck music hard so the coach cuts through Spotify / podcasts.
             let opts: AVAudioSession.CategoryOptions = duckOthers
                 ? [.duckOthers, .interruptSpokenAudioAndMixWithOthers]
                 : [.mixWithOthers]
@@ -432,9 +483,13 @@ final class SpeechEngine: NSObject, AVSpeechSynthesizerDelegate, AVAudioPlayerDe
 
     private func deactivateSession() {
         #if os(iOS)
-        // Soft restore: brief delay so music doesn't slam back mid-word echo
+        // Soft restore: brief delay so music doesn't slam back mid-word echo.
+        // Bump token so a later activateSession (e.g. call ended) wins the race.
+        deactivateGeneration &+= 1
+        let token = deactivateGeneration
         Task { @MainActor in
             try? await Task.sleep(for: .milliseconds(120))
+            guard self.deactivateGeneration == token, !self.callInterrupted, !self.speaking else { return }
             try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
         }
         #endif
@@ -450,16 +505,16 @@ struct BoothPreset {
 
     static func preset(for id: Persona.ID) -> BoothPreset {
         switch id {
-        case .southpaw:
-            BoothPreset(reverbPreset: .smallRoom, wet: 3, lowShelfGain: 1.6, presenceCut: 1.2, highShelfGain: 1.0)
-        case .machine:
-            BoothPreset(reverbPreset: .smallRoom, wet: 2, lowShelfGain: 1.8, presenceCut: 1.4, highShelfGain: 1.2)
+        case .southpaw, .whip:
+            BoothPreset(reverbPreset: .smallRoom, wet: 3, lowShelfGain: 1.6, presenceCut: 1.4, highShelfGain: 1.2)
+        case .machine, .hardline:
+            BoothPreset(reverbPreset: .smallRoom, wet: 2, lowShelfGain: 1.8, presenceCut: 1.6, highShelfGain: 1.4)
         case .preacher:
-            BoothPreset(reverbPreset: .mediumRoom, wet: 5, lowShelfGain: 1.4, presenceCut: 0.8, highShelfGain: 0.8)
-        case .sarge:
-            BoothPreset(reverbPreset: .smallRoom, wet: 1, lowShelfGain: 1.2, presenceCut: 1.6, highShelfGain: 1.4)
+            BoothPreset(reverbPreset: .mediumRoom, wet: 5, lowShelfGain: 1.4, presenceCut: 1.0, highShelfGain: 1.0)
+        case .sarge, .major:
+            BoothPreset(reverbPreset: .smallRoom, wet: 1, lowShelfGain: 1.4, presenceCut: 1.8, highShelfGain: 1.6)
         case .steady:
-            BoothPreset(reverbPreset: .mediumChamber, wet: 4, lowShelfGain: 0.8, presenceCut: 0.6, highShelfGain: 0.5)
+            BoothPreset(reverbPreset: .mediumChamber, wet: 4, lowShelfGain: 0.8, presenceCut: 0.8, highShelfGain: 0.7)
         }
     }
 }
@@ -495,7 +550,8 @@ final class VoiceBooth {
         AudioUnitSetParameter(unit, kDynamicsProcessorParam_HeadRoom, kAudioUnitScope_Global, 0, 4, 0)
         AudioUnitSetParameter(unit, kDynamicsProcessorParam_AttackTime, kAudioUnitScope_Global, 0, 0.004, 0)
         AudioUnitSetParameter(unit, kDynamicsProcessorParam_ReleaseTime, kAudioUnitScope_Global, 0, 0.11, 0)
-        AudioUnitSetParameter(unit, kDynamicsProcessorParam_OverallGain, kAudioUnitScope_Global, 0, 5, 0)
+        // Louder Apple-fallback coach over music.
+        AudioUnitSetParameter(unit, kDynamicsProcessorParam_OverallGain, kAudioUnitScope_Global, 0, 9, 0)
         apply(BoothPreset.preset(for: .southpaw))
     }
 

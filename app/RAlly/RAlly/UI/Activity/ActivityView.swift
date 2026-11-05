@@ -8,6 +8,10 @@ struct ActivityView: View {
 
     @State private var selectedSession: WorkoutSessionRecord?
 
+    private var liveSessions: [WorkoutSessionRecord] {
+        sessions.filter { $0.deletedAt == nil }
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -21,7 +25,7 @@ struct ActivityView: View {
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 16)
-                    .padding(.bottom, 120)
+                    .padding(.bottom, 28)
                 }
             }
             .navigationTitle("")
@@ -48,10 +52,10 @@ struct ActivityView: View {
     }
 
     private var lifetimeStatsCard: some View {
-        let totalDistanceM = sessions.reduce(0) { $0 + $1.distanceM }
-        let totalDurationSec = sessions.reduce(0) { $0 + $1.durationSec }
-        let totalElevationM = sessions.reduce(0) { $0 + $1.elevationGainM }
-        let totalKcal = sessions.reduce(0.0) { $0 + $1.activeEnergyKcal }
+        let totalDistanceM = liveSessions.reduce(0) { $0 + $1.distanceM }
+        let totalDurationSec = liveSessions.reduce(0) { $0 + $1.durationSec }
+        let totalElevationM = liveSessions.reduce(0) { $0 + $1.elevationGainM }
+        let totalKcal = liveSessions.reduce(0.0) { $0 + $1.activeEnergyKcal }
 
         return VStack(spacing: 16) {
             HStack {
@@ -60,7 +64,7 @@ struct ActivityView: View {
                     .tracking(1.5)
                     .foregroundColor(Theme.secondaryText)
                 Spacer()
-                Text("\(sessions.count) WORKOUTS")
+                Text("\(liveSessions.count) WORKOUTS")
                     .font(Theme.font(size: 11, weight: .bold))
                     .foregroundColor(Theme.accent)
             }
@@ -170,14 +174,14 @@ struct ActivityView: View {
                 Spacer()
             }
 
-            if sessions.isEmpty {
+            if liveSessions.isEmpty {
                 Text("No completed workouts yet. Hit start on the Run tab.")
                     .font(Theme.font(size: 13, weight: .regular))
                     .foregroundColor(Theme.secondaryText)
                     .padding(.vertical, 20)
             } else {
                 VStack(spacing: 12) {
-                    ForEach(sessions) { s in
+                    ForEach(liveSessions) { s in
                         Button {
                             selectedSession = s
                         } label: {

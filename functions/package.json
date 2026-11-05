@@ -1,0 +1,13 @@
+{
+  "name": "rally-functions",
+  "description": "R·ALLY Cloud Functions — keep OAuth secrets off the device",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "private": true,
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}
