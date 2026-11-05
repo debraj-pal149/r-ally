@@ -109,7 +109,6 @@ h1 em, h2 span { color: var(--crimson); font-style: normal; }
 .app-store small { display: block; font: 500 10px/12px var(--body); }
 .text-link { text-decoration: none; font-size: 14px; font-weight: 600; border-bottom: 1px solid rgba(255,255,255,.35); padding: 7px 0; }
 .text-link span { color: var(--hot); margin-left: 5px; }
-.release-note { margin-top: 17px; color: #8e8587; font-size: 12px; }
 .hero-visual { position: relative; z-index: 2; width: 100%; max-width: 690px; justify-self: end; align-self: stretch; min-height: 550px; }
 .hero-photo-wrap {
   position: absolute; inset: 2% 0 3% 8%; overflow: hidden;
@@ -339,6 +338,12 @@ footer > small { grid-column: 1 / -1; padding-top: 18px; border-top: 1px solid v
     padding: calc(96px + env(safe-area-inset-top)) 20px 0;
   }
   .hero-copy { padding-left: 0; max-width: none; }
+  /* One solid accent — dual bars read as “half-loaded left pane” on phones. */
+  .hero-copy::before {
+    width: 28px;
+    margin-bottom: 16px;
+    box-shadow: none;
+  }
   .hero h1 > span { white-space: normal; }
   h1 { font-size: clamp(40px, 11vw, 48px); line-height: .9; }
   .hero-lede { max-width: none; margin: 18px 0 22px; font-size: 15px; line-height: 1.55; }
@@ -357,7 +362,6 @@ footer > small { grid-column: 1 / -1; padding-top: 18px; border-top: 1px solid v
     text-underline-offset: 5px;
     text-decoration-color: rgba(255,255,255,.35);
   }
-  .release-note { margin-top: 14px; font-size: 12px; }
   .hero-visual { min-height: 280px; margin: 28px 0 24px; }
   .hero-photo-wrap { inset: 0; border-radius: 4px 40px 4px 4px; }
   .hero-photo { object-position: 58% 44%; opacity: .88; }
